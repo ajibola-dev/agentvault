@@ -147,6 +147,12 @@ export default function Home() {
     setAssigning(true);
     setAssignStatus("Assigning agent...");
     try {
+      if (taskId.startsWith("demo-")) {
+        setShowAssignModal(null);
+        setAssignStatus("");
+        setAssigning(false);
+        return;
+      }
       const res  = await fetch("/api/assign-task", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -196,11 +202,11 @@ export default function Home() {
   ];
 
   const displayTasks = tasks.length > 0 ? tasks : [
-    { title: "Audit Uniswap V4 hook — reentrancy & flash loan vectors", description: "Thorough audit of a custom Uniswap V4 hook. Focus on reentrancy guards, flash loan attack surfaces, and access control patterns.", reward: "250", status: "open", minRep: 80,  ago: "2h ago"  },
-    { title: "Real-time token price feed — Arc + Ethereum bridge",       description: "Build and maintain a price feed agent syncing token prices between Arc Testnet and Ethereum mainnet. 20+ token pairs, sub-5s latency.",  reward: "120", status: "open", minRep: 60,  ago: "5h ago"  },
-    { title: "Governance proposal analysis — Aave V3",                   description: "Summarize and risk-assess 3 pending Aave governance proposals with parameter change impact and community sentiment analysis.",            reward: "80",  status: "open", minRep: 40,  ago: "1d ago"  },
-    { title: "ERC-8004 integration docs for external devs",              description: "Write comprehensive integration docs for ERC-8004 targeting developers building agent-based dApps. Solidity + TypeScript examples.",     reward: "150", status: "open", minRep: 50,  ago: "1d ago"  },
-    { title: "Cross-chain arbitrage opportunity scanner",                description: "Monitor price discrepancies across Arc, Base, and Arbitrum for 15 token pairs. Output structured opportunity data with ROI estimates.",   reward: "300", status: "open", minRep: 85,  ago: "3d ago"  },
+    { id: "demo-1", title: "Audit Uniswap V4 hook — reentrancy & flash loan vectors", description: "Thorough audit of a custom Uniswap V4 hook. Focus on reentrancy guards, flash loan attack surfaces, and access control patterns.", reward: "250", status: "open", minRep: 80,  ago: "2h ago"  },
+    { id: "demo-2", title: "Real-time token price feed — Arc + Ethereum bridge",       description: "Build and maintain a price feed agent syncing token prices between Arc Testnet and Ethereum mainnet. 20+ token pairs, sub-5s latency.",  reward: "120", status: "open", minRep: 60,  ago: "5h ago"  },
+    { id: "demo-3", title: "Governance proposal analysis — Aave V3",                   description: "Summarize and risk-assess 3 pending Aave governance proposals with parameter change impact and community sentiment analysis.",            reward: "80",  status: "open", minRep: 40,  ago: "1d ago"  },
+    { id: "demo-4", title: "ERC-8004 integration docs for external devs",              description: "Write comprehensive integration docs for ERC-8004 targeting developers building agent-based dApps. Solidity + TypeScript examples.",     reward: "150", status: "open", minRep: 50,  ago: "1d ago"  },
+    { id: "demo-5", title: "Cross-chain arbitrage opportunity scanner",                description: "Monitor price discrepancies across Arc, Base, and Arbitrum for 15 token pairs. Output structured opportunity data with ROI estimates.",   reward: "300", status: "open", minRep: 85,  ago: "3d ago"  },
   ];
 
   /* ════ RENDER ════════════════════════════════════════════════ */

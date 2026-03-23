@@ -1,22 +1,10 @@
+import { 
+  initiateDeveloperControlledWalletsClient,
+  generateEntitySecretCiphertext
+} from "@circle-fin/developer-controlled-wallets";
 import { NextResponse } from "next/server";
 
 export const tasks: any[] = [];
-
-const CIRCLE_BASE = "https://api.circle.com/v1/w3s";
-
-async function circlePost(path: string, body: object) {
-  const res = await fetch(`${CIRCLE_BASE}${path}`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${process.env.CIRCLE_API_KEY}`,
-    },
-    body: JSON.stringify(body),
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error(JSON.stringify(data));
-  return data;
-}
 
 export async function POST(req: Request) {
   try {
@@ -31,30 +19,28 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Invalid reward amount" }, { status: 400 });
     }
 
-    // Create wallet set via REST API directly
-    const walletSetRes = await circlePost("/developer/walletSets", {
-      idempotencyKey: crypto.randomUUID(),
-      name: `AgentVault - Escrow - ${title.slice(0, 40)}`,
+    const apiKey       = process.env.CIRCLE_API_KEY!;
+    const entitySecret = process.env.CIRCLE_ENTITY_SECRET!;
+
+    // Generate fresh ciphertext for this request
+    const ciphertext = await generateEntitySecretCiphertext({ apiKey, entitySecret });
+
+    const client = initiateDeveloperControlledWalletsClient({ apiKey, entitySecret });
+
+    const walletSet = await client.createWalletSet({
+      name: `AV-Escrow-${title.slice(0, 30)}`,
     });
 
-    const walletSetId = walletSetRes?.data?.walletSet?.id ?? null;
+    const wallets = await client.createWallets({
+      blockchains:  ["ARC-TESTNET" as any],
+      count:        1,
+      walletSetId:  walletSet.data?.walletSet?.id ?? "",
+      accountType:  "SCA",
+    });
 
-    let escrowAddress = null;
-    let escrowId = null;
-
-    if (walletSetId) {
-      const walletsRes = await circlePost("/developer/wallets", {
-        idempotencyKey: crypto.randomUUID(),
-        blockchains: ["ARC-TESTNET"],
-        count: 1,
-        walletSetId,
-        accountType: "SCA",
-        entitySecretCiphertext: process.env.CIRCLE_ENTITY_SECRET,
-      });
-      const wallet = walletsRes?.data?.wallets?.[0];
-      escrowAddress = wallet?.address ?? null;
-      escrowId = wallet?.id ?? null;
-    }
+    const escrowWallet  = wallets.data?.wallets?.[0];
+    const escrowAddress = escrowWallet?.address ?? null;
+    const escrowId      = escrowWallet?.id ?? null;
 
     const task = {
       id:           crypto.randomUUID(),
@@ -67,6 +53,7 @@ export async function POST(req: Request) {
       escrowAddress,
       escrowId,
       escrowStatus: escrowAddress ? "wallet_created" : "pending",
+      ciphertext,
       createdAt:    new Date().toISOString(),
     };
 
@@ -76,6 +63,7 @@ export async function POST(req: Request) {
   } catch (err: any) {
     return NextResponse.json({
       error: err.message,
+      code:  err?.code,
     }, { status: 500 });
   }
 }

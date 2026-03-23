@@ -10,7 +10,6 @@ export async function POST() {
     const client = initiateDeveloperControlledWalletsClient({
       apiKey:       process.env.CIRCLE_API_KEY!,
       entitySecret: process.env.CIRCLE_ENTITY_SECRET!,
-      appId:        process.env.CIRCLE_APP_ID!,
     });
 
     const walletSet = await client.createWalletSet({

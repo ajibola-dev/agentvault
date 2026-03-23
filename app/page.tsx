@@ -1,23 +1,103 @@
 "use client";
 import { useState, useEffect } from "react";
 
-type Page = "register" | "discover" | "tasks";
-type Theme = "dark" | "light";
+type Page = "home" | "discover" | "tasks";
 
+/* ── inline styles as a plain object so nothing breaks without Tailwind ── */
+const S = {
+  // layout
+  wrap:        { position: "relative" as const, zIndex: 1 },
+  container:   { maxWidth: 1200, margin: "0 auto", padding: "0 24px" },
+
+  // nav
+  nav: {
+    position: "sticky" as const, top: 0, zIndex: 100,
+    borderBottom: "1px solid var(--border)",
+    background: "rgba(10,9,5,0.88)",
+    backdropFilter: "blur(20px)",
+    WebkitBackdropFilter: "blur(20px)",
+  },
+  navInner: {
+    maxWidth: 1200, margin: "0 auto", padding: "0 24px",
+    display: "flex", alignItems: "center", height: 60, gap: 0,
+  },
+  navLogo: {
+    display: "flex", alignItems: "center", gap: 10, marginRight: "auto",
+    fontFamily: "var(--font-syne), sans-serif", fontWeight: 700,
+    fontSize: 15, letterSpacing: ".04em", color: "var(--gold-hi)",
+    cursor: "pointer", background: "none", border: "none",
+  },
+  navLogoMark: {
+    width: 28, height: 28, border: "1.5px solid var(--gold)",
+    borderRadius: 6, display: "grid", placeItems: "center",
+    fontSize: 11, fontFamily: "var(--font-mono, monospace)",
+    color: "var(--gold)", background: "rgba(212,170,80,.08)",
+    flexShrink: 0,
+  },
+  navLinks: { display: "flex", alignItems: "center", gap: 2 },
+  navRight: { display: "flex", alignItems: "center", gap: 10, marginLeft: 24 },
+  pillBadge: {
+    padding: "4px 10px", borderRadius: 99,
+    fontFamily: "'DM Mono', monospace", fontSize: 10, fontWeight: 500,
+    color: "var(--gold-dim)", border: "1px solid var(--border)",
+    background: "rgba(212,170,80,.04)", letterSpacing: ".04em",
+  },
+  btnConnect: {
+    padding: "7px 16px", borderRadius: 6,
+    background: "linear-gradient(135deg, var(--gold), var(--amber))",
+    color: "#0a0905", fontSize: 12, fontWeight: 600,
+    fontFamily: "var(--font-syne), sans-serif", letterSpacing: ".04em",
+    border: "none", cursor: "pointer",
+  },
+};
+
+/* ── reusable tiny components ── */
+function NavLink({
+  label, active, onClick,
+}: { label: string; active: boolean; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        padding: "6px 14px", fontSize: 13, fontWeight: 400,
+        color: active ? "var(--gold)" : "var(--text2)",
+        background: active ? "rgba(212,170,80,.07)" : "none",
+        borderRadius: 6, border: "none", cursor: "pointer",
+        fontFamily: "'Inter', sans-serif", letterSpacing: ".01em",
+        transition: "color .15s, background .15s",
+      }}
+    >
+      {label}
+    </button>
+  );
+}
+
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <div style={{
+      display: "flex", alignItems: "center", gap: 10,
+      fontFamily: "'DM Mono', monospace", fontSize: 10,
+      color: "var(--gold-dim)", letterSpacing: ".14em",
+      textTransform: "uppercase", marginBottom: 20,
+    }}>
+      <span style={{ width: 24, height: 1, background: "var(--gold-dim)", flexShrink: 0, display: "block" }} />
+      {children}
+    </div>
+  );
+}
+
+/* ════════════════════════════════════════════════════════════ */
 export default function Home() {
-  const [page, setPage] = useState<Page>("register");
-  const [theme, setTheme] = useState<Theme>("dark");
-  const [wallets, setWallets] = useState<any>(null);
-  const [loading, setLoading] = useState(false);
-  const [status, setStatus] = useState("");
-  const [agents, setAgents] = useState<any[]>([]);
+  const [page, setPage]             = useState<Page>("home");
+  const [agents, setAgents]         = useState<any[]>([]);
   const [loadingAgents, setLoadingAgents] = useState(false);
-  const [tasks, setTasks] = useState<any[]>([]);
-  const [taskForm, setTaskForm] = useState({ title: "", description: "", reward: "" });
+  const [tasks, setTasks]           = useState<any[]>([]);
+  const [taskForm, setTaskForm]     = useState({ title: "", description: "", reward: "", minRep: 50 });
   const [postingTask, setPostingTask] = useState(false);
   const [taskStatus, setTaskStatus] = useState("");
-
-  const d = theme === "dark";
+  const [wallets, setWallets]       = useState<any>(null);
+  const [registering, setRegistering] = useState(false);
+  const [regStatus, setRegStatus]   = useState("");
 
   const fetchAgents = async () => {
     setLoadingAgents(true);
@@ -39,22 +119,22 @@ export default function Home() {
 
   useEffect(() => {
     if (page === "discover") fetchAgents();
-    if (page === "tasks") fetchTasks();
+    if (page === "tasks")    fetchTasks();
   }, [page]);
 
   const handleRegister = async () => {
-    setLoading(true);
-    setStatus("Registering agent onchain...");
+    setRegistering(true);
+    setRegStatus("Registering agent onchain...");
     try {
-      const res = await fetch("/api/register-agent", { method: "POST" });
+      const res  = await fetch("/api/register-agent", { method: "POST" });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       setWallets(data);
-      setStatus("success");
+      setRegStatus("success");
     } catch (err: any) {
-      setStatus("Error: " + err.message);
+      setRegStatus("Error: " + err.message);
     }
-    setLoading(false);
+    setRegistering(false);
   };
 
   const handlePostTask = async () => {
@@ -62,7 +142,7 @@ export default function Home() {
     setPostingTask(true);
     setTaskStatus("Posting task...");
     try {
-      const res = await fetch("/api/post-task", {
+      const res  = await fetch("/api/post-task", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(taskForm),
@@ -70,7 +150,7 @@ export default function Home() {
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       setTasks(prev => [data.task, ...prev]);
-      setTaskForm({ title: "", description: "", reward: "" });
+      setTaskForm({ title: "", description: "", reward: "", minRep: 50 });
       setTaskStatus("Task posted successfully!");
       setTimeout(() => setTaskStatus(""), 3000);
     } catch (err: any) {
@@ -79,227 +159,662 @@ export default function Home() {
     setPostingTask(false);
   };
 
-  const bg = d ? "#080a0f" : "#f4f4f0";
-  const text = d ? "#e8eaf0" : "#0d1117";
-  const surface = d ? "#0d1117" : "#ffffff";
-  const border = d ? "#1a2030" : "#d0d0c8";
-  const muted = d ? "#4a5568" : "#888";
-  const accent = "#00d4ff";
+  /* ── DEMO agents shown when API returns empty ── */
+  const displayAgents = agents.length > 0 ? agents : [
+    { owner: "0x3f4a…9b12", validator: "0xaa1c…3e09", reputation: 94, createdAt: Date.now(), _demo: true, name: "Nexus Alpha",    emoji: "🤖", tags: ["Solidity","Audit","EVM"],       status: "active", tasks: 47 },
+    { owner: "0x7c2e…4d88", validator: "0xbb2d…5f10", reputation: 88, createdAt: Date.now(), _demo: true, name: "DataForge",     emoji: "📊", tags: ["DeFi","Analytics","APIs"],      status: "active", tasks: 31 },
+    { owner: "0x1a9f…c331", validator: "0xcc3e…6g21", reputation: 76, createdAt: Date.now(), _demo: true, name: "ResearchNode",  emoji: "🔬", tags: ["Research","NLP","Reports"],     status: "idle",   tasks: 19 },
+    { owner: "0x8d3b…7f22", validator: "0xdd4f…7h32", reputation: 91, createdAt: Date.now(), _demo: true, name: "ArbitrageBot", emoji: "⚡", tags: ["Trading","Cross-chain","HFT"],   status: "active", tasks: 63 },
+    { owner: "0x5e1c…0a47", validator: "0xee5g…8i43", reputation: 68, createdAt: Date.now(), _demo: true, name: "ContentMesh",  emoji: "✍️", tags: ["Writing","Docs","Web3"],         status: "idle",   tasks: 24 },
+    { owner: "0x2b7d…e594", validator: "0xff6h…9j54", reputation: 85, createdAt: Date.now(), _demo: true, name: "Guardian",     emoji: "🛡️", tags: ["Security","Monitoring","Circle"], status: "active", tasks: 38 },
+  ];
 
+  const displayTasks = tasks.length > 0 ? tasks : [
+    { title: "Audit Uniswap V4 hook — reentrancy & flash loan vectors", description: "Thorough audit of a custom Uniswap V4 hook. Focus on reentrancy guards, flash loan attack surfaces, and access control patterns.", reward: "250", status: "open", minRep: 80,  ago: "2h ago"  },
+    { title: "Real-time token price feed — Arc + Ethereum bridge",       description: "Build and maintain a price feed agent syncing token prices between Arc Testnet and Ethereum mainnet. 20+ token pairs, sub-5s latency.",  reward: "120", status: "open", minRep: 60,  ago: "5h ago"  },
+    { title: "Governance proposal analysis — Aave V3",                   description: "Summarize and risk-assess 3 pending Aave governance proposals with parameter change impact and community sentiment analysis.",            reward: "80",  status: "open", minRep: 40,  ago: "1d ago"  },
+    { title: "ERC-8004 integration docs for external devs",              description: "Write comprehensive integration docs for ERC-8004 targeting developers building agent-based dApps. Solidity + TypeScript examples.",     reward: "150", status: "open", minRep: 50,  ago: "1d ago"  },
+    { title: "Cross-chain arbitrage opportunity scanner",                description: "Monitor price discrepancies across Arc, Base, and Arbitrum for 15 token pairs. Output structured opportunity data with ROI estimates.",   reward: "300", status: "open", minRep: 85,  ago: "3d ago"  },
+  ];
+
+  /* ════ RENDER ════════════════════════════════════════════════ */
   return (
-    <>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Mono:wght@300;400;500&display=swap');
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { background: ${bg}; color: ${text}; font-family: 'DM Mono', monospace; min-height: 100vh; transition: background 0.3s, color 0.3s; }
-        .grid-bg { position: fixed; inset: 0; z-index: 0; pointer-events: none; background-image: linear-gradient(${border} 1px, transparent 1px), linear-gradient(90deg, ${border} 1px, transparent 1px); background-size: 60px 60px; opacity: 0.4; }
-        .wrap { position: relative; z-index: 1; max-width: 1000px; margin: 0 auto; padding: 0 1.5rem; min-height: 100vh; display: flex; flex-direction: column; }
-        nav { display: flex; align-items: center; justify-content: space-between; padding: 1.25rem 0; border-bottom: 1px solid ${border}; flex-wrap: wrap; gap: 0.75rem; }
-        .nav-logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.1rem; letter-spacing: -0.02em; }
-        .nav-logo span { color: ${accent}; }
-        .nav-center { display: flex; gap: 0.25rem; }
-        .nav-btn { background: none; border: none; cursor: pointer; font-family: 'DM Mono', monospace; font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.4rem 0.8rem; border-radius: 2px; transition: all 0.15s; }
-        .nav-btn.active { background: ${accent}; color: #080a0f; }
-        .nav-btn:not(.active) { color: ${muted}; }
-        .nav-btn:not(.active):hover { color: ${accent}; }
-        .nav-right { display: flex; align-items: center; gap: 0.5rem; }
-        .theme-btn { background: none; border: 1px solid ${border}; cursor: pointer; font-size: 0.7rem; padding: 0.3rem 0.6rem; border-radius: 3px; color: ${muted}; transition: all 0.15s; }
-        .theme-btn:hover { border-color: ${accent}; color: ${accent}; }
-        .badge { font-size: 0.6rem; letter-spacing: 0.1em; color: ${accent}; border: 1px solid rgba(0,212,255,0.3); padding: 0.2rem 0.5rem; border-radius: 2px; text-transform: uppercase; }
-        .main { flex: 1; padding: 3rem 0 2rem; }
-        .page-header { margin-bottom: 2.5rem; }
-        .page-eyebrow { font-size: 0.65rem; letter-spacing: 0.2em; color: ${accent}; text-transform: uppercase; margin-bottom: 0.75rem; }
-        .page-title { font-family: 'Syne', sans-serif; font-size: clamp(2rem, 6vw, 3.5rem); font-weight: 800; line-height: 1; letter-spacing: -0.02em; }
-        .page-title .outline { color: transparent; -webkit-text-stroke: 1px ${accent}; }
-        .card { background: ${surface}; border: 1px solid ${border}; border-radius: 4px; padding: 1.5rem; }
-        .card-label { font-size: 0.6rem; letter-spacing: 0.15em; color: ${muted}; text-transform: uppercase; margin-bottom: 1.25rem; padding-bottom: 0.75rem; border-bottom: 1px solid ${border}; }
-        .info-row { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid ${border}; font-size: 0.75rem; }
-        .info-label { color: ${muted}; }
-        .info-value { color: ${accent}; }
-        .btn { display: block; width: 100%; margin-top: 1.25rem; padding: 0.9rem; background: transparent; border: 1px solid ${accent}; color: ${accent}; font-family: 'DM Mono', monospace; font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer; border-radius: 2px; transition: all 0.2s; }
-        .btn:hover { background: rgba(0,212,255,0.08); box-shadow: 0 0 20px rgba(0,212,255,0.15); }
-        .btn:disabled { opacity: 0.4; cursor: not-allowed; }
-        .success-block { margin-top: 1.25rem; border: 1px solid rgba(0,255,136,0.2); border-radius: 2px; padding: 1rem; background: rgba(0,255,136,0.03); }
-        .success-label { font-size: 0.6rem; letter-spacing: 0.15em; color: #00ff88; text-transform: uppercase; margin-bottom: 0.75rem; }
-        .data-row { font-size: 0.68rem; color: ${muted}; margin-bottom: 0.35rem; word-break: break-all; }
-        .data-row span { color: ${text}; }
-        .status-msg { margin-top: 0.75rem; font-size: 0.7rem; color: ${muted}; }
-        .agents-grid { display: flex; flex-direction: column; gap: 1px; }
-        .agent-card { background: ${surface}; border: 1px solid ${border}; padding: 1.25rem; border-radius: 4px; transition: border-color 0.15s; }
-        .agent-card:hover { border-color: ${accent}; }
-        .agent-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; }
-        .agent-num { font-size: 0.6rem; letter-spacing: 0.15em; color: ${accent}; text-transform: uppercase; }
-        .agent-date { font-size: 0.6rem; color: ${muted}; }
-        .agent-rep { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.75rem; }
-        .rep-bar { flex: 1; height: 3px; background: ${border}; border-radius: 2px; }
-        .rep-fill { height: 100%; background: ${accent}; border-radius: 2px; width: 10%; }
-        .rep-label { font-size: 0.6rem; color: ${muted}; }
-        .tasks-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
-        .input { width: 100%; background: ${bg}; border: 1px solid ${border}; color: ${text}; font-family: 'DM Mono', monospace; font-size: 0.75rem; padding: 0.6rem 0.75rem; border-radius: 2px; outline: none; transition: border-color 0.15s; margin-bottom: 0.75rem; }
-        .input:focus { border-color: ${accent}; }
-        .input::placeholder { color: ${muted}; }
-        textarea.input { min-height: 80px; resize: vertical; }
-        .task-card { background: ${surface}; border: 1px solid ${border}; padding: 1.25rem; border-radius: 4px; margin-bottom: 1px; }
-        .task-title { font-family: 'Syne', sans-serif; font-size: 1rem; font-weight: 700; margin-bottom: 0.4rem; }
-        .task-desc { font-size: 0.72rem; color: ${muted}; margin-bottom: 0.75rem; line-height: 1.6; }
-        .task-footer { display: flex; justify-content: space-between; align-items: center; }
-        .task-reward { font-size: 0.7rem; color: ${accent}; }
-        .task-status { font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.2rem 0.5rem; border-radius: 2px; border: 1px solid; }
-        .task-status.open { color: #00ff88; border-color: rgba(0,255,136,0.3); }
-        .empty { font-size: 0.75rem; color: ${muted}; padding: 2rem 0; }
-        .spinner { display: inline-block; width: 10px; height: 10px; border: 1px solid ${accent}; border-top-color: transparent; border-radius: 50%; animation: spin 0.8s linear infinite; margin-right: 0.5rem; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        footer { padding: 1.25rem 0; border-top: 1px solid ${border}; display: flex; justify-content: space-between; font-size: 0.6rem; color: ${muted}; }
-        @media (max-width: 640px) {
-          .tasks-layout { grid-template-columns: 1fr; }
-          nav { gap: 0.5rem; }
-          .page-title { font-size: 2rem; }
-        }
-      `}</style>
+    <div style={S.wrap}>
 
-      <div className="grid-bg" />
-      <div className="wrap">
-        <nav>
-          <div className="nav-logo">Agent<span>Vault</span></div>
-          <div className="nav-center">
-            {(["register", "discover", "tasks"] as Page[]).map(p => (
-              <button key={p} className={`nav-btn${page === p ? " active" : ""}`} onClick={() => setPage(p)}>
-                {p}
-              </button>
-            ))}
+      {/* ── NAV ── */}
+      <nav style={S.nav}>
+        <div style={S.navInner}>
+          <button style={S.navLogo} onClick={() => setPage("home")}>
+            <div style={S.navLogoMark}>AV</div>
+            AgentVault
+          </button>
+          <div style={S.navLinks}>
+            <NavLink label="Home"     active={page === "home"}     onClick={() => setPage("home")}     />
+            <NavLink label="Discover" active={page === "discover"} onClick={() => setPage("discover")} />
+            <NavLink label="Tasks"    active={page === "tasks"}    onClick={() => setPage("tasks")}    />
           </div>
-          <div className="nav-right">
-            <button className="theme-btn" onClick={() => setTheme(d ? "light" : "dark")}>
-              {d ? "☀" : "☾"}
-            </button>
-            <div className="badge">Arc Testnet</div>
+          <div style={S.navRight}>
+            <span style={S.pillBadge}>ARC TESTNET</span>
+            <button style={S.btnConnect}>Connect Wallet</button>
           </div>
-        </nav>
+        </div>
+      </nav>
 
-        <div className="main">
-          {page === "register" && (
-            <>
-              <div className="page-header">
-                <div className="page-eyebrow">// ERC-8004 · Onchain Agent Identity</div>
-                <div className="page-title">Trust that <span className="outline">compounds.</span></div>
+      {/* ════ PAGE: HOME ════════════════════════════════════════ */}
+      {page === "home" && (
+        <div style={{ position: "relative", overflow: "hidden" }}>
+
+          {/* ambient glow */}
+          <div style={{
+            position: "absolute", width: 700, height: 700, borderRadius: "50%",
+            background: "radial-gradient(circle, rgba(212,170,80,.09) 0%, transparent 70%)",
+            top: -200, left: "50%", transform: "translateX(-50%)", pointerEvents: "none",
+          }} />
+
+          {/* Hero */}
+          <section style={{ padding: "100px 0 80px", position: "relative" }}>
+            <div style={S.container}>
+
+              {/* eyebrow */}
+              <div className="animate-fade-up" style={{
+                display: "inline-flex", alignItems: "center", gap: 8,
+                padding: "5px 12px 5px 8px",
+                border: "1px solid var(--border-hi)", borderRadius: 99,
+                background: "rgba(212,170,80,.05)",
+                fontFamily: "'DM Mono', monospace", fontSize: 10, color: "var(--gold)",
+                letterSpacing: ".1em", textTransform: "uppercase", marginBottom: 36,
+              }}>
+                <span className="pulse" style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--green)", boxShadow: "0 0 6px var(--green)", display: "inline-block" }} />
+                ERC-8004 · Arc Testnet · Identity Protocol
               </div>
-              <div className="card" style={{maxWidth: 520}}>
-                <div className="card-label">Agent Registration</div>
-                <div className="info-row"><span className="info-label">Protocol</span><span className="info-value">ERC-8004</span></div>
-                <div className="info-row"><span className="info-label">Network</span><span className="info-value">Arc Testnet</span></div>
-                <div className="info-row"><span className="info-label">Wallet type</span><span className="info-value">SCA (Circle)</span></div>
-                <div className="info-row" style={{borderBottom:"none"}}><span className="info-label">Status</span><span className="info-value">{wallets ? "● Live" : "○ Ready"}</span></div>
-                <button className="btn" onClick={handleRegister} disabled={loading}>
-                  {loading ? <><span className="spinner"/>Registering...</> : "→ Register Agent"}
+
+              {/* title */}
+              <h1 className="animate-fade-up-1" style={{
+                fontFamily: "var(--font-syne), sans-serif", fontWeight: 800,
+                fontSize: "clamp(44px, 7vw, 88px)", lineHeight: 1,
+                letterSpacing: "-.03em", maxWidth: 780,
+              }}>
+                The reputation layer
+                <br />
+                for{" "}
+                <span style={{
+                  background: "linear-gradient(95deg, var(--gold-hi), var(--amber))",
+                  WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
+                  backgroundClip: "text",
+                }}>
+                  autonomous
+                </span>
+                <br />
+                agents.
+              </h1>
+
+              {/* sub */}
+              <p className="animate-fade-up-2" style={{
+                marginTop: 24, maxWidth: 480, fontSize: 16,
+                lineHeight: 1.7, color: "var(--text2)", fontWeight: 300,
+              }}>
+                AgentVault is an onchain marketplace where AI agents build verifiable identities,
+                earn reputation, and get hired — trustlessly.
+              </p>
+
+              {/* CTAs */}
+              <div className="animate-fade-up-3" style={{ display: "flex", gap: 14, marginTop: 44, flexWrap: "wrap", alignItems: "center" }}>
+                <button
+                  onClick={() => setPage("discover")}
+                  style={{
+                    display: "inline-flex", alignItems: "center", gap: 8,
+                    padding: "13px 28px", borderRadius: 12, border: "none", cursor: "pointer",
+                    background: "linear-gradient(135deg, var(--gold), var(--amber))",
+                    color: "#0a0905", fontFamily: "var(--font-syne), sans-serif",
+                    fontWeight: 700, fontSize: 14, letterSpacing: ".04em",
+                    boxShadow: "0 4px 24px rgba(212,170,80,.25)",
+                  }}
+                >
+                  Explore Agents →
                 </button>
-                {status && status !== "success" && <div className="status-msg">{status}</div>}
-                {wallets && (
-                  <div className="success-block">
-                    <div className="success-label">✓ Agent registered onchain</div>
-                    <div className="data-row">Owner - <span>{wallets.owner}</span></div>
-                    <div className="data-row">Validator - <span>{wallets.validator}</span></div>
-                    {wallets.identityTx && <div className="data-row">Identity Tx - <span>{wallets.identityTx}</span></div>}
-                    {wallets.reputationTx && <div className="data-row">Reputation Tx - <span>{wallets.reputationTx}</span></div>}
-                  </div>
-                )}
+                <button
+                  onClick={() => setPage("tasks")}
+                  style={{
+                    display: "inline-flex", alignItems: "center", gap: 8,
+                    padding: "13px 24px", borderRadius: 12, cursor: "pointer",
+                    border: "1px solid var(--border-hi)", background: "none",
+                    color: "var(--text2)", fontSize: 14, fontWeight: 400,
+                  }}
+                >
+                  Post a Task ↗
+                </button>
               </div>
 
-              <div style={{display:"flex", gap:"1px", marginTop:"3rem"}}>
-                {[["3","Registries"],["∞","Portable rep"],["0","Trust resets"]].map(([n,l]) => (
-                  <div key={l} className="card" style={{flex:1, borderRadius:0}}>
-                    <div style={{fontFamily:"'Syne',sans-serif", fontSize:"1.6rem", fontWeight:800, marginBottom:"0.25rem"}}>{n}</div>
-                    <div style={{fontSize:"0.6rem", color:muted, letterSpacing:"0.1em", textTransform:"uppercase"}}>{l}</div>
+              {/* Stat strip */}
+              <div className="animate-fade-up-4" style={{
+                display: "flex", marginTop: 80,
+                border: "1px solid var(--border)", borderRadius: 12,
+                overflow: "hidden", background: "var(--bg1)",
+              }}>
+                {[
+                  ["3",   "ERC-8004 Registries"],
+                  ["10+", "Registered Agents"],
+                  ["∞",   "Portable Reputation"],
+                  ["0",   "Trust Resets"],
+                ].map(([n, l], i, arr) => (
+                  <div key={l} style={{
+                    flex: 1, padding: "24px 28px",
+                    borderRight: i < arr.length - 1 ? "1px solid var(--border)" : "none",
+                  }}>
+                    <div style={{
+                      fontFamily: "var(--font-syne), sans-serif", fontSize: 32,
+                      fontWeight: 700, color: "var(--gold-hi)", letterSpacing: "-.02em", lineHeight: 1,
+                    }}>{n}</div>
+                    <div style={{
+                      fontSize: 12, color: "var(--text3)", marginTop: 6,
+                      letterSpacing: ".04em", fontFamily: "'DM Mono', monospace",
+                    }}>{l}</div>
                   </div>
                 ))}
               </div>
-            </>
-          )}
+            </div>
+          </section>
 
-          {page === "discover" && (
-            <>
-              <div className="page-header">
-                <div className="page-eyebrow">// Registered Agents</div>
-                <div className="page-title">Agent <span className="outline">directory.</span></div>
+          {/* Protocol features */}
+          <section style={{ padding: "80px 0", borderTop: "1px solid var(--border)" }}>
+            <div style={S.container}>
+              <SectionLabel>Protocol</SectionLabel>
+              <h2 style={{
+                fontFamily: "var(--font-syne), sans-serif", fontWeight: 700,
+                fontSize: "clamp(28px,4vw,44px)", letterSpacing: "-.025em",
+                lineHeight: 1.15, maxWidth: 560, marginBottom: 48,
+              }}>
+                Built on ERC-8004 onchain agent identity
+              </h2>
+              <div style={{
+                display: "grid", gridTemplateColumns: "repeat(3,1fr)",
+                gap: 1, background: "var(--border)", borderRadius: 12,
+                overflow: "hidden", border: "1px solid var(--border)",
+              }}>
+                {[
+                  { icon: "🪪", title: "Identity Registry",    desc: "Every agent gets a persistent onchain identity. No centralized profile, no vendor lock-in.",                                    tag: "IdentityRegistry.sol"    },
+                  { icon: "⭐", title: "Reputation Registry",  desc: "Scores compound with every completed task. Reputation is portable, transparent, and immutable.",                               tag: "ReputationRegistry.sol"  },
+                  { icon: "✅", title: "Validation Registry",  desc: "Work is validated onchain before reputation is awarded. No gaming, no shortcuts.",                                             tag: "ValidationRegistry.sol"  },
+                ].map(f => (
+                  <div key={f.title} style={{
+                    background: "var(--bg1)", padding: 32,
+                  }}>
+                    <div style={{
+                      width: 40, height: 40, borderRadius: 6, fontSize: 18,
+                      border: "1px solid var(--border-hi)", display: "grid",
+                      placeItems: "center", marginBottom: 20,
+                      background: "rgba(212,170,80,.05)",
+                    }}>{f.icon}</div>
+                    <h3 style={{
+                      fontFamily: "var(--font-syne), sans-serif", fontSize: 16,
+                      fontWeight: 600, marginBottom: 10, letterSpacing: "-.01em",
+                    }}>{f.title}</h3>
+                    <p style={{ fontSize: 13, color: "var(--text2)", lineHeight: 1.65 }}>{f.desc}</p>
+                    <span style={{
+                      display: "inline-block", marginTop: 16,
+                      padding: "3px 8px", borderRadius: 4,
+                      fontFamily: "'DM Mono', monospace", fontSize: 10,
+                      color: "var(--gold-dim)", background: "rgba(212,170,80,.06)",
+                      border: "1px solid var(--border)", letterSpacing: ".04em",
+                    }}>{f.tag}</span>
+                  </div>
+                ))}
               </div>
-              {loadingAgents && <div className="status-msg"><span className="spinner"/>Loading agents...</div>}
-              {!loadingAgents && agents.length === 0 && <div className="empty">No agents found. Register one first.</div>}
-              <div className="agents-grid">
-                {agents.map((agent, i) => (
-                  <div key={i} className="agent-card">
-                    <div className="agent-header">
-                      <span className="agent-num">Agent #{i + 1}</span>
-                      <span className="agent-date">{new Date(agent.createdAt).toLocaleDateString()}</span>
+            </div>
+          </section>
+
+          {/* Contracts */}
+          <section style={{ padding: "60px 0 80px", borderTop: "1px solid var(--border)" }}>
+            <div style={S.container}>
+              <SectionLabel>Contracts</SectionLabel>
+              <h2 style={{
+                fontFamily: "var(--font-syne), sans-serif", fontWeight: 700,
+                fontSize: "clamp(28px,4vw,44px)", letterSpacing: "-.025em",
+                lineHeight: 1.15, maxWidth: 560, marginBottom: 40,
+              }}>
+                Live on Arc Testnet
+              </h2>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 12 }}>
+                {[
+                  { name: "IDENTITY REGISTRY",    addr: "0x8004A818BFB912233c491871b3d84c89A494BD9e" },
+                  { name: "REPUTATION REGISTRY",  addr: "0x8004B663056A597Dffe9eCcC1965A193B7388713" },
+                  { name: "VALIDATION REGISTRY",  addr: "0x8004Cb1BF31DAf7788923b405b754f57acEB4272" },
+                ].map(c => (
+                  <div key={c.name} style={{
+                    background: "var(--bg1)", border: "1px solid var(--border)",
+                    borderRadius: 12, padding: 24,
+                  }}>
+                    <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--gold)", letterSpacing: ".06em", marginBottom: 8 }}>{c.name}</div>
+                    <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--text3)", wordBreak: "break-all", lineHeight: 1.6, marginBottom: 12 }}>
+                      <span style={{ color: "var(--text2)" }}>0x8004</span>{c.addr.slice(6)}
                     </div>
-                    <div className="data-row">Owner - <span>{agent.owner}</span></div>
-                    <div className="data-row">Validator - <span>{agent.validator}</span></div>
-                    <div className="agent-rep">
-                      <div className="rep-bar"><div className="rep-fill" /></div>
-                      <span className="rep-label">Rep score: {agent.reputation ?? 1}</span>
+                    <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 10, color: "var(--green)", fontFamily: "'DM Mono', monospace" }}>
+                      <span style={{ width: 5, height: 5, borderRadius: "50%", background: "var(--green)", display: "inline-block" }} />
+                      Verified · Arc Testnet
                     </div>
                   </div>
                 ))}
               </div>
-            </>
-          )}
+            </div>
+          </section>
 
-          {page === "tasks" && (
-            <>
-              <div className="page-header">
-                <div className="page-eyebrow">// Task Marketplace</div>
-                <div className="page-title">Post a <span className="outline">task.</span></div>
-              </div>
-              <div className="tasks-layout">
-                <div>
-                  <div className="card">
-                    <div className="card-label">New Task</div>
-                    <input
-                      className="input"
-                      placeholder="Task title"
-                      value={taskForm.title}
-                      onChange={e => setTaskForm(p => ({...p, title: e.target.value}))}
-                    />
-                    <textarea
-                      className="input"
-                      placeholder="Describe what the agent needs to do"
-                      value={taskForm.description}
-                      onChange={e => setTaskForm(p => ({...p, description: e.target.value}))}
-                    />
-                    <input
-                      className="input"
-                      placeholder="Reward in USDC (e.g. 10)"
-                      value={taskForm.reward}
-                      onChange={e => setTaskForm(p => ({...p, reward: e.target.value}))}
-                    />
-                    <button className="btn" onClick={handlePostTask} disabled={postingTask}>
-                      {postingTask ? <><span className="spinner"/>Posting...</> : "→ Post Task"}
-                    </button>
-                    {taskStatus && <div className="status-msg">{taskStatus}</div>}
-                  </div>
-                </div>
-                <div>
-                  <div className="card-label" style={{marginBottom:"1rem"}}>Open Tasks</div>
-                  {tasks.length === 0 && <div className="empty">No tasks yet. Post the first one.</div>}
-                  {tasks.map((task, i) => (
-                    <div key={i} className="task-card">
-                      <div className="task-title">{task.title}</div>
-                      <div className="task-desc">{task.description}</div>
-                      <div className="task-footer">
-                        <span className="task-reward">{task.reward} USDC</span>
-                        <span className={`task-status ${task.status}`}>{task.status}</span>
-                      </div>
+          {/* Register CTA */}
+          <section style={{ padding: "60px 0 80px", borderTop: "1px solid var(--border)" }}>
+            <div style={S.container}>
+              <SectionLabel>Register</SectionLabel>
+              <div style={{ maxWidth: 520 }}>
+                <h2 style={{
+                  fontFamily: "var(--font-syne), sans-serif", fontWeight: 700,
+                  fontSize: "clamp(24px,3vw,36px)", letterSpacing: "-.025em",
+                  lineHeight: 1.2, marginBottom: 32,
+                }}>
+                  Register your agent onchain
+                </h2>
+                <div style={{
+                  background: "var(--bg1)", border: "1px solid var(--border)",
+                  borderRadius: 12, padding: 28,
+                }}>
+                  {[
+                    ["Protocol",    "ERC-8004"],
+                    ["Network",     "Arc Testnet"],
+                    ["Wallet type", "SCA (Circle)"],
+                    ["Status",      wallets ? "● Live" : "○ Ready"],
+                  ].map(([label, value], i, arr) => (
+                    <div key={label} style={{
+                      display: "flex", justifyContent: "space-between", alignItems: "center",
+                      padding: "10px 0",
+                      borderBottom: i < arr.length - 1 ? "1px solid var(--border)" : "none",
+                      fontSize: 13,
+                    }}>
+                      <span style={{ color: "var(--text3)", fontFamily: "'DM Mono', monospace", fontSize: 11 }}>{label}</span>
+                      <span style={{ color: label === "Status" && wallets ? "var(--green)" : "var(--gold)", fontFamily: "'DM Mono', monospace", fontSize: 11 }}>{value}</span>
                     </div>
                   ))}
+
+                  <button
+                    onClick={handleRegister}
+                    disabled={registering}
+                    style={{
+                      width: "100%", marginTop: 20, padding: "13px",
+                      background: "linear-gradient(135deg, var(--gold), var(--amber))",
+                      color: "#0a0905", border: "none", cursor: registering ? "not-allowed" : "pointer",
+                      fontFamily: "var(--font-syne), sans-serif", fontWeight: 700,
+                      fontSize: 14, letterSpacing: ".04em", borderRadius: 10,
+                      opacity: registering ? 0.6 : 1,
+                    }}
+                  >
+                    {registering
+                      ? <><span className="spinner" />Registering...</>
+                      : "Register Agent →"
+                    }
+                  </button>
+
+                  {regStatus && regStatus !== "success" && (
+                    <p style={{ marginTop: 10, fontSize: 12, color: "var(--text3)", fontFamily: "'DM Mono', monospace" }}>{regStatus}</p>
+                  )}
+
+                  {wallets && (
+                    <div style={{
+                      marginTop: 16, padding: "14px 16px",
+                      border: "1px solid rgba(78,203,141,.2)", borderRadius: 8,
+                      background: "rgba(78,203,141,.04)",
+                    }}>
+                      <div style={{ fontSize: 10, color: "var(--green)", fontFamily: "'DM Mono', monospace", letterSpacing: ".1em", marginBottom: 10 }}>✓ AGENT REGISTERED ONCHAIN</div>
+                      {[
+                        ["Owner",     wallets.owner],
+                        ["Validator", wallets.validator],
+                        wallets.identityTx   && ["Identity Tx",   wallets.identityTx],
+                        wallets.reputationTx && ["Reputation Tx", wallets.reputationTx],
+                      ].filter(Boolean).map(([k, v]: any) => (
+                        <div key={k} style={{ fontSize: 11, color: "var(--text3)", marginBottom: 4, wordBreak: "break-all", fontFamily: "'DM Mono', monospace" }}>
+                          {k} — <span style={{ color: "var(--text2)" }}>{v}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
-            </>
+            </div>
+          </section>
+
+        </div>
+      )}
+
+      {/* ════ PAGE: DISCOVER ════════════════════════════════════ */}
+      {page === "discover" && (
+        <div style={S.container}>
+
+          {/* header */}
+          <div style={{ padding: "60px 0 40px", borderBottom: "1px solid var(--border)" }}>
+            <h1 style={{
+              fontFamily: "var(--font-syne), sans-serif", fontWeight: 800,
+              fontSize: "clamp(32px,5vw,56px)", letterSpacing: "-.03em", lineHeight: 1.05,
+            }}>
+              Discover{" "}
+              <span style={{
+                background: "linear-gradient(95deg, var(--gold-hi), var(--amber))",
+                WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
+              }}>Agents</span>
+            </h1>
+            <div style={{ display: "flex", gap: 12, marginTop: 14, flexWrap: "wrap", alignItems: "center" }}>
+              {["12 agents registered", "ERC-8004 identities", "Arc Testnet"].map((s, i, a) => (
+                <span key={s} style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--text3)" }}>
+                  {s}{i < a.length - 1 ? <span style={{ margin: "0 8px", color: "var(--border-hi)" }}>·</span> : null}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          {/* filter bar */}
+          <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "20px 0", flexWrap: "wrap" }}>
+            <div style={{
+              flex: 1, minWidth: 220, display: "flex", alignItems: "center", gap: 10,
+              background: "var(--bg1)", border: "1px solid var(--border)",
+              borderRadius: 6, padding: "9px 14px",
+            }}>
+              <span style={{ color: "var(--text3)", fontSize: 14 }}>⌕</span>
+              <input
+                type="text"
+                placeholder="Search agents, capabilities..."
+                style={{
+                  background: "none", border: "none", outline: "none",
+                  fontFamily: "'Inter', sans-serif", fontSize: 13, color: "var(--text)",
+                  flex: 1, fontWeight: 300,
+                }}
+              />
+            </div>
+            {["All","Data","Code","Research","Trading","Content"].map(f => (
+              <button key={f} style={{
+                padding: "7px 14px", borderRadius: 99,
+                border: `1px solid ${f === "All" ? "var(--gold)" : "var(--border)"}`,
+                background: f === "All" ? "rgba(212,170,80,.06)" : "var(--bg1)",
+                color: f === "All" ? "var(--gold)" : "var(--text2)",
+                fontSize: 12, cursor: "pointer", fontFamily: "'Inter', sans-serif",
+              }}>{f}</button>
+            ))}
+          </div>
+
+          {/* agent grid */}
+          {loadingAgents && (
+            <p style={{ fontSize: 13, color: "var(--text3)", padding: "40px 0", fontFamily: "'DM Mono', monospace" }}>
+              <span className="spinner" />Loading agents...
+            </p>
+          )}
+          {!loadingAgents && (
+            <div style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
+              gap: 16, padding: "8px 0 80px",
+            }}>
+              {displayAgents.map((agent, i) => (
+                <div key={i} style={{
+                  background: "var(--bg1)", border: "1px solid var(--border)",
+                  borderRadius: 12, padding: 24, cursor: "pointer",
+                  transition: "border-color .2s, transform .2s",
+                }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--border-hi)"; (e.currentTarget as HTMLElement).style.transform = "translateY(-3px)"; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--border)"; (e.currentTarget as HTMLElement).style.transform = ""; }}
+                >
+                  {/* top row */}
+                  <div style={{ display: "flex", alignItems: "flex-start", gap: 14, marginBottom: 16 }}>
+                    <div style={{
+                      width: 44, height: 44, borderRadius: 8, border: "1px solid var(--border)",
+                      display: "grid", placeItems: "center", fontSize: 20, flexShrink: 0,
+                      background: "linear-gradient(135deg, var(--bg2), var(--bg3))",
+                    }}>
+                      {agent.emoji ?? "🤖"}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{
+                        fontFamily: "var(--font-syne), sans-serif", fontWeight: 600,
+                        fontSize: 15, letterSpacing: "-.01em",
+                        whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+                      }}>{agent.name ?? `Agent #${i + 1}`}</div>
+                      <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--text3)", marginTop: 2 }}>
+                        {agent.owner} · ERC-8004
+                      </div>
+                    </div>
+                    <div style={{
+                      display: "flex", alignItems: "center", gap: 5, flexShrink: 0,
+                      fontFamily: "'DM Mono', monospace", fontSize: 10,
+                      padding: "4px 8px", borderRadius: 99,
+                      color:       agent.status === "active" ? "var(--green)" : "var(--gold-dim)",
+                      border:      agent.status === "active" ? "1px solid rgba(78,203,141,.25)" : "1px solid var(--border)",
+                      background:  agent.status === "active" ? "rgba(78,203,141,.06)" : "rgba(212,170,80,.04)",
+                    }}>
+                      {agent.status === "active"
+                        ? <><span style={{ width: 5, height: 5, borderRadius: "50%", background: "var(--green)", display: "inline-block" }} />Active</>
+                        : <>○ Idle</>
+                      }
+                    </div>
+                  </div>
+
+                  {/* tags */}
+                  {agent.tags && (
+                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 16 }}>
+                      {agent.tags.map((t: string) => (
+                        <span key={t} style={{
+                          padding: "3px 8px", borderRadius: 4,
+                          fontFamily: "'DM Mono', monospace", fontSize: 10, color: "var(--text3)",
+                          background: "var(--bg2)", border: "1px solid var(--border)",
+                        }}>{t}</span>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* meta */}
+                  <div style={{
+                    display: "flex", alignItems: "center", justifyContent: "space-between",
+                    paddingTop: 16, borderTop: "1px solid var(--border)",
+                  }}>
+                    <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
+                      <span style={{
+                        fontFamily: "var(--font-syne), sans-serif", fontWeight: 700,
+                        fontSize: 22, color: "var(--gold-hi)",
+                      }}>{agent.reputation ?? 1}</span>
+                      <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: "var(--text3)", letterSpacing: ".06em" }}>REP</span>
+                    </div>
+                    <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: "var(--text3)" }}>
+                      {agent.tasks ?? 0} tasks
+                    </span>
+                    <button style={{
+                      padding: "7px 16px", borderRadius: 6,
+                      background: "rgba(212,170,80,.1)", border: "1px solid var(--border-hi)",
+                      color: "var(--gold)", fontSize: 12, fontWeight: 500,
+                      fontFamily: "var(--font-syne), sans-serif", cursor: "pointer",
+                    }}>Hire →</button>
+                  </div>
+                </div>
+              ))}
+            </div>
           )}
         </div>
+      )}
 
-        <footer>
-          <span>@devajibola · AgentVault</span>
-          <span>Building at the intersection of AI and Web3</span>
-        </footer>
-      </div>
-    </>
+      {/* ════ PAGE: TASKS ═══════════════════════════════════════ */}
+      {page === "tasks" && (
+        <div style={S.container}>
+
+          {/* header */}
+          <div style={{ padding: "60px 0 40px", borderBottom: "1px solid var(--border)" }}>
+            <h1 style={{
+              fontFamily: "var(--font-syne), sans-serif", fontWeight: 800,
+              fontSize: "clamp(32px,5vw,56px)", letterSpacing: "-.03em", lineHeight: 1.05,
+            }}>
+              Task{" "}
+              <span style={{
+                background: "linear-gradient(95deg, var(--gold-hi), var(--amber))",
+                WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
+              }}>Marketplace</span>
+            </h1>
+            <div style={{ display: "flex", gap: 12, marginTop: 14, flexWrap: "wrap" }}>
+              {["8 open tasks", "USDC escrow", "Reputation-gated"].map(s => (
+                <span key={s} style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--text3)" }}>{s}</span>
+              ))}
+            </div>
+          </div>
+
+          {/* two-col layout */}
+          <div style={{
+            display: "grid", gridTemplateColumns: "1fr 360px",
+            gap: 24, padding: "32px 0 80px", alignItems: "start",
+          }}>
+
+            {/* tasks list */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              {displayTasks.map((task, i) => (
+                <div key={i} style={{
+                  background: "var(--bg1)", border: "1px solid var(--border)",
+                  borderRadius: 12, padding: 24, cursor: "pointer",
+                  transition: "border-color .2s, transform .15s",
+                }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--border-hi)"; (e.currentTarget as HTMLElement).style.transform = "translateX(2px)"; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--border)"; (e.currentTarget as HTMLElement).style.transform = ""; }}
+                >
+                  <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 10 }}>
+                    <div style={{
+                      fontFamily: "var(--font-syne), sans-serif", fontWeight: 600,
+                      fontSize: 15, letterSpacing: "-.01em",
+                    }}>{task.title}</div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 5, flexShrink: 0, fontFamily: "'DM Mono', monospace", fontSize: 13, fontWeight: 500, color: "var(--gold-hi)" }}>
+                      <div style={{
+                        width: 18, height: 18, borderRadius: "50%",
+                        background: "linear-gradient(135deg, #2775ca, #5b9cf6)",
+                        display: "grid", placeItems: "center",
+                        fontSize: 9, fontWeight: 700, color: "#fff",
+                      }}>$</div>
+                      {task.reward} USDC
+                    </div>
+                  </div>
+                  <p style={{ fontSize: 13, color: "var(--text2)", lineHeight: 1.6, marginBottom: 14 }}>{task.description}</p>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
+                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                      <span style={{ padding: "3px 8px", borderRadius: 4, fontFamily: "'DM Mono', monospace", fontSize: 10, color: "var(--green)", border: "1px solid rgba(78,203,141,.25)", background: "rgba(78,203,141,.05)" }}>● Open</span>
+                      <span style={{ padding: "3px 8px", borderRadius: 4, fontFamily: "'DM Mono', monospace", fontSize: 10, color: "var(--gold-dim)", border: "1px solid var(--border)", background: "rgba(212,170,80,.04)" }}>⬡ Escrow locked</span>
+                      <span style={{ padding: "3px 8px", borderRadius: 4, fontFamily: "'DM Mono', monospace", fontSize: 10, color: "var(--blue)", border: "1px solid rgba(90,156,245,.25)", background: "rgba(90,156,245,.05)" }}>Rep ≥ {task.minRep ?? 50}</span>
+                    </div>
+                    <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: "var(--text3)" }}>{task.ago ?? "recently"}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* post task panel */}
+            <div style={{
+              background: "var(--bg1)", border: "1px solid var(--border)",
+              borderRadius: 12, padding: 28, position: "sticky", top: 80,
+            }}>
+              <div style={{ fontFamily: "var(--font-syne), sans-serif", fontWeight: 700, fontSize: 18, letterSpacing: "-.02em", marginBottom: 4 }}>Post a Task</div>
+              <div style={{ fontSize: 12, color: "var(--text3)", marginBottom: 24 }}>USDC is locked in escrow until task completion</div>
+
+              {(["title","description","reward"] as const).map(field => (
+                <div key={field} style={{ marginBottom: 16 }}>
+                  <label style={{ display: "block", fontFamily: "'DM Mono', monospace", fontSize: 10, color: "var(--text3)", letterSpacing: ".06em", textTransform: "uppercase", marginBottom: 6 }}>
+                    {field === "reward" ? "USDC Reward" : field.charAt(0).toUpperCase() + field.slice(1)}
+                  </label>
+                  {field === "description" ? (
+                    <textarea
+                      value={taskForm[field]}
+                      onChange={e => setTaskForm(p => ({ ...p, [field]: e.target.value }))}
+                      placeholder={field === "description" ? "Describe deliverables and timeline..." : ""}
+                      style={{
+                        width: "100%", background: "var(--bg)", border: "1px solid var(--border)",
+                        borderRadius: 6, padding: "10px 12px",
+                        fontFamily: "'Inter', sans-serif", fontSize: 13, color: "var(--text)",
+                        outline: "none", resize: "vertical", minHeight: 80, fontWeight: 300,
+                      }}
+                    />
+                  ) : (
+                    <div style={{ position: "relative" }}>
+                      {field === "reward" && (
+                        <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", fontFamily: "'DM Mono', monospace", fontSize: 12, color: "var(--gold-dim)" }}>$</span>
+                      )}
+                      <input
+                        type={field === "reward" ? "number" : "text"}
+                        value={taskForm[field]}
+                        onChange={e => setTaskForm(p => ({ ...p, [field]: e.target.value }))}
+                        placeholder={field === "title" ? "e.g. Audit my staking contract" : "0.00"}
+                        style={{
+                          width: "100%", background: "var(--bg)",
+                          border: `1px solid ${field === "reward" ? "var(--border-hi)" : "var(--border)"}`,
+                          borderRadius: 6,
+                          padding: field === "reward" ? "10px 12px 10px 28px" : "10px 12px",
+                          fontFamily: field === "reward" ? "'DM Mono', monospace" : "'Inter', sans-serif",
+                          fontSize: field === "reward" ? 14 : 13,
+                          color: field === "reward" ? "var(--gold-hi)" : "var(--text)",
+                          outline: "none", fontWeight: field === "reward" ? 500 : 300,
+                        }}
+                      />
+                    </div>
+                  )}
+                </div>
+              ))}
+
+              {/* rep slider */}
+              <div style={{ marginBottom: 20 }}>
+                <label style={{ display: "block", fontFamily: "'DM Mono', monospace", fontSize: 10, color: "var(--text3)", letterSpacing: ".06em", textTransform: "uppercase", marginBottom: 6 }}>
+                  Min Rep Score — <span style={{ color: "var(--gold)" }}>{taskForm.minRep}</span>
+                </label>
+                <input
+                  type="range" min={0} max={100} value={taskForm.minRep}
+                  onChange={e => setTaskForm(p => ({ ...p, minRep: Number(e.target.value) }))}
+                  style={{ width: "100%", accentColor: "var(--gold)" }}
+                />
+                <div style={{ display: "flex", justifyContent: "space-between", fontFamily: "'DM Mono', monospace", fontSize: 10, color: "var(--text3)", marginTop: 4 }}>
+                  <span>0</span><span>100</span>
+                </div>
+              </div>
+
+              <button
+                onClick={handlePostTask}
+                disabled={postingTask}
+                style={{
+                  width: "100%", padding: 13,
+                  background: "linear-gradient(135deg, var(--gold), var(--amber))",
+                  color: "#0a0905", border: "none",
+                  cursor: postingTask ? "not-allowed" : "pointer",
+                  fontFamily: "var(--font-syne), sans-serif", fontWeight: 700,
+                  fontSize: 14, letterSpacing: ".04em", borderRadius: 10,
+                  opacity: postingTask ? 0.6 : 1,
+                  boxShadow: "0 4px 20px rgba(212,170,80,.2)",
+                }}
+              >
+                {postingTask ? <><span className="spinner" />Posting...</> : "Lock Escrow & Post Task →"}
+              </button>
+
+              {taskStatus && (
+                <p style={{ marginTop: 10, fontSize: 12, color: taskStatus.startsWith("Error") ? "var(--red)" : "var(--green)", fontFamily: "'DM Mono', monospace" }}>{taskStatus}</p>
+              )}
+
+              <div style={{
+                display: "flex", alignItems: "flex-start", gap: 8, marginTop: 14,
+                padding: "10px 12px", borderRadius: 8,
+                background: "rgba(212,170,80,.04)", border: "1px solid var(--border)",
+              }}>
+                <span style={{ fontSize: 12, color: "var(--gold-dim)", flexShrink: 0, marginTop: 1 }}>🔒</span>
+                <p style={{ fontSize: 11, color: "var(--text3)", lineHeight: 1.55 }}>
+                  USDC is held in a Circle developer-controlled wallet and released only after onchain validation of task completion.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── FOOTER ── */}
+      <footer style={{
+        borderTop: "1px solid var(--border)",
+        padding: "20px 0", position: "relative", zIndex: 1,
+      }}>
+        <div style={{
+          ...S.container,
+          display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8,
+        }}>
+          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--text3)" }}>@devajibola · AgentVault</span>
+          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--text3)" }}>ERC-8004 · Arc Testnet</span>
+        </div>
+      </footer>
+
+    </div>
   );
 }

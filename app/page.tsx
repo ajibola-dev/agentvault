@@ -122,7 +122,10 @@ export default function Home() {
 
   useEffect(() => {
     if (page === "discover") fetchAgents();
-    if (page === "tasks")    fetchTasks();
+    if (page === "tasks") {
+      fetchTasks();
+      fetchAgents();
+    }
   }, [page]);
 
   const handleRegister = async () => {

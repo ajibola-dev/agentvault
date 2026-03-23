@@ -9,12 +9,12 @@ export async function GET() {
     });
 
     const walletSets = await client.listWalletSets({});
-    const agentSets = walletSets.data?.walletSets?.filter(ws =>
+    const agentSets = walletSets.data?.walletSets?.filter(ws: any) =>
       ws.name?.includes("AgentVault")
     ) ?? [];
 
     const agents = await Promise.all(
-      agentSets.map(async (ws) => {
+      agentSets.map(async (ws: any) => {
         const wallets = await client.listWallets({ walletSetId: ws.id });
         const owner = wallets.data?.wallets?.[0];
         const validator = wallets.data?.wallets?.[1];

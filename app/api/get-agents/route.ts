@@ -9,7 +9,7 @@ export async function GET() {
     });
 
     const walletSets = await client.listWalletSets({});
-    const agentSets = walletSets.data?.walletSets?.filter(ws: any) =>
+    const agentSets = walletSets.data?.walletSets?.filter((ws: any) =>
       ws.name?.includes("AgentVault")
     ) ?? [];
 

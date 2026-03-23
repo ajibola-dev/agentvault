@@ -17,7 +17,6 @@ export async function POST() {
     });
 
     const wallets = await client.createWallets({
-      blockchains: ["ARC-TESTNET"],
       count: 2,
       walletSetId: walletSet.data?.walletSet?.id ?? "",
       accountType: "SCA",
@@ -35,7 +34,6 @@ export async function POST() {
       abiFunctionSignature: "register(string)",
       abiParameters: [METADATA_URI],
       fee: { type: "level", config: { feeLevel: "MEDIUM" } },
-      blockchain: "ARC-TESTNET",
     });
 
     const reputationTx = await client.createContractExecutionTransaction({
@@ -44,7 +42,6 @@ export async function POST() {
       abiFunctionSignature: "recordReputation(address,uint256,string)",
       abiParameters: [ownerAddress!, "1", "initial_registration"],
       fee: { type: "level", config: { feeLevel: "MEDIUM" } },
-      blockchain: "ARC-TESTNET",
     });
 
     return NextResponse.json({

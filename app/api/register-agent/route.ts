@@ -17,6 +17,7 @@ export async function POST() {
     });
 
     const wallets = await client.createWallets({
+    blockchains: ["ARC-TESTNET" as any],
       count: 2,
       walletSetId: walletSet.data?.walletSet?.id ?? "",
       accountType: "SCA",

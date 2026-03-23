@@ -65,6 +65,7 @@ export async function POST(req: Request) {
       full: JSON.stringify(err, Object.getOwnPropertyNames(err))
     }, { status: 500 });
   }
+}
 
 export async function GET() {
   return NextResponse.json({ tasks });

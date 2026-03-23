@@ -96,6 +96,9 @@ export default function Home() {
   const [postingTask, setPostingTask] = useState(false);
   const [taskStatus, setTaskStatus] = useState("");
   const [wallets, setWallets]       = useState<any>(null);
+  const [showAssignModal, setShowAssignModal] = useState<string | null>(null);
+  const [assigning, setAssigning]             = useState(false);
+  const [assignStatus, setAssignStatus]       = useState("");
   const [registering, setRegistering] = useState(false);
   const [regStatus, setRegStatus]   = useState("");
 
@@ -135,6 +138,26 @@ export default function Home() {
       setRegStatus("Error: " + err.message);
     }
     setRegistering(false);
+  };
+
+  const handleAssign = async (taskId: string, agentId: string, agentAddress: string) => {
+    setAssigning(true);
+    setAssignStatus("Assigning agent...");
+    try {
+      const res  = await fetch("/api/assign-task", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ taskId, agentId, agentAddress }),
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      setTasks(prev => prev.map((t: any) => t.id === taskId ? data.task : t));
+      setShowAssignModal(null);
+      setAssignStatus("");
+    } catch (err: any) {
+      setAssignStatus("Error: " + err.message);
+    }
+    setAssigning(false);
   };
 
   const handlePostTask = async () => {
@@ -695,8 +718,119 @@ export default function Home() {
                     </div>
                     <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: "var(--text3)" }}>{task.ago ?? "recently"}</span>
                   </div>
+                  {/* Assign button */}
+                  {!task.agentId ? (
+                    <button
+                      onClick={() => setShowAssignModal(task.id)}
+                      style={{
+                        marginTop: 12, padding: "7px 16px", borderRadius: 6,
+                        background: "rgba(212,170,80,.1)", border: "1px solid var(--border-hi)",
+                        color: "var(--gold)", fontSize: 12, fontWeight: 500,
+                        fontFamily: "var(--font-syne), sans-serif", cursor: "pointer",
+                      }}
+                    >
+                      Assign Agent →
+                    </button>
+                  ) : (
+                    <div style={{
+                      marginTop: 12, padding: "7px 12px", borderRadius: 6,
+                      background: "rgba(78,203,141,.06)", border: "1px solid rgba(78,203,141,.25)",
+                      fontSize: 11, color: "var(--green)", fontFamily: "'DM Mono', monospace",
+                    }}>
+                      ✓ Assigned · {task.agentAddress?.slice(0,10)}...
+                    </div>
+                  )}
                 </div>
               ))}
+
+              {/* Assign Modal */}
+              {showAssignModal && (
+                <div style={{
+                  position: "fixed", inset: 0, zIndex: 200,
+                  background: "rgba(0,0,0,.7)", display: "flex",
+                  alignItems: "center", justifyContent: "center",
+                  backdropFilter: "blur(4px)",
+                }}
+                  onClick={() => setShowAssignModal(null)}
+                >
+                  <div
+                    onClick={e => e.stopPropagation()}
+                    style={{
+                      background: "var(--bg1)", border: "1px solid var(--border-hi)",
+                      borderRadius: 16, padding: 32, width: "100%", maxWidth: 480,
+                      margin: "0 24px",
+                    }}
+                  >
+                    <div style={{
+                      fontFamily: "var(--font-syne), sans-serif", fontWeight: 700,
+                      fontSize: 18, letterSpacing: "-.02em", marginBottom: 4,
+                    }}>Assign Agent</div>
+                    <div style={{ fontSize: 12, color: "var(--text3)", marginBottom: 24 }}>
+                      Select a registered agent for this task
+                    </div>
+                    {agents.length === 0 && (
+                      <p style={{ fontSize: 13, color: "var(--text3)", fontFamily: "'DM Mono', monospace" }}>
+                        No agents registered yet.
+                      </p>
+                    )}
+                    <div style={{ display: "flex", flexDirection: "column", gap: 10, maxHeight: 320, overflowY: "auto" }}>
+                      {agents.map((agent: any, i: number) => (
+                        <button
+                          key={i}
+                          onClick={() => handleAssign(showAssignModal, agent.id, agent.owner)}
+                          disabled={assigning}
+                          style={{
+                            display: "flex", alignItems: "center", justifyContent: "space-between",
+                            padding: "14px 16px", borderRadius: 10,
+                            background: "var(--bg2)", border: "1px solid var(--border)",
+                            cursor: "pointer", textAlign: "left",
+                            transition: "border-color .15s",
+                          }}
+                          onMouseEnter={e => (e.currentTarget.style.borderColor = "var(--border-hi)")}
+                          onMouseLeave={e => (e.currentTarget.style.borderColor = "var(--border)")}
+                        >
+                          <div>
+                            <div style={{
+                              fontFamily: "var(--font-syne), sans-serif", fontWeight: 600,
+                              fontSize: 13, color: "var(--text)", marginBottom: 4,
+                            }}>Agent #{i + 1}</div>
+                            <div style={{
+                              fontFamily: "'DM Mono', monospace", fontSize: 10,
+                              color: "var(--text3)",
+                            }}>{agent.owner?.slice(0, 20)}...</div>
+                          </div>
+                          <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
+                            <span style={{
+                              fontFamily: "var(--font-syne), sans-serif", fontWeight: 700,
+                              fontSize: 18, color: "var(--gold-hi)",
+                            }}>{agent.reputation ?? 1}</span>
+                            <span style={{
+                              fontFamily: "'DM Mono', monospace", fontSize: 9,
+                              color: "var(--text3)", letterSpacing: ".06em",
+                            }}>REP</span>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                    {assignStatus && (
+                      <p style={{ marginTop: 12, fontSize: 12, color: "var(--text3)", fontFamily: "'DM Mono', monospace" }}>
+                        {assignStatus}
+                      </p>
+                    )}
+                    <button
+                      onClick={() => setShowAssignModal(null)}
+                      style={{
+                        marginTop: 16, width: "100%", padding: "10px",
+                        background: "none", border: "1px solid var(--border)",
+                        borderRadius: 8, color: "var(--text3)", cursor: "pointer",
+                        fontSize: 13,
+                      }}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* post task panel */}

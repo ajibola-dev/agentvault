@@ -56,9 +56,15 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ task });
   } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return NextResponse.json({ 
+      error: err.message,
+      code: err?.code,
+      status: err?.response?.status,
+      data: err?.response?.data,
+      body: err?.body,
+      full: JSON.stringify(err, Object.getOwnPropertyNames(err))
+    }, { status: 500 });
   }
-}
 
 export async function GET() {
   return NextResponse.json({ tasks });

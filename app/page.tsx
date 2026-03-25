@@ -1,8 +1,52 @@
 "use client";
 import { useState, useEffect } from "react";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { useAccount } from "wagmi";
 
 type Page = "home" | "discover" | "tasks";
+type Agent = {
+  id?: string;
+  name?: string;
+  owner?: string;
+  validator?: string;
+  reputation: number;
+  createdAt: string | number;
+  status: "active" | "idle";
+  tasks?: number;
+  tags?: string[];
+  emoji?: string;
+  _demo?: boolean;
+};
+
+type Task = {
+  id: string;
+  title: string;
+  description: string;
+  reward: string;
+  status: "open" | "assigned";
+  minRep: number;
+  ago?: string;
+  agentId?: string | null;
+  agentAddress?: string | null;
+};
+
+type TaskFormState = {
+  title: string;
+  description: string;
+  reward: string;
+  minRep: number;
+};
+
+type WalletRegistration = {
+  owner?: string;
+  validator?: string;
+  identityTx?: string;
+  reputationTx?: string;
+};
+
+function getErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : "Unknown error";
+}
 
 /* ── inline styles as a plain object so nothing breaks without Tailwind ── */
 const S = {
@@ -50,6 +94,20 @@ const S = {
     fontFamily: "var(--font-syne), sans-serif", letterSpacing: ".04em",
     border: "none", cursor: "pointer",
   },
+  btnConnectIdle: {
+    padding: "7px 16px", borderRadius: 6,
+    background: "rgba(212,170,80,.1)",
+    color: "var(--gold)", fontSize: 12, fontWeight: 700,
+    fontFamily: "var(--font-syne), sans-serif", letterSpacing: ".04em",
+    border: "1px solid var(--border-hi)", cursor: "pointer",
+  },
+  navAccount: {
+    padding: "7px 12px", borderRadius: 6,
+    background: "rgba(78,203,141,.08)",
+    color: "var(--green)", fontSize: 11, fontWeight: 500,
+    fontFamily: "'DM Mono', monospace", letterSpacing: ".04em",
+    border: "1px solid rgba(78,203,141,.22)", cursor: "pointer",
+  },
 };
 
 /* ── reusable tiny components ── */
@@ -89,36 +147,38 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 
 /* ════════════════════════════════════════════════════════════ */
 export default function Home() {
+  const { address, isConnected } = useAccount();
   const [page, setPage]             = useState<Page>("home");
-  const [agents, setAgents]         = useState<any[]>([]);
+  const [agents, setAgents]         = useState<Agent[]>([]);
   const [loadingAgents, setLoadingAgents] = useState(false);
-  const [tasks, setTasks]           = useState<any[]>([]);
-  const [taskForm, setTaskForm]     = useState({ title: "", description: "", reward: "", minRep: 50 });
+  const [tasks, setTasks]           = useState<Task[]>([]);
+  const [taskForm, setTaskForm]     = useState<TaskFormState>({ title: "", description: "", reward: "", minRep: 50 });
   const [postingTask, setPostingTask] = useState(false);
   const [taskStatus, setTaskStatus] = useState("");
-  const [wallets, setWallets]       = useState<any>(null);
+  const [wallets, setWallets]       = useState<WalletRegistration | null>(null);
   const [showAssignModal, setShowAssignModal] = useState<string | null>(null);
   const [assigning, setAssigning]             = useState(false);
   const [assignStatus, setAssignStatus]       = useState("");
   const [registering, setRegistering] = useState(false);
   const [regStatus, setRegStatus]   = useState("");
+  const connectedAddress = address ? `${address.slice(0, 6)}...${address.slice(-4)}` : "";
 
   const fetchAgents = async () => {
     setLoadingAgents(true);
     try {
       const res = await fetch("/api/get-agents");
-      const data = await res.json();
+      const data = await res.json() as { agents?: Agent[] };
       setAgents(data.agents ?? []);
-    } catch (e) { console.error(e); }
+    } catch (e: unknown) { console.error(e); }
     setLoadingAgents(false);
   };
 
   const fetchTasks = async () => {
     try {
       const res = await fetch("/api/get-tasks");
-      const data = await res.json();
+      const data = await res.json() as { tasks?: Task[] };
       setTasks(data.tasks ?? []);
-    } catch (e) { console.error(e); }
+    } catch (e: unknown) { console.error(e); }
   };
 
   useEffect(() => {
@@ -130,16 +190,21 @@ export default function Home() {
   }, [page]);
 
   const handleRegister = async () => {
+    if (!isConnected) {
+      setRegStatus("Connect wallet to register");
+      return;
+    }
+
     setRegistering(true);
     setRegStatus("Registering agent onchain...");
     try {
       const res  = await fetch("/api/register-agent", { method: "POST" });
-      const data = await res.json();
+      const data = await res.json() as WalletRegistration & { error?: string };
       if (data.error) throw new Error(data.error);
       setWallets(data);
       setRegStatus("success");
-    } catch (err: any) {
-      setRegStatus("Error: " + err.message);
+    } catch (err: unknown) {
+      setRegStatus("Error: " + getErrorMessage(err));
     }
     setRegistering(false);
   };
@@ -159,18 +224,23 @@ export default function Home() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ taskId, agentId, agentAddress }),
       });
-      const data = await res.json();
+      const data = await res.json() as { error?: string; task: Task };
       if (data.error) throw new Error(data.error);
-      setTasks(prev => prev.map((t: any) => t.id === taskId ? data.task : t));
+      setTasks((prev) => prev.map((t) => t.id === taskId ? data.task : t));
       setShowAssignModal(null);
       setAssignStatus("");
-    } catch (err: any) {
-      setAssignStatus("Error: " + err.message);
+    } catch (err: unknown) {
+      setAssignStatus("Error: " + getErrorMessage(err));
     }
     setAssigning(false);
   };
 
   const handlePostTask = async () => {
+    if (!isConnected) {
+      setTaskStatus("Connect wallet to post");
+      return;
+    }
+
     if (!taskForm.title || !taskForm.description || !taskForm.reward) return;
     setPostingTask(true);
     setTaskStatus("Posting task...");
@@ -180,20 +250,20 @@ export default function Home() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(taskForm),
       });
-      const data = await res.json();
+      const data = await res.json() as { error?: string; task: Task };
       if (data.error) throw new Error(data.error);
-      setTasks(prev => [data.task, ...prev]);
+      setTasks((prev) => [data.task, ...prev]);
       setTaskForm({ title: "", description: "", reward: "", minRep: 50 });
       setTaskStatus("Task posted successfully!");
       setTimeout(() => setTaskStatus(""), 3000);
-    } catch (err: any) {
-      setTaskStatus("Error: " + err.message);
+    } catch (err: unknown) {
+      setTaskStatus("Error: " + getErrorMessage(err));
     }
     setPostingTask(false);
   };
 
   /* ── DEMO agents shown when API returns empty ── */
-  const displayAgents = agents.length > 0 ? agents : [
+  const displayAgents: Agent[] = agents.length > 0 ? agents : [
     { owner: "0x3f4a…9b12", validator: "0xaa1c…3e09", reputation: 94, createdAt: Date.now(), _demo: true, name: "Nexus Alpha",    emoji: "🤖", tags: ["Solidity","Audit","EVM"],       status: "active", tasks: 47 },
     { owner: "0x7c2e…4d88", validator: "0xbb2d…5f10", reputation: 88, createdAt: Date.now(), _demo: true, name: "DataForge",     emoji: "📊", tags: ["DeFi","Analytics","APIs"],      status: "active", tasks: 31 },
     { owner: "0x1a9f…c331", validator: "0xcc3e…6g21", reputation: 76, createdAt: Date.now(), _demo: true, name: "ResearchNode",  emoji: "🔬", tags: ["Research","NLP","Reports"],     status: "idle",   tasks: 19 },
@@ -202,7 +272,7 @@ export default function Home() {
     { owner: "0x2b7d…e594", validator: "0xff6h…9j54", reputation: 85, createdAt: Date.now(), _demo: true, name: "Guardian",     emoji: "🛡️", tags: ["Security","Monitoring","Circle"], status: "active", tasks: 38 },
   ];
 
-  const displayTasks = tasks.length > 0 ? tasks : [
+  const displayTasks: Task[] = tasks.length > 0 ? tasks : [
     { id: "demo-1", title: "Audit Uniswap V4 hook — reentrancy & flash loan vectors", description: "Thorough audit of a custom Uniswap V4 hook. Focus on reentrancy guards, flash loan attack surfaces, and access control patterns.", reward: "250", status: "open", minRep: 80,  ago: "2h ago"  },
     { id: "demo-2", title: "Real-time token price feed — Arc + Ethereum bridge",       description: "Build and maintain a price feed agent syncing token prices between Arc Testnet and Ethereum mainnet. 20+ token pairs, sub-5s latency.",  reward: "120", status: "open", minRep: 60,  ago: "5h ago"  },
     { id: "demo-3", title: "Governance proposal analysis — Aave V3",                   description: "Summarize and risk-assess 3 pending Aave governance proposals with parameter change impact and community sentiment analysis.",            reward: "80",  status: "open", minRep: 40,  ago: "1d ago"  },
@@ -228,7 +298,42 @@ export default function Home() {
           </div>
           <div style={S.navRight}>
             <span style={S.pillBadge}>ARC TESTNET</span>
-            <ConnectButton chainStatus="none" showBalance={false} />
+            <ConnectButton.Custom>
+              {({
+                account,
+                chain,
+                mounted,
+                authenticationStatus,
+                openAccountModal,
+                openChainModal,
+                openConnectModal,
+              }) => {
+                const ready = mounted && authenticationStatus !== "loading";
+                const connected = ready && account && chain && (!authenticationStatus || authenticationStatus === "authenticated");
+
+                if (!connected) {
+                  return (
+                    <button onClick={openConnectModal} style={S.btnConnectIdle} type="button">
+                      Connect Wallet
+                    </button>
+                  );
+                }
+
+                if (chain.unsupported) {
+                  return (
+                    <button onClick={openChainModal} style={S.btnConnectIdle} type="button">
+                      Wrong Network
+                    </button>
+                  );
+                }
+
+                return (
+                  <button onClick={openAccountModal} style={S.navAccount} type="button">
+                    {connectedAddress || account.displayName}
+                  </button>
+                );
+              }}
+            </ConnectButton.Custom>
           </div>
         </div>
       </nav>
@@ -466,21 +571,27 @@ export default function Home() {
 
                   <button
                     onClick={handleRegister}
-                    disabled={registering}
+                    disabled={registering || !isConnected}
                     style={{
                       width: "100%", marginTop: 20, padding: "13px",
                       background: "linear-gradient(135deg, var(--gold), var(--amber))",
-                      color: "#0a0905", border: "none", cursor: registering ? "not-allowed" : "pointer",
+                      color: "#0a0905", border: "none", cursor: registering || !isConnected ? "not-allowed" : "pointer",
                       fontFamily: "var(--font-syne), sans-serif", fontWeight: 700,
                       fontSize: 14, letterSpacing: ".04em", borderRadius: 10,
-                      opacity: registering ? 0.6 : 1,
+                      opacity: registering || !isConnected ? 0.6 : 1,
                     }}
                   >
                     {registering
                       ? <><span className="spinner" />Registering...</>
-                      : "Register Agent →"
+                      : isConnected ? "Register Agent →" : "Connect Wallet to Register"
                     }
                   </button>
+
+                  {!isConnected && (
+                    <p style={{ marginTop: 10, fontSize: 12, color: "var(--text3)", fontFamily: "'DM Mono', monospace" }}>
+                      Connect wallet to register an agent.
+                    </p>
+                  )}
 
                   {regStatus && regStatus !== "success" && (
                     <p style={{ marginTop: 10, fontSize: 12, color: "var(--text3)", fontFamily: "'DM Mono', monospace" }}>{regStatus}</p>
@@ -498,7 +609,7 @@ export default function Home() {
                         ["Validator", wallets.validator],
                         wallets.identityTx   && ["Identity Tx",   wallets.identityTx],
                         wallets.reputationTx && ["Reputation Tx", wallets.reputationTx],
-                      ].filter(Boolean).map(([k, v]: any) => (
+                      ].filter((entry): entry is [string, string] => Array.isArray(entry)).map(([k, v]) => (
                         <div key={k} style={{ fontSize: 11, color: "var(--text3)", marginBottom: 4, wordBreak: "break-all", fontFamily: "'DM Mono', monospace" }}>
                           {k} — <span style={{ color: "var(--text2)" }}>{v}</span>
                         </div>
@@ -784,7 +895,7 @@ export default function Home() {
                       </p>
                     )}
                     <div style={{ display: "flex", flexDirection: "column", gap: 10, maxHeight: 320, overflowY: "auto" }}>
-                      {agents.map((agent: any, i: number) => (
+                      {agents.map((agent, i: number) => (
                         <button
                           key={i}
                           onClick={() => handleAssign(showAssignModal, agent.id, agent.owner)}
@@ -911,20 +1022,26 @@ export default function Home() {
 
               <button
                 onClick={handlePostTask}
-                disabled={postingTask}
+                disabled={postingTask || !isConnected}
                 style={{
                   width: "100%", padding: 13,
                   background: "linear-gradient(135deg, var(--gold), var(--amber))",
                   color: "#0a0905", border: "none",
-                  cursor: postingTask ? "not-allowed" : "pointer",
+                  cursor: postingTask || !isConnected ? "not-allowed" : "pointer",
                   fontFamily: "var(--font-syne), sans-serif", fontWeight: 700,
                   fontSize: 14, letterSpacing: ".04em", borderRadius: 10,
-                  opacity: postingTask ? 0.6 : 1,
+                  opacity: postingTask || !isConnected ? 0.6 : 1,
                   boxShadow: "0 4px 20px rgba(212,170,80,.2)",
                 }}
               >
-                {postingTask ? <><span className="spinner" />Posting...</> : "Lock Escrow & Post Task →"}
+                {postingTask ? <><span className="spinner" />Posting...</> : isConnected ? "Lock Escrow & Post Task →" : "Connect Wallet to Post"}
               </button>
+
+              {!isConnected && (
+                <p style={{ marginTop: 10, fontSize: 12, color: "var(--text3)", fontFamily: "'DM Mono', monospace" }}>
+                  Connect wallet to post.
+                </p>
+              )}
 
               {taskStatus && (
                 <p style={{ marginTop: 10, fontSize: 12, color: taskStatus.startsWith("Error") ? "var(--red)" : "var(--green)", fontFamily: "'DM Mono', monospace" }}>{taskStatus}</p>

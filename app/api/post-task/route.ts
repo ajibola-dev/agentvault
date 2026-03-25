@@ -4,11 +4,54 @@ import {
 } from "@circle-fin/developer-controlled-wallets";
 import { NextResponse } from "next/server";
 
-export const tasks: any[] = [];
+type PostTaskRequest = {
+  title?: string;
+  description?: string;
+  reward?: string;
+  minRep?: number;
+  agentId?: string | null;
+};
+
+type Task = {
+  id: string;
+  title: string;
+  description: string;
+  reward: string;
+  minRep: number;
+  agentId: string | null;
+  agentAddress?: string | null;
+  status: "open" | "assigned";
+  escrowAddress: string | null;
+  escrowId: string | null;
+  escrowStatus: "wallet_created" | "pending";
+  ciphertext: string;
+  createdAt: string;
+  assignedAt?: string;
+};
+
+type CircleWallet = {
+  id?: string;
+  address?: string;
+};
+
+function getErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : "Unknown error";
+}
+
+function getErrorCode(error: unknown): string | undefined {
+  if (typeof error === "object" && error !== null && "code" in error) {
+    const { code } = error as { code?: unknown };
+    return typeof code === "string" ? code : undefined;
+  }
+
+  return undefined;
+}
+
+export const tasks: Task[] = [];
 
 export async function POST(req: Request) {
   try {
-    const { title, description, reward, minRep, agentId } = await req.json();
+    const { title, description, reward, minRep, agentId } = await req.json() as PostTaskRequest;
 
     if (!title || !description || !reward) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -32,17 +75,17 @@ export async function POST(req: Request) {
     });
 
     const wallets = await client.createWallets({
-      blockchains:  ["ARC-TESTNET" as any],
+      blockchains:  ["ARC-TESTNET"],
       count:        1,
       walletSetId:  walletSet.data?.walletSet?.id ?? "",
       accountType:  "SCA",
     });
 
-    const escrowWallet  = wallets.data?.wallets?.[0];
+    const escrowWallet  = wallets.data?.wallets?.[0] as CircleWallet | undefined;
     const escrowAddress = escrowWallet?.address ?? null;
     const escrowId      = escrowWallet?.id ?? null;
 
-    const task = {
+    const task: Task = {
       id:           crypto.randomUUID(),
       title,
       description,
@@ -60,10 +103,10 @@ export async function POST(req: Request) {
     tasks.push(task);
     return NextResponse.json({ task });
 
-  } catch (err: any) {
+  } catch (err: unknown) {
     return NextResponse.json({
-      error: err.message,
-      code:  err?.code,
+      error: getErrorMessage(err),
+      code:  getErrorCode(err),
     }, { status: 500 });
   }
 }

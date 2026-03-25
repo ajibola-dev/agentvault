@@ -7,6 +7,14 @@ import { NextResponse } from "next/server";
 const IDENTITY_REGISTRY   = "0x8004A818BFB912233c491871b3d84c89A494BD9e";
 const REPUTATION_REGISTRY = "0x8004B663056A597Dffe9eCcC1965A193B7388713";
 const METADATA_URI        = "ipfs://bafkreibdi6623n3xpf7ymk62ckb4bo75o3qemwkpfvp5i25j66itxvsoei";
+type CircleWallet = {
+  id?: string;
+  address?: string;
+};
+
+function getErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : "Unknown error";
+}
 
 export async function POST() {
   try {
@@ -25,14 +33,14 @@ export async function POST() {
     });
 
     const wallets = await client.createWallets({
-      blockchains: ["ARC-TESTNET" as any],
+      blockchains: ["ARC-TESTNET"],
       count: 2,
       walletSetId: walletSet.data?.walletSet?.id ?? "",
       accountType: "SCA",
     });
 
-    const ownerWallet     = wallets.data?.wallets?.[0];
-    const validatorWallet = wallets.data?.wallets?.[1];
+    const ownerWallet     = wallets.data?.wallets?.[0] as CircleWallet | undefined;
+    const validatorWallet = wallets.data?.wallets?.[1] as CircleWallet | undefined;
     const ownerAddress    = ownerWallet?.address;
     const ownerId         = ownerWallet?.id;
     const validatorId     = validatorWallet?.id;
@@ -59,7 +67,7 @@ export async function POST() {
       identityTx:   registerTx.data?.id   ?? "pending",
       reputationTx: reputationTx.data?.id ?? "pending",
     });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (err: unknown) {
+    return NextResponse.json({ error: getErrorMessage(err) }, { status: 500 });
   }
 }

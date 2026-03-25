@@ -1,15 +1,25 @@
 import { NextResponse } from "next/server";
 import { tasks } from "../post-task/route";
 
+type AssignTaskRequest = {
+  taskId?: string;
+  agentId?: string;
+  agentAddress?: string | null;
+};
+
+function getErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : "Unknown error";
+}
+
 export async function POST(req: Request) {
   try {
-    const { taskId, agentId, agentAddress } = await req.json();
+    const { taskId, agentId, agentAddress } = await req.json() as AssignTaskRequest;
 
     if (!taskId || !agentId) {
       return NextResponse.json({ error: "Missing taskId or agentId" }, { status: 400 });
     }
 
-    const task = tasks.find((t: any) => t.id === taskId);
+    const task = tasks.find((t) => t.id === taskId);
     if (!task) {
       return NextResponse.json({ error: "Task not found" }, { status: 404 });
     }
@@ -24,7 +34,7 @@ export async function POST(req: Request) {
     task.assignedAt   = new Date().toISOString();
 
     return NextResponse.json({ task });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (err: unknown) {
+    return NextResponse.json({ error: getErrorMessage(err) }, { status: 500 });
   }
 }

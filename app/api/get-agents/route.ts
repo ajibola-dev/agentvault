@@ -31,6 +31,30 @@ const reputationAbi = [
   },
 ] as const;
 
+type CircleWalletSet = {
+  id: string;
+  name?: string;
+  createDate?: string;
+};
+
+type CircleWallet = {
+  address?: string;
+};
+
+type Agent = {
+  id: string;
+  name?: string;
+  owner?: string;
+  validator?: string;
+  reputation: number;
+  createdAt?: string;
+  status: "active";
+};
+
+function getErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : "Unknown error";
+}
+
 async function getReputationScore(address: string): Promise<number> {
   try {
     const client = createPublicClient({
@@ -71,15 +95,16 @@ export async function GET() {
     const client = initiateDeveloperControlledWalletsClient({ apiKey, entitySecret });
 
     const walletSets = await client.listWalletSets({});
-    const agentSets  = walletSets.data?.walletSets?.filter((ws: any) =>
+    const allWalletSets = (walletSets.data?.walletSets as CircleWalletSet[] | undefined) ?? [];
+    const agentSets = allWalletSets.filter((ws) =>
       ws.name?.includes("AgentVault") && !ws.name?.includes("Escrow")
-    ) ?? [];
+    );
 
-    const agents = await Promise.all(
-      agentSets.map(async (ws: any) => {
+    const agents: Agent[] = await Promise.all(
+      agentSets.map(async (ws) => {
         const wallets   = await client.listWallets({ walletSetId: ws.id });
-        const owner     = wallets.data?.wallets?.[0];
-        const validator = wallets.data?.wallets?.[1];
+        const owner     = wallets.data?.wallets?.[0] as CircleWallet | undefined;
+        const validator = wallets.data?.wallets?.[1] as CircleWallet | undefined;
 
         const reputation = owner?.address
           ? await getReputationScore(owner.address)
@@ -98,7 +123,7 @@ export async function GET() {
     );
 
     return NextResponse.json({ agents });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (err: unknown) {
+    return NextResponse.json({ error: getErrorMessage(err) }, { status: 500 });
   }
 }

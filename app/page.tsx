@@ -292,6 +292,13 @@ export default function Home() {
       setRegStatus("Connect wallet to register");
       return;
     }
+    if (!isAuthed) {
+      const ok = await authenticateWallet();
+      if (!ok) {
+        setRegStatus("Authentication required before registering");
+        return;
+      }
+    }
 
     setRegistering(true);
     setRegStatus("Registering agent onchain...");

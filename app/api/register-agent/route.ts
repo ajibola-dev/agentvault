@@ -3,6 +3,7 @@ import {
   initiateDeveloperControlledWalletsClient,
 } from "@circle-fin/developer-controlled-wallets";
 import { NextResponse } from "next/server";
+import { getAuthenticatedAddress } from "@/lib/auth";
 
 const IDENTITY_REGISTRY   = "0x8004A818BFB912233c491871b3d84c89A494BD9e";
 const REPUTATION_REGISTRY = "0x8004B663056A597Dffe9eCcC1965A193B7388713";
@@ -16,8 +17,13 @@ function getErrorMessage(error: unknown): string {
   return error instanceof Error ? error.message : "Unknown error";
 }
 
-export async function POST() {
+export async function POST(req: Request) {
   try {
+    const callerAddress = getAuthenticatedAddress(req);
+    if (!callerAddress) {
+      return NextResponse.json({ error: "Unauthorized: sign in with wallet first" }, { status: 401 });
+    }
+
     const apiKey = process.env.CIRCLE_API_KEY!;
     const entitySecret = process.env.CIRCLE_ENTITY_SECRET!;
 

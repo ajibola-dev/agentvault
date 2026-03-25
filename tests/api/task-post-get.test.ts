@@ -6,6 +6,8 @@ import { POST as verifyPost } from "@/app/api/auth/verify/route";
 import { POST as postTaskPost } from "@/app/api/post-task/route";
 import { GET as getTasksGet } from "@/app/api/get-tasks/route";
 import { clearAuthState } from "@/lib/session-store";
+import { clearRateLimits } from "@/lib/rate-limit";
+import { clearAuditLogs } from "@/lib/audit-log";
 import { clearTasks } from "@/lib/task-repo";
 
 const {
@@ -62,6 +64,8 @@ describe("post-task and get-tasks APIs", () => {
     process.env.CIRCLE_ENTITY_SECRET = "test-entity-secret";
 
     clearAuthState();
+    clearRateLimits();
+    clearAuditLogs();
     clearTasks();
 
     mockGenerateCiphertext.mockReset();

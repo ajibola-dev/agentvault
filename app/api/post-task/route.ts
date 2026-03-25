@@ -6,6 +6,9 @@ import { NextResponse } from "next/server";
 import type { Task } from "@/lib/task-store";
 import { getAuthenticatedAddress } from "@/lib/auth";
 import { createTask, listTasks } from "@/lib/task-repo";
+import { getClientIp } from "@/lib/request-meta";
+import { checkRateLimit } from "@/lib/rate-limit";
+import { logAuditEvent } from "@/lib/audit-log";
 
 export const runtime = "nodejs";
 
@@ -44,20 +47,64 @@ function getErrorCode(error: unknown): string | undefined {
   return undefined;
 }
 export async function POST(req: Request) {
+  const ip = getClientIp(req);
+  const limit = checkRateLimit({
+    endpoint: "tasks/post",
+    key: `ip:${ip}`,
+    max: 20,
+    windowMs: 60_000,
+  });
+  if (!limit.allowed) {
+    logAuditEvent({
+      endpoint: "tasks/post",
+      action: "post_task",
+      ip,
+      status: "rate_limited",
+      message: "Too many task creation requests",
+    });
+    return NextResponse.json(
+      { error: "Too many requests. Please try again later." },
+      { status: 429, headers: { "Retry-After": String(limit.retryAfterSeconds) } }
+    );
+  }
+
   try {
     const callerAddress = getAuthenticatedAddress(req);
     if (!callerAddress) {
+      logAuditEvent({
+        endpoint: "tasks/post",
+        action: "post_task",
+        ip,
+        status: "unauthorized",
+        message: "Missing auth session",
+      });
       return NextResponse.json({ error: "Unauthorized: sign in with wallet first" }, { status: 401 });
     }
 
     const { title, description, reward, minRep, agentId } = await req.json() as PostTaskRequest;
 
     if (!title || !description || !reward) {
+      logAuditEvent({
+        endpoint: "tasks/post",
+        action: "post_task",
+        actorAddress: callerAddress,
+        ip,
+        status: "validation_error",
+        message: "Missing required fields",
+      });
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
     const rewardNum = parseFloat(reward);
     if (isNaN(rewardNum) || rewardNum <= 0) {
+      logAuditEvent({
+        endpoint: "tasks/post",
+        action: "post_task",
+        actorAddress: callerAddress,
+        ip,
+        status: "validation_error",
+        message: "Invalid reward amount",
+      });
       return NextResponse.json({ error: "Invalid reward amount" }, { status: 400 });
     }
 
@@ -101,9 +148,25 @@ export async function POST(req: Request) {
     };
 
     createTask(task);
+    logAuditEvent({
+      endpoint: "tasks/post",
+      action: "post_task",
+      actorAddress: callerAddress,
+      ip,
+      status: "success",
+      resourceId: task.id,
+    });
     return NextResponse.json({ task });
 
   } catch (err: unknown) {
+    logAuditEvent({
+      endpoint: "tasks/post",
+      action: "post_task",
+      ip,
+      status: "error",
+      message: getErrorMessage(err),
+      metadata: { code: getErrorCode(err) },
+    });
     return NextResponse.json({
       error: getErrorMessage(err),
       code:  getErrorCode(err),

@@ -4,6 +4,9 @@ import {
 } from "@circle-fin/developer-controlled-wallets";
 import { NextResponse } from "next/server";
 import { getAuthenticatedAddress } from "@/lib/auth";
+import { getClientIp } from "@/lib/request-meta";
+import { checkRateLimit } from "@/lib/rate-limit";
+import { logAuditEvent } from "@/lib/audit-log";
 
 const IDENTITY_REGISTRY   = "0x8004A818BFB912233c491871b3d84c89A494BD9e";
 const REPUTATION_REGISTRY = "0x8004B663056A597Dffe9eCcC1965A193B7388713";
@@ -18,9 +21,37 @@ function getErrorMessage(error: unknown): string {
 }
 
 export async function POST(req: Request) {
+  const ip = getClientIp(req);
+  const limit = checkRateLimit({
+    endpoint: "agents/register",
+    key: `ip:${ip}`,
+    max: 10,
+    windowMs: 60_000,
+  });
+  if (!limit.allowed) {
+    logAuditEvent({
+      endpoint: "agents/register",
+      action: "register_agent",
+      ip,
+      status: "rate_limited",
+      message: "Too many registration requests",
+    });
+    return NextResponse.json(
+      { error: "Too many requests. Please try again later." },
+      { status: 429, headers: { "Retry-After": String(limit.retryAfterSeconds) } }
+    );
+  }
+
   try {
     const callerAddress = getAuthenticatedAddress(req);
     if (!callerAddress) {
+      logAuditEvent({
+        endpoint: "agents/register",
+        action: "register_agent",
+        ip,
+        status: "unauthorized",
+        message: "Missing auth session",
+      });
       return NextResponse.json({ error: "Unauthorized: sign in with wallet first" }, { status: 401 });
     }
 
@@ -66,6 +97,14 @@ export async function POST(req: Request) {
       abiParameters:        [ownerAddress!, "1", "initial_registration"],
       fee: { type: "level", config: { feeLevel: "MEDIUM" } },
     });
+    logAuditEvent({
+      endpoint: "agents/register",
+      action: "register_agent",
+      actorAddress: callerAddress,
+      ip,
+      status: "success",
+      metadata: { owner: ownerAddress, validator: validatorWallet?.address },
+    });
 
     return NextResponse.json({
       owner:        ownerAddress,
@@ -74,6 +113,13 @@ export async function POST(req: Request) {
       reputationTx: reputationTx.data?.id ?? "pending",
     });
   } catch (err: unknown) {
+    logAuditEvent({
+      endpoint: "agents/register",
+      action: "register_agent",
+      ip,
+      status: "error",
+      message: getErrorMessage(err),
+    });
     return NextResponse.json({ error: getErrorMessage(err) }, { status: 500 });
   }
 }

@@ -50,6 +50,33 @@ function createAuthTables(): void {
   `);
 }
 
+function createSecurityTables(): void {
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS rate_limits (
+      endpoint TEXT NOT NULL,
+      key TEXT NOT NULL,
+      windowStart INTEGER NOT NULL,
+      count INTEGER NOT NULL,
+      PRIMARY KEY (endpoint, key, windowStart)
+    )
+  `);
+
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS audit_logs (
+      id TEXT PRIMARY KEY,
+      endpoint TEXT NOT NULL,
+      action TEXT NOT NULL,
+      actorAddress TEXT,
+      ip TEXT,
+      status TEXT NOT NULL,
+      resourceId TEXT,
+      message TEXT,
+      metadata TEXT,
+      createdAt TEXT NOT NULL
+    )
+  `);
+}
+
 function migrateToV2(): void {
   const table = db
     .prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'tasks'")
@@ -90,6 +117,11 @@ if (schemaVersion < 2) {
 if (schemaVersion < 3) {
   createAuthTables();
   db.pragma("user_version = 3");
+}
+
+if (schemaVersion < 4) {
+  createSecurityTables();
+  db.pragma("user_version = 4");
 }
 
 export default db;

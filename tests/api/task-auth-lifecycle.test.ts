@@ -7,6 +7,8 @@ import { GET as sessionGet } from "@/app/api/auth/session/route";
 import { POST as assignPost } from "@/app/api/assign-task/route";
 import { POST as updateTaskStatusPost } from "@/app/api/update-task-status/route";
 import { clearAuthState } from "@/lib/session-store";
+import { clearRateLimits } from "@/lib/rate-limit";
+import { clearAuditLogs } from "@/lib/audit-log";
 import { clearTasks, createTask, getTaskById } from "@/lib/task-repo";
 import type { Task } from "@/lib/task-store";
 
@@ -70,6 +72,8 @@ function buildTask(params: {
 describe("task auth and lifecycle APIs", () => {
   beforeEach(() => {
     clearAuthState();
+    clearRateLimits();
+    clearAuditLogs();
     clearTasks();
   });
 

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { tasks } from "../post-task/route";
+import { tasks } from "@/lib/task-store";
 
 type AssignTaskRequest = {
   taskId?: string;

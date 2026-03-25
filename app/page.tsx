@@ -898,7 +898,10 @@ export default function Home() {
                       {agents.map((agent, i: number) => (
                         <button
                           key={i}
-                          onClick={() => handleAssign(showAssignModal, agent.id, agent.owner)}
+                          onClick={() => {
+                            if (!showAssignModal || !agent.id || !agent.owner) return;
+                            handleAssign(showAssignModal, agent.id, agent.owner);
+                          }}
                           disabled={assigning}
                           style={{
                             display: "flex", alignItems: "center", justifyContent: "space-between",

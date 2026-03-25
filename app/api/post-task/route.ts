@@ -3,6 +3,7 @@ import {
   generateEntitySecretCiphertext
 } from "@circle-fin/developer-controlled-wallets";
 import { NextResponse } from "next/server";
+import { tasks, type Task } from "@/lib/task-store";
 
 type PostTaskRequest = {
   title?: string;
@@ -10,23 +11,6 @@ type PostTaskRequest = {
   reward?: string;
   minRep?: number;
   agentId?: string | null;
-};
-
-type Task = {
-  id: string;
-  title: string;
-  description: string;
-  reward: string;
-  minRep: number;
-  agentId: string | null;
-  agentAddress?: string | null;
-  status: "open" | "assigned";
-  escrowAddress: string | null;
-  escrowId: string | null;
-  escrowStatus: "wallet_created" | "pending";
-  ciphertext: string;
-  createdAt: string;
-  assignedAt?: string;
 };
 
 type CircleWallet = {
@@ -46,9 +30,6 @@ function getErrorCode(error: unknown): string | undefined {
 
   return undefined;
 }
-
-export const tasks: Task[] = [];
-
 export async function POST(req: Request) {
   try {
     const { title, description, reward, minRep, agentId } = await req.json() as PostTaskRequest;

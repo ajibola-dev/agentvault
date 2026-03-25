@@ -32,6 +32,24 @@ function createTasksTable(): void {
   `);
 }
 
+function createAuthTables(): void {
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS auth_nonces (
+      nonce TEXT PRIMARY KEY,
+      address TEXT NOT NULL,
+      expiresAt INTEGER NOT NULL
+    )
+  `);
+
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS auth_sessions (
+      token TEXT PRIMARY KEY,
+      address TEXT NOT NULL,
+      expiresAt INTEGER NOT NULL
+    )
+  `);
+}
+
 function migrateToV2(): void {
   const table = db
     .prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'tasks'")
@@ -67,6 +85,11 @@ if (schemaVersion < 1) {
 if (schemaVersion < 2) {
   migrateToV2();
   db.pragma("user_version = 2");
+}
+
+if (schemaVersion < 3) {
+  createAuthTables();
+  db.pragma("user_version = 3");
 }
 
 export default db;

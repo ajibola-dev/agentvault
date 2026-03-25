@@ -1,10 +1,14 @@
 import { NextResponse } from "next/server";
 
 export async function GET() {
+  if (process.env.NODE_ENV === "production") {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
   return NextResponse.json({
-    apiKeyLength:    process.env.CIRCLE_API_KEY?.length ?? 0,
-    secretLength:    process.env.CIRCLE_ENTITY_SECRET?.length ?? 0,
-    apiKeyPrefix:    process.env.CIRCLE_API_KEY?.slice(0, 8) ?? "missing",
-    secretPrefix:    process.env.CIRCLE_ENTITY_SECRET?.slice(0, 4) ?? "missing",
+    hasCircleApiKey: Boolean(process.env.CIRCLE_API_KEY),
+    hasCircleEntitySecret: Boolean(process.env.CIRCLE_ENTITY_SECRET),
+    hasCircleAppId: Boolean(process.env.CIRCLE_APP_ID),
+    hasWalletConnectProjectId: Boolean(process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID),
   });
 }

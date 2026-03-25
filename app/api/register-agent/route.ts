@@ -1,4 +1,7 @@
-import { initiateDeveloperControlledWalletsClient } from "@circle-fin/developer-controlled-wallets";
+import {
+  generateEntitySecretCiphertext,
+  initiateDeveloperControlledWalletsClient,
+} from "@circle-fin/developer-controlled-wallets";
 import { NextResponse } from "next/server";
 
 const IDENTITY_REGISTRY   = "0x8004A818BFB912233c491871b3d84c89A494BD9e";
@@ -7,9 +10,14 @@ const METADATA_URI        = "ipfs://bafkreibdi6623n3xpf7ymk62ckb4bo75o3qemwkpfvp
 
 export async function POST() {
   try {
+    const apiKey = process.env.CIRCLE_API_KEY!;
+    const entitySecret = process.env.CIRCLE_ENTITY_SECRET!;
+
+    await generateEntitySecretCiphertext({ apiKey, entitySecret });
+
     const client = initiateDeveloperControlledWalletsClient({
-      apiKey:       process.env.CIRCLE_API_KEY!,
-      entitySecret: process.env.CIRCLE_ENTITY_SECRET!,
+      apiKey,
+      entitySecret,
     });
 
     const walletSet = await client.createWalletSet({

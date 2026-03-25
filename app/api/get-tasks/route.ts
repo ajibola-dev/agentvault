@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
-import { tasks } from "@/lib/task-store";
+import { listTasks } from "@/lib/task-repo";
+
+export const runtime = "nodejs";
 
 export async function GET() {
-  return NextResponse.json({ tasks });
+  return NextResponse.json({ tasks: listTasks() });
 }

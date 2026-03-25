@@ -3,7 +3,11 @@ import {
   generateEntitySecretCiphertext
 } from "@circle-fin/developer-controlled-wallets";
 import { NextResponse } from "next/server";
-import { tasks, type Task } from "@/lib/task-store";
+import type { Task } from "@/lib/task-store";
+import { getAuthenticatedAddress } from "@/lib/auth";
+import { createTask, listTasks } from "@/lib/task-repo";
+
+export const runtime = "nodejs";
 
 type PostTaskRequest = {
   title?: string;
@@ -32,6 +36,11 @@ function getErrorCode(error: unknown): string | undefined {
 }
 export async function POST(req: Request) {
   try {
+    const callerAddress = getAuthenticatedAddress(req);
+    if (!callerAddress) {
+      return NextResponse.json({ error: "Unauthorized: sign in with wallet first" }, { status: 401 });
+    }
+
     const { title, description, reward, minRep, agentId } = await req.json() as PostTaskRequest;
 
     if (!title || !description || !reward) {
@@ -72,6 +81,7 @@ export async function POST(req: Request) {
       description,
       reward:       rewardNum.toString(),
       minRep:       minRep ?? 50,
+      creatorAddress: callerAddress,
       agentId:      agentId ?? null,
       status:       "open",
       escrowAddress,
@@ -81,7 +91,7 @@ export async function POST(req: Request) {
       createdAt:    new Date().toISOString(),
     };
 
-    tasks.push(task);
+    createTask(task);
     return NextResponse.json({ task });
 
   } catch (err: unknown) {
@@ -93,5 +103,5 @@ export async function POST(req: Request) {
 }
 
 export async function GET() {
-  return NextResponse.json({ tasks });
+  return NextResponse.json({ tasks: listTasks() });
 }

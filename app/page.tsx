@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { useAccount } from "wagmi";
+import { useAccount, useSignMessage } from "wagmi";
 
 type Page = "home" | "discover" | "tasks";
 type Agent = {
@@ -23,8 +23,9 @@ type Task = {
   title: string;
   description: string;
   reward: string;
-  status: "open" | "assigned";
+  status: "open" | "assigned" | "in_progress" | "completed" | "paid";
   minRep: number;
+  creatorAddress?: string;
   ago?: string;
   agentId?: string | null;
   agentAddress?: string | null;
@@ -42,6 +43,24 @@ type WalletRegistration = {
   validator?: string;
   identityTx?: string;
   reputationTx?: string;
+};
+
+type SessionResponse = {
+  authenticated?: boolean;
+  address?: string;
+};
+
+type NonceResponse = {
+  nonce?: string;
+  message?: string;
+  address?: string;
+  error?: string;
+};
+
+type VerifyResponse = {
+  ok?: boolean;
+  address?: string;
+  error?: string;
 };
 
 function getErrorMessage(error: unknown): string {
@@ -148,6 +167,7 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 /* ════════════════════════════════════════════════════════════ */
 export default function Home() {
   const { address, isConnected } = useAccount();
+  const { signMessageAsync } = useSignMessage();
   const [page, setPage]             = useState<Page>("home");
   const [agents, setAgents]         = useState<Agent[]>([]);
   const [loadingAgents, setLoadingAgents] = useState(false);
@@ -161,6 +181,9 @@ export default function Home() {
   const [assignStatus, setAssignStatus]       = useState("");
   const [registering, setRegistering] = useState(false);
   const [regStatus, setRegStatus]   = useState("");
+  const [isAuthed, setIsAuthed] = useState(false);
+  const [authenticating, setAuthenticating] = useState(false);
+  const [authStatus, setAuthStatus] = useState("");
   const connectedAddress = address ? `${address.slice(0, 6)}...${address.slice(-4)}` : "";
 
   const fetchAgents = async () => {
@@ -189,6 +212,81 @@ export default function Home() {
     }
   }, [page]);
 
+  useEffect(() => {
+    const checkSession = async () => {
+      if (!isConnected || !address) {
+        setIsAuthed(false);
+        setAuthStatus("");
+        return;
+      }
+
+      try {
+        const res = await fetch("/api/auth/session");
+        const data = await res.json() as SessionResponse;
+        const matches = data.authenticated && data.address?.toLowerCase() === address.toLowerCase();
+        setIsAuthed(Boolean(matches));
+        if (matches) {
+          setAuthStatus("Wallet authenticated");
+        } else {
+          setAuthStatus("Sign message to authenticate");
+        }
+      } catch {
+        setIsAuthed(false);
+        setAuthStatus("Unable to verify auth session");
+      }
+    };
+
+    void checkSession();
+  }, [address, isConnected]);
+
+  const authenticateWallet = async (): Promise<boolean> => {
+    if (!isConnected || !address) {
+      setAuthStatus("Connect wallet to authenticate");
+      return false;
+    }
+
+    setAuthenticating(true);
+    setAuthStatus("Requesting nonce...");
+    try {
+      const nonceRes = await fetch("/api/auth/nonce", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ address }),
+      });
+      const nonceData = await nonceRes.json() as NonceResponse;
+      if (!nonceRes.ok || !nonceData.nonce || !nonceData.message || !nonceData.address) {
+        throw new Error(nonceData.error ?? "Failed to get auth nonce");
+      }
+
+      setAuthStatus("Sign wallet message...");
+      const signature = await signMessageAsync({ message: nonceData.message });
+
+      const verifyRes = await fetch("/api/auth/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          address: nonceData.address,
+          nonce: nonceData.nonce,
+          signature,
+        }),
+      });
+      const verifyData = await verifyRes.json() as VerifyResponse;
+      if (!verifyRes.ok || !verifyData.ok) {
+        throw new Error(verifyData.error ?? "Failed to verify signature");
+      }
+
+      setIsAuthed(true);
+      setAuthStatus("Wallet authenticated");
+      return true;
+    } catch (err: unknown) {
+      setIsAuthed(false);
+      setAuthStatus("Error: " + getErrorMessage(err));
+      return false;
+    } finally {
+      setAuthenticating(false);
+    }
+  };
+
   const handleRegister = async () => {
     if (!isConnected) {
       setRegStatus("Connect wallet to register");
@@ -210,6 +308,18 @@ export default function Home() {
   };
 
   const handleAssign = async (taskId: string, agentId: string, agentAddress: string) => {
+    if (!isConnected || !address) {
+      setAssignStatus("Connect wallet to assign");
+      return;
+    }
+    if (!isAuthed) {
+      const ok = await authenticateWallet();
+      if (!ok) {
+        setAssignStatus("Authentication required before assigning");
+        return;
+      }
+    }
+
     setAssigning(true);
     setAssignStatus("Assigning agent...");
     try {
@@ -235,10 +345,51 @@ export default function Home() {
     setAssigning(false);
   };
 
+  const handleStatusUpdate = async (taskId: string, status: Task["status"]) => {
+    if (!isConnected || !address) {
+      setAssignStatus("Connect wallet to update task status");
+      return;
+    }
+    if (!isAuthed) {
+      const ok = await authenticateWallet();
+      if (!ok) {
+        setAssignStatus("Authentication required before status update");
+        return;
+      }
+    }
+
+    setAssigning(true);
+    setAssignStatus("Updating task status...");
+    try {
+      const res = await fetch("/api/update-task-status", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ taskId, status }),
+      });
+      const data = await res.json() as { error?: string; task?: Task };
+      if (!res.ok || data.error || !data.task) {
+        throw new Error(data.error ?? "Failed to update task status");
+      }
+
+      setTasks((prev) => prev.map((t) => t.id === taskId ? data.task! : t));
+      setAssignStatus("");
+    } catch (err: unknown) {
+      setAssignStatus("Error: " + getErrorMessage(err));
+    }
+    setAssigning(false);
+  };
+
   const handlePostTask = async () => {
     if (!isConnected) {
       setTaskStatus("Connect wallet to post");
       return;
+    }
+    if (!isAuthed) {
+      const ok = await authenticateWallet();
+      if (!ok) {
+        setTaskStatus("Authentication required before posting");
+        return;
+      }
     }
 
     if (!taskForm.title || !taskForm.description || !taskForm.reward) return;
@@ -806,63 +957,173 @@ export default function Home() {
 
             {/* tasks list */}
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              {displayTasks.map((task, i) => (
-                <div key={i} style={{
-                  background: "var(--bg1)", border: "1px solid var(--border)",
-                  borderRadius: 12, padding: 24, cursor: "pointer",
-                  transition: "border-color .2s, transform .15s",
-                }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--border-hi)"; (e.currentTarget as HTMLElement).style.transform = "translateX(2px)"; }}
-                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--border)"; (e.currentTarget as HTMLElement).style.transform = ""; }}
-                >
-                  <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 10 }}>
-                    <div style={{
-                      fontFamily: "var(--font-syne), sans-serif", fontWeight: 600,
-                      fontSize: 15, letterSpacing: "-.01em",
-                    }}>{task.title}</div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 5, flexShrink: 0, fontFamily: "'DM Mono', monospace", fontSize: 13, fontWeight: 500, color: "var(--gold-hi)" }}>
+              {displayTasks.map((task, i) => {
+                const isCreator = Boolean(address && task.creatorAddress && task.creatorAddress.toLowerCase() === address.toLowerCase());
+                const isAgent = Boolean(address && task.agentAddress && task.agentAddress.toLowerCase() === address.toLowerCase());
+                const canAssign = task.status === "open" && !task.agentId;
+                const canStart = task.status === "assigned" && isAgent;
+                const canComplete = task.status === "in_progress" && isAgent;
+                const canPay = task.status === "completed" && isCreator;
+
+                const statusLabelMap: Record<Task["status"], string> = {
+                  open: "● Open",
+                  assigned: "◎ Assigned",
+                  in_progress: "◔ In Progress",
+                  completed: "✓ Completed",
+                  paid: "◆ Paid",
+                };
+
+                const statusToneMap: Record<Task["status"], { color: string; border: string; background: string }> = {
+                  open: {
+                    color: "var(--green)",
+                    border: "1px solid rgba(78,203,141,.25)",
+                    background: "rgba(78,203,141,.05)",
+                  },
+                  assigned: {
+                    color: "var(--gold)",
+                    border: "1px solid var(--border-hi)",
+                    background: "rgba(212,170,80,.06)",
+                  },
+                  in_progress: {
+                    color: "var(--blue)",
+                    border: "1px solid rgba(90,156,245,.25)",
+                    background: "rgba(90,156,245,.05)",
+                  },
+                  completed: {
+                    color: "var(--green)",
+                    border: "1px solid rgba(78,203,141,.25)",
+                    background: "rgba(78,203,141,.05)",
+                  },
+                  paid: {
+                    color: "var(--gold-hi)",
+                    border: "1px solid rgba(212,170,80,.3)",
+                    background: "rgba(212,170,80,.08)",
+                  },
+                };
+
+                return (
+                  <div key={i} style={{
+                    background: "var(--bg1)", border: "1px solid var(--border)",
+                    borderRadius: 12, padding: 24, cursor: "pointer",
+                    transition: "border-color .2s, transform .15s",
+                  }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--border-hi)"; (e.currentTarget as HTMLElement).style.transform = "translateX(2px)"; }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--border)"; (e.currentTarget as HTMLElement).style.transform = ""; }}
+                  >
+                    <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 10 }}>
                       <div style={{
-                        width: 18, height: 18, borderRadius: "50%",
-                        background: "linear-gradient(135deg, #2775ca, #5b9cf6)",
-                        display: "grid", placeItems: "center",
-                        fontSize: 9, fontWeight: 700, color: "#fff",
-                      }}>$</div>
-                      {task.reward} USDC
+                        fontFamily: "var(--font-syne), sans-serif", fontWeight: 600,
+                        fontSize: 15, letterSpacing: "-.01em",
+                      }}>{task.title}</div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 5, flexShrink: 0, fontFamily: "'DM Mono', monospace", fontSize: 13, fontWeight: 500, color: "var(--gold-hi)" }}>
+                        <div style={{
+                          width: 18, height: 18, borderRadius: "50%",
+                          background: "linear-gradient(135deg, #2775ca, #5b9cf6)",
+                          display: "grid", placeItems: "center",
+                          fontSize: 9, fontWeight: 700, color: "#fff",
+                        }}>$</div>
+                        {task.reward} USDC
+                      </div>
                     </div>
+                    <p style={{ fontSize: 13, color: "var(--text2)", lineHeight: 1.6, marginBottom: 14 }}>{task.description}</p>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
+                      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                        <span style={{
+                          padding: "3px 8px",
+                          borderRadius: 4,
+                          fontFamily: "'DM Mono', monospace",
+                          fontSize: 10,
+                          ...statusToneMap[task.status],
+                        }}>{statusLabelMap[task.status]}</span>
+                        <span style={{ padding: "3px 8px", borderRadius: 4, fontFamily: "'DM Mono', monospace", fontSize: 10, color: "var(--gold-dim)", border: "1px solid var(--border)", background: "rgba(212,170,80,.04)" }}>⬡ Escrow locked</span>
+                        <span style={{ padding: "3px 8px", borderRadius: 4, fontFamily: "'DM Mono', monospace", fontSize: 10, color: "var(--blue)", border: "1px solid rgba(90,156,245,.25)", background: "rgba(90,156,245,.05)" }}>Rep ≥ {task.minRep ?? 50}</span>
+                      </div>
+                      <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: "var(--text3)" }}>{task.ago ?? "recently"}</span>
+                    </div>
+
+                    {canAssign && (
+                      <button
+                        onClick={() => {
+                          if (!isConnected) {
+                            setAssignStatus("Connect wallet to assign");
+                            return;
+                          }
+                          setShowAssignModal(task.id);
+                        }}
+                        disabled={!isConnected}
+                        style={{
+                          marginTop: 12, padding: "7px 16px", borderRadius: 6,
+                          background: "rgba(212,170,80,.1)", border: "1px solid var(--border-hi)",
+                          color: "var(--gold)", fontSize: 12, fontWeight: 500,
+                          fontFamily: "var(--font-syne), sans-serif",
+                          cursor: !isConnected ? "not-allowed" : "pointer",
+                          opacity: !isConnected ? 0.65 : 1,
+                        }}
+                      >
+                        Assign Agent →
+                      </button>
+                    )}
+
+                    {canStart && (
+                      <button
+                        onClick={() => void handleStatusUpdate(task.id, "in_progress")}
+                        disabled={assigning}
+                        style={{
+                          marginTop: 12, padding: "7px 16px", borderRadius: 6,
+                          background: "rgba(90,156,245,.1)", border: "1px solid rgba(90,156,245,.3)",
+                          color: "var(--blue)", fontSize: 12, fontWeight: 500,
+                          fontFamily: "var(--font-syne), sans-serif", cursor: "pointer",
+                          opacity: assigning ? 0.65 : 1,
+                        }}
+                      >
+                        Start Work →
+                      </button>
+                    )}
+
+                    {canComplete && (
+                      <button
+                        onClick={() => void handleStatusUpdate(task.id, "completed")}
+                        disabled={assigning}
+                        style={{
+                          marginTop: 12, padding: "7px 16px", borderRadius: 6,
+                          background: "rgba(78,203,141,.08)", border: "1px solid rgba(78,203,141,.25)",
+                          color: "var(--green)", fontSize: 12, fontWeight: 500,
+                          fontFamily: "var(--font-syne), sans-serif", cursor: "pointer",
+                          opacity: assigning ? 0.65 : 1,
+                        }}
+                      >
+                        Submit Complete →
+                      </button>
+                    )}
+
+                    {canPay && (
+                      <button
+                        onClick={() => void handleStatusUpdate(task.id, "paid")}
+                        disabled={assigning}
+                        style={{
+                          marginTop: 12, padding: "7px 16px", borderRadius: 6,
+                          background: "rgba(212,170,80,.1)", border: "1px solid var(--border-hi)",
+                          color: "var(--gold-hi)", fontSize: 12, fontWeight: 500,
+                          fontFamily: "var(--font-syne), sans-serif", cursor: "pointer",
+                          opacity: assigning ? 0.65 : 1,
+                        }}
+                      >
+                        Release Payment →
+                      </button>
+                    )}
+
+                    {task.agentId && (
+                      <div style={{
+                        marginTop: 12, padding: "7px 12px", borderRadius: 6,
+                        background: "rgba(78,203,141,.06)", border: "1px solid rgba(78,203,141,.25)",
+                        fontSize: 11, color: "var(--green)", fontFamily: "'DM Mono', monospace",
+                      }}>
+                        Agent · {task.agentAddress?.slice(0, 10)}...
+                      </div>
+                    )}
                   </div>
-                  <p style={{ fontSize: 13, color: "var(--text2)", lineHeight: 1.6, marginBottom: 14 }}>{task.description}</p>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
-                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                      <span style={{ padding: "3px 8px", borderRadius: 4, fontFamily: "'DM Mono', monospace", fontSize: 10, color: "var(--green)", border: "1px solid rgba(78,203,141,.25)", background: "rgba(78,203,141,.05)" }}>● Open</span>
-                      <span style={{ padding: "3px 8px", borderRadius: 4, fontFamily: "'DM Mono', monospace", fontSize: 10, color: "var(--gold-dim)", border: "1px solid var(--border)", background: "rgba(212,170,80,.04)" }}>⬡ Escrow locked</span>
-                      <span style={{ padding: "3px 8px", borderRadius: 4, fontFamily: "'DM Mono', monospace", fontSize: 10, color: "var(--blue)", border: "1px solid rgba(90,156,245,.25)", background: "rgba(90,156,245,.05)" }}>Rep ≥ {task.minRep ?? 50}</span>
-                    </div>
-                    <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: "var(--text3)" }}>{task.ago ?? "recently"}</span>
-                  </div>
-                  {/* Assign button */}
-                  {!task.agentId ? (
-                    <button
-                      onClick={() => setShowAssignModal(task.id)}
-                      style={{
-                        marginTop: 12, padding: "7px 16px", borderRadius: 6,
-                        background: "rgba(212,170,80,.1)", border: "1px solid var(--border-hi)",
-                        color: "var(--gold)", fontSize: 12, fontWeight: 500,
-                        fontFamily: "var(--font-syne), sans-serif", cursor: "pointer",
-                      }}
-                    >
-                      Assign Agent →
-                    </button>
-                  ) : (
-                    <div style={{
-                      marginTop: 12, padding: "7px 12px", borderRadius: 6,
-                      background: "rgba(78,203,141,.06)", border: "1px solid rgba(78,203,141,.25)",
-                      fontSize: 11, color: "var(--green)", fontFamily: "'DM Mono', monospace",
-                    }}>
-                      ✓ Assigned · {task.agentAddress?.slice(0,10)}...
-                    </div>
-                  )}
-                </div>
-              ))}
+                );
+              })}
 
               {/* Assign Modal */}
               {showAssignModal && (
@@ -964,6 +1225,29 @@ export default function Home() {
             }}>
               <div style={{ fontFamily: "var(--font-syne), sans-serif", fontWeight: 700, fontSize: 18, letterSpacing: "-.02em", marginBottom: 4 }}>Post a Task</div>
               <div style={{ fontSize: 12, color: "var(--text3)", marginBottom: 24 }}>USDC is locked in escrow until task completion</div>
+              <button
+                onClick={() => void authenticateWallet()}
+                disabled={!isConnected || authenticating}
+                style={{
+                  width: "100%",
+                  marginBottom: 12,
+                  padding: "10px",
+                  borderRadius: 8,
+                  border: "1px solid var(--border)",
+                  background: "var(--bg2)",
+                  color: isAuthed ? "var(--green)" : "var(--gold)",
+                  cursor: !isConnected || authenticating ? "not-allowed" : "pointer",
+                  opacity: !isConnected || authenticating ? 0.65 : 1,
+                  fontFamily: "'DM Mono', monospace",
+                  fontSize: 11,
+                }}
+              >
+                {authenticating
+                  ? "Authenticating..."
+                  : isAuthed
+                    ? "Wallet Authenticated"
+                    : "Authenticate Wallet"}
+              </button>
 
               {(["title","description","reward"] as const).map(field => (
                 <div key={field} style={{ marginBottom: 16 }}>
@@ -1048,6 +1332,11 @@ export default function Home() {
 
               {taskStatus && (
                 <p style={{ marginTop: 10, fontSize: 12, color: taskStatus.startsWith("Error") ? "var(--red)" : "var(--green)", fontFamily: "'DM Mono', monospace" }}>{taskStatus}</p>
+              )}
+              {authStatus && (
+                <p style={{ marginTop: 8, fontSize: 11, color: authStatus.startsWith("Error") ? "var(--red)" : "var(--text3)", fontFamily: "'DM Mono', monospace" }}>
+                  {authStatus}
+                </p>
               )}
 
               <div style={{

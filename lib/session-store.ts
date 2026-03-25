@@ -65,3 +65,8 @@ export function getSessionAddress(token: string): string | null {
 export function invalidateSession(token: string): void {
   sessions.delete(token);
 }
+
+export function clearAuthState(): void {
+  nonces.clear();
+  sessions.clear();
+}

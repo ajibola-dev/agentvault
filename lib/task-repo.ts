@@ -82,6 +82,8 @@ const updateTaskStatusStmt = db.prepare(`
   WHERE id = @id
 `);
 
+const clearTasksStmt = db.prepare("DELETE FROM tasks");
+
 export function createTask(task: Task): Task {
   insertTaskStmt.run({
     ...task,
@@ -117,4 +119,8 @@ export function assignTask(params: {
 export function updateTaskStatus(id: string, status: Task["status"]): Task | null {
   updateTaskStatusStmt.run({ id, status });
   return getTaskById(id);
+}
+
+export function clearTasks(): void {
+  clearTasksStmt.run();
 }

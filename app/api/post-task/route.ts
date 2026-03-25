@@ -23,7 +23,16 @@ type CircleWallet = {
 };
 
 function getErrorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : "Unknown error";
+  if (error instanceof Error) {
+    return error.message;
+  }
+  if (typeof error === "object" && error !== null && "message" in error) {
+    const { message } = error as { message?: unknown };
+    if (typeof message === "string") {
+      return message;
+    }
+  }
+  return "Unknown error";
 }
 
 function getErrorCode(error: unknown): string | undefined {

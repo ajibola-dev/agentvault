@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
 
 type Page = "home" | "discover" | "tasks";
 
@@ -227,7 +228,7 @@ export default function Home() {
           </div>
           <div style={S.navRight}>
             <span style={S.pillBadge}>ARC TESTNET</span>
-            <button style={S.btnConnect}>Connect Wallet</button>
+            <ConnectButton chainStatus="none" showBalance={false} />
           </div>
         </div>
       </nav>

@@ -41,7 +41,7 @@ export function getSessionToken(req: Request): string | null {
   return value || null;
 }
 
-export function getAuthenticatedAddress(req: Request): string | null {
+export async function getAuthenticatedAddress(req: Request): Promise<string | null> {
   const token = getSessionToken(req);
   if (!token) {
     return null;

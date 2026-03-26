@@ -71,8 +71,8 @@ function buildTask(params: {
 
 describe("task auth and lifecycle APIs", () => {
   beforeEach(async () => {
-    clearAuthState();
-    clearRateLimits();
+    await clearAuthState();
+    await clearRateLimits();
     clearAuditLogs();
     await clearTasks();
   });

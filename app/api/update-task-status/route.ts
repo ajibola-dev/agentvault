@@ -38,7 +38,7 @@ function canTransition(task: Task, nextStatus: Task["status"], callerAddress: st
 
 export async function POST(req: Request) {
   const ip = getClientIp(req);
-  const ipLimit = checkRateLimit({
+  const ipLimit = await checkRateLimit({
     endpoint: "tasks/update-status",
     key: `ip:${ip}`,
     max: 40,
@@ -59,7 +59,7 @@ export async function POST(req: Request) {
   }
 
   try {
-    const callerAddress = getAuthenticatedAddress(req);
+    const callerAddress = await getAuthenticatedAddress(req);
     if (!callerAddress) {
       logAuditEvent({
         endpoint: "tasks/update-status",
@@ -70,7 +70,7 @@ export async function POST(req: Request) {
       });
       return NextResponse.json({ error: "Unauthorized: sign in with wallet first" }, { status: 401 });
     }
-    const actorLimit = checkRateLimit({
+    const actorLimit = await checkRateLimit({
       endpoint: "tasks/update-status",
       key: `actor:${callerAddress.toLowerCase()}`,
       max: 40,

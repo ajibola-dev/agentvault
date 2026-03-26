@@ -18,7 +18,7 @@ type VerifyRequest = {
 
 export async function POST(req: Request) {
   const ip = getClientIp(req);
-  const limit = checkRateLimit({
+  const limit = await checkRateLimit({
     endpoint: "auth/verify",
     key: `ip:${ip}`,
     max: 15,
@@ -64,7 +64,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Invalid address" }, { status: 400 });
     }
 
-    if (!hasNonce(normalized, nonce)) {
+    if (!(await hasNonce(normalized, nonce))) {
       logAuditEvent({
         endpoint: "auth/verify",
         action: "verify_signature",
@@ -94,7 +94,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
     }
 
-    if (!consumeNonce(normalized, nonce)) {
+    if (!(await consumeNonce(normalized, nonce))) {
       logAuditEvent({
         endpoint: "auth/verify",
         action: "verify_signature",
@@ -106,7 +106,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Nonce already used" }, { status: 400 });
     }
 
-    const token = createSession(normalized);
+    const token = await createSession(normalized);
     const response = NextResponse.json({ ok: true, address: normalized });
 
     response.cookies.set({

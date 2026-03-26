@@ -19,7 +19,7 @@ function getErrorMessage(error: unknown): string {
 
 export async function POST(req: Request) {
   const ip = getClientIp(req);
-  const ipLimit = checkRateLimit({
+  const ipLimit = await checkRateLimit({
     endpoint: "tasks/assign",
     key: `ip:${ip}`,
     max: 30,
@@ -40,7 +40,7 @@ export async function POST(req: Request) {
   }
 
   try {
-    const callerAddress = getAuthenticatedAddress(req);
+    const callerAddress = await getAuthenticatedAddress(req);
     if (!callerAddress) {
       logAuditEvent({
         endpoint: "tasks/assign",
@@ -51,7 +51,7 @@ export async function POST(req: Request) {
       });
       return NextResponse.json({ error: "Unauthorized: sign in with wallet first" }, { status: 401 });
     }
-    const actorLimit = checkRateLimit({
+    const actorLimit = await checkRateLimit({
       endpoint: "tasks/assign",
       key: `actor:${callerAddress.toLowerCase()}`,
       max: 30,

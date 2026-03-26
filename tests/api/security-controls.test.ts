@@ -8,9 +8,9 @@ import { clearAuditLogs, listAuditLogs } from "@/lib/audit-log";
 import { clearAuthState, createSession } from "@/lib/session-store";
 
 describe("security controls", () => {
-  beforeEach(() => {
-    clearAuthState();
-    clearRateLimits();
+  beforeEach(async () => {
+    await clearAuthState();
+    await clearRateLimits();
     clearAuditLogs();
   });
 
@@ -53,7 +53,7 @@ describe("security controls", () => {
 
   it("rate-limits authenticated task updates by wallet even when IP changes", async () => {
     const actor = "0x3333333333333333333333333333333333333333";
-    const sessionToken = createSession(actor);
+    const sessionToken = await createSession(actor);
     const cookie = `${AUTH_SESSION_COOKIE}=${sessionToken}`;
 
     for (let i = 0; i < 40; i += 1) {

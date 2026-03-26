@@ -11,7 +11,7 @@ type NonceRequest = {
 
 export async function POST(req: Request) {
   const ip = getClientIp(req);
-  const limit = checkRateLimit({
+  const limit = await checkRateLimit({
     endpoint: "auth/nonce",
     key: `ip:${ip}`,
     max: 20,
@@ -56,7 +56,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Invalid address" }, { status: 400 });
     }
 
-    const nonce = issueNonce(normalized);
+    const nonce = await issueNonce(normalized);
     const message = createAuthMessage(normalized, nonce);
     logAuditEvent({
       endpoint: "auth/nonce",

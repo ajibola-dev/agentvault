@@ -7,7 +7,7 @@ import { logAuditEvent } from "@/lib/audit-log";
 
 export async function POST(req: Request) {
   const ip = getClientIp(req);
-  const limit = checkRateLimit({
+  const limit = await checkRateLimit({
     endpoint: "auth/logout",
     key: `ip:${ip}`,
     max: 30,
@@ -29,7 +29,7 @@ export async function POST(req: Request) {
 
   const token = getSessionToken(req);
   if (token) {
-    invalidateSession(token);
+    await invalidateSession(token);
   }
   logAuditEvent({
     endpoint: "auth/logout",

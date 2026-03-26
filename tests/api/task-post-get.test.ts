@@ -63,8 +63,8 @@ describe("post-task and get-tasks APIs", () => {
     process.env.CIRCLE_API_KEY = "test-api-key";
     process.env.CIRCLE_ENTITY_SECRET = "test-entity-secret";
 
-    clearAuthState();
-    clearRateLimits();
+    await clearAuthState();
+    await clearRateLimits();
     clearAuditLogs();
     await clearTasks();
 

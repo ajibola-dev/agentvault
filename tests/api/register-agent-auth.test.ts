@@ -6,9 +6,9 @@ import { clearAuditLogs } from "@/lib/audit-log";
 import { clearAuthState } from "@/lib/session-store";
 
 describe("register-agent auth", () => {
-  beforeEach(() => {
-    clearAuthState();
-    clearRateLimits();
+  beforeEach(async () => {
+    await clearAuthState();
+    await clearRateLimits();
     clearAuditLogs();
   });
 

@@ -11,6 +11,10 @@ export type Task = {
   escrowAddress: string | null;
   escrowId: string | null;
   escrowStatus: "wallet_created" | "pending";
+  escrowFundingTxId?: string | null;
+  escrowFundingState?: "not_configured" | "submitted" | "error";
+  escrowReleaseTxId?: string | null;
+  escrowReleaseState?: "not_released" | "submitted" | "error" | "not_configured";
   ciphertext: string;
   createdAt: string;
   assignedAt?: string;

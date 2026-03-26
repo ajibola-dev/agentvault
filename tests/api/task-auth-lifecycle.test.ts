@@ -71,6 +71,10 @@ function buildTask(params: {
 
 describe("task auth and lifecycle APIs", () => {
   beforeEach(async () => {
+    delete process.env.CIRCLE_USDC_TOKEN_ID;
+    delete process.env.ESCROW_SOURCE_WALLET_ID;
+    delete process.env.ESCROW_ENFORCE_FUNDING;
+
     await clearAuthState();
     await clearRateLimits();
     clearAuditLogs();

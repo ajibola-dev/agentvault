@@ -14,11 +14,13 @@ const {
   mockGenerateCiphertext,
   mockCreateWalletSet,
   mockCreateWallets,
+  mockCreateTransaction,
   mockInitiateClient,
 } = vi.hoisted(() => ({
   mockGenerateCiphertext: vi.fn(),
   mockCreateWalletSet: vi.fn(),
   mockCreateWallets: vi.fn(),
+  mockCreateTransaction: vi.fn(),
   mockInitiateClient: vi.fn(),
 }));
 
@@ -62,6 +64,9 @@ describe("post-task and get-tasks APIs", () => {
   beforeEach(async () => {
     process.env.CIRCLE_API_KEY = "test-api-key";
     process.env.CIRCLE_ENTITY_SECRET = "test-entity-secret";
+    delete process.env.CIRCLE_USDC_TOKEN_ID;
+    delete process.env.ESCROW_SOURCE_WALLET_ID;
+    delete process.env.ESCROW_ENFORCE_FUNDING;
 
     await clearAuthState();
     await clearRateLimits();
@@ -71,6 +76,7 @@ describe("post-task and get-tasks APIs", () => {
     mockGenerateCiphertext.mockReset();
     mockCreateWalletSet.mockReset();
     mockCreateWallets.mockReset();
+    mockCreateTransaction.mockReset();
     mockInitiateClient.mockReset();
 
     mockGenerateCiphertext.mockResolvedValue("ciphertext-token");
@@ -83,6 +89,7 @@ describe("post-task and get-tasks APIs", () => {
     mockInitiateClient.mockReturnValue({
       createWalletSet: mockCreateWalletSet,
       createWallets: mockCreateWallets,
+      createTransaction: mockCreateTransaction,
     });
   });
 
@@ -169,5 +176,41 @@ describe("post-task and get-tasks APIs", () => {
     const getRes = await getTasksGet();
     const getData = await getRes.json() as { tasks: unknown[] };
     expect(getData.tasks).toHaveLength(0);
+  });
+
+  it("submits escrow auto-funding transaction when source wallet and token are configured", async () => {
+    process.env.CIRCLE_USDC_TOKEN_ID = "usdc-token-id";
+    process.env.ESCROW_SOURCE_WALLET_ID = "funding-wallet-id";
+    mockCreateTransaction.mockResolvedValueOnce({
+      data: { id: "funding-tx-1" },
+    });
+
+    const owner = privateKeyToAccount(generatePrivateKey());
+    const cookie = await authenticate(owner.address, async (message) => owner.signMessage({ message }));
+
+    const req = new Request("http://localhost/api/post-task", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        cookie,
+      },
+      body: JSON.stringify({
+        title: "Funded Task",
+        description: "Escrow funded",
+        reward: "15",
+      }),
+    });
+
+    const res = await postTaskPost(req);
+    expect(res.status).toBe(200);
+    const data = await res.json() as {
+      task: {
+        escrowFundingTxId?: string | null;
+        escrowFundingState?: string;
+      };
+    };
+    expect(data.task.escrowFundingTxId).toBe("funding-tx-1");
+    expect(data.task.escrowFundingState).toBe("submitted");
+    expect(mockCreateTransaction).toHaveBeenCalledTimes(1);
   });
 });

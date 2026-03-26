@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
+import {
+  generateEntitySecretCiphertext,
+  initiateDeveloperControlledWalletsClient,
+} from "@circle-fin/developer-controlled-wallets";
 import { getAuthenticatedAddress, sameAddress } from "@/lib/auth";
-import { getTaskById, updateTaskStatus } from "@/lib/task-repo";
+import { getTaskById, recordEscrowRelease, updateTaskStatus } from "@/lib/task-repo";
 import type { Task } from "@/lib/task-store";
 import { getClientIp } from "@/lib/request-meta";
 import { checkRateLimit } from "@/lib/rate-limit";
@@ -12,6 +16,16 @@ type UpdateTaskStatusRequest = {
   taskId?: string;
   status?: Task["status"];
 };
+
+type CircleTransferResponse = {
+  data?: {
+    id?: string;
+  };
+};
+
+function getErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : "Unknown error";
+}
 
 function isAssignedAgent(task: Task, callerAddress: string): boolean {
   return Boolean(task.agentAddress && sameAddress(task.agentAddress, callerAddress));
@@ -145,6 +159,74 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Forbidden: invalid transition for caller" }, { status: 403 });
     }
 
+    if (status === "paid") {
+      const usdcTokenId = process.env.CIRCLE_USDC_TOKEN_ID;
+      if (!usdcTokenId) {
+        await recordEscrowRelease({
+          id: task.id,
+          releaseTxId: null,
+          releaseState: "not_configured",
+        });
+      } else {
+        if (!task.agentAddress || !task.escrowId) {
+          logAuditEvent({
+            endpoint: "tasks/update-status",
+            action: "update_task_status",
+            actorAddress: callerAddress,
+            ip,
+            status: "validation_error",
+            resourceId: taskId,
+            message: "Missing escrow wallet or assignee address for payout",
+          });
+          return NextResponse.json(
+            { error: "Missing escrow wallet or assignee address for payout" },
+            { status: 400 }
+          );
+        }
+
+        try {
+          const apiKey = process.env.CIRCLE_API_KEY!;
+          const entitySecret = process.env.CIRCLE_ENTITY_SECRET!;
+          await generateEntitySecretCiphertext({ apiKey, entitySecret });
+          const circleClient = initiateDeveloperControlledWalletsClient({
+            apiKey,
+            entitySecret,
+          });
+
+          const payoutTx = await circleClient.createTransaction({
+            idempotencyKey: crypto.randomUUID(),
+            walletId: task.escrowId,
+            tokenId: usdcTokenId,
+            destinationAddress: task.agentAddress,
+            amount: [task.reward],
+            fee: { type: "level", config: { feeLevel: "MEDIUM" } },
+          }) as CircleTransferResponse;
+
+          await recordEscrowRelease({
+            id: task.id,
+            releaseTxId: payoutTx.data?.id ?? null,
+            releaseState: "submitted",
+          });
+        } catch (payoutError) {
+          await recordEscrowRelease({
+            id: task.id,
+            releaseTxId: null,
+            releaseState: "error",
+          });
+          logAuditEvent({
+            endpoint: "tasks/update-status",
+            action: "update_task_status",
+            actorAddress: callerAddress,
+            ip,
+            status: "error",
+            resourceId: taskId,
+            message: `Escrow payout failed: ${getErrorMessage(payoutError)}`,
+          });
+          return NextResponse.json({ error: `Escrow payout failed: ${getErrorMessage(payoutError)}` }, { status: 502 });
+        }
+      }
+    }
+
     const updated = await updateTaskStatus(task.id, status);
     if (!updated) {
       logAuditEvent({
@@ -169,13 +251,13 @@ export async function POST(req: Request) {
     });
 
     return NextResponse.json({ task: updated });
-  } catch {
+  } catch (error) {
     logAuditEvent({
       endpoint: "tasks/update-status",
       action: "update_task_status",
       ip,
       status: "error",
-      message: "Failed to update task status",
+      message: getErrorMessage(error),
     });
     return NextResponse.json({ error: "Failed to update task status" }, { status: 500 });
   }

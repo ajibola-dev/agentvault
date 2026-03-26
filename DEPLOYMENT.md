@@ -7,6 +7,12 @@
 - `CIRCLE_APP_ID`
 - `DATABASE_URL` (preferred) or `POSTGRES_URL`
 
+## Optional Escrow Transfer Variables
+
+- `ESCROW_SOURCE_WALLET_ID`: Circle wallet ID used to pre-fund per-task escrow wallets.
+- `CIRCLE_USDC_TOKEN_ID`: Circle token ID for Arc Testnet USDC transfers.
+- `ESCROW_ENFORCE_FUNDING` (`true`/`false`): when `true`, task creation fails if escrow auto-funding fails.
+
 ## Build Warnings Clarification
 
 - `npm WARN ERESOLVE overriding peer dependency` around `use-sync-external-store` is a peer warning from transitive deps and does not fail deployment by itself.
@@ -33,3 +39,4 @@
 
 - Task persistence is Postgres-backed.
 - Rate limiting, audit logs, and auth nonce/session stores are in-memory by design.
+- `completed -> paid` now attempts escrow payout submission when `CIRCLE_USDC_TOKEN_ID` is configured.

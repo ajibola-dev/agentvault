@@ -24,6 +24,11 @@ type CircleWallet = {
   id?: string;
   address?: string;
 };
+type CircleTransferResponse = {
+  data?: {
+    id?: string;
+  };
+};
 
 function getErrorMessage(error: unknown): string {
   if (error instanceof Error) {
@@ -150,6 +155,32 @@ export async function POST(req: Request) {
     const escrowWallet  = wallets.data?.wallets?.[0] as CircleWallet | undefined;
     const escrowAddress = escrowWallet?.address ?? null;
     const escrowId      = escrowWallet?.id ?? null;
+    const sourceWalletId = process.env.ESCROW_SOURCE_WALLET_ID;
+    const usdcTokenId = process.env.CIRCLE_USDC_TOKEN_ID;
+    const enforceFunding = process.env.ESCROW_ENFORCE_FUNDING === "true";
+
+    let escrowFundingTxId: string | null = null;
+    let escrowFundingState: "not_configured" | "submitted" | "error" = "not_configured";
+
+    if (sourceWalletId && usdcTokenId && escrowAddress) {
+      try {
+        const fundingTx = await client.createTransaction({
+          idempotencyKey: crypto.randomUUID(),
+          walletId: sourceWalletId,
+          tokenId: usdcTokenId,
+          destinationAddress: escrowAddress,
+          amount: [rewardNum.toString()],
+          fee: { type: "level", config: { feeLevel: "MEDIUM" } },
+        }) as CircleTransferResponse;
+        escrowFundingTxId = fundingTx.data?.id ?? null;
+        escrowFundingState = "submitted";
+      } catch (fundingError) {
+        escrowFundingState = "error";
+        if (enforceFunding) {
+          throw fundingError;
+        }
+      }
+    }
 
     const task: Task = {
       id:           crypto.randomUUID(),
@@ -163,6 +194,10 @@ export async function POST(req: Request) {
       escrowAddress,
       escrowId,
       escrowStatus: escrowAddress ? "wallet_created" : "pending",
+      escrowFundingTxId,
+      escrowFundingState,
+      escrowReleaseTxId: null,
+      escrowReleaseState: "not_released",
       ciphertext,
       createdAt:    new Date().toISOString(),
     };

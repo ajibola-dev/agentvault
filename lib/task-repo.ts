@@ -14,6 +14,10 @@ type TaskRow = {
   escrow_address: string | null;
   escrow_id: string | null;
   escrow_status: Task["escrowStatus"];
+  escrow_funding_tx_id: string | null;
+  escrow_funding_state: NonNullable<Task["escrowFundingState"]>;
+  escrow_release_tx_id: string | null;
+  escrow_release_state: NonNullable<Task["escrowReleaseState"]>;
   ciphertext: string;
   created_at: string;
   assigned_at: string | null;
@@ -38,6 +42,10 @@ function rowToTask(row: TaskRow): Task {
     escrowAddress: row.escrow_address,
     escrowId: row.escrow_id,
     escrowStatus: row.escrow_status,
+    escrowFundingTxId: row.escrow_funding_tx_id,
+    escrowFundingState: row.escrow_funding_state,
+    escrowReleaseTxId: row.escrow_release_tx_id,
+    escrowReleaseState: row.escrow_release_state,
     ciphertext: row.ciphertext,
     createdAt: row.created_at,
     assignedAt: row.assigned_at ?? undefined,
@@ -109,11 +117,19 @@ async function ensureSchema(): Promise<void> {
             escrow_address TEXT,
             escrow_id TEXT,
             escrow_status TEXT NOT NULL CHECK (escrow_status IN ('wallet_created', 'pending')),
+            escrow_funding_tx_id TEXT,
+            escrow_funding_state TEXT NOT NULL DEFAULT 'not_configured' CHECK (escrow_funding_state IN ('not_configured', 'submitted', 'error')),
+            escrow_release_tx_id TEXT,
+            escrow_release_state TEXT NOT NULL DEFAULT 'not_released' CHECK (escrow_release_state IN ('not_released', 'submitted', 'error', 'not_configured')),
             ciphertext TEXT NOT NULL,
             created_at TEXT NOT NULL,
             assigned_at TEXT
           )
         `);
+        await client.query("ALTER TABLE tasks ADD COLUMN IF NOT EXISTS escrow_funding_tx_id TEXT");
+        await client.query("ALTER TABLE tasks ADD COLUMN IF NOT EXISTS escrow_funding_state TEXT NOT NULL DEFAULT 'not_configured'");
+        await client.query("ALTER TABLE tasks ADD COLUMN IF NOT EXISTS escrow_release_tx_id TEXT");
+        await client.query("ALTER TABLE tasks ADD COLUMN IF NOT EXISTS escrow_release_state TEXT NOT NULL DEFAULT 'not_released'");
       } finally {
         client.release();
       }
@@ -134,10 +150,11 @@ export async function createTask(task: Task): Promise<Task> {
       `
         INSERT INTO tasks (
           id, title, description, reward, min_rep, creator_address, agent_id, agent_address, status,
-          escrow_address, escrow_id, escrow_status, ciphertext, created_at, assigned_at
+          escrow_address, escrow_id, escrow_status, escrow_funding_tx_id, escrow_funding_state,
+          escrow_release_tx_id, escrow_release_state, ciphertext, created_at, assigned_at
         ) VALUES (
           $1, $2, $3, $4, $5, $6, $7, $8, $9,
-          $10, $11, $12, $13, $14, $15
+          $10, $11, $12, $13, $14, $15, $16, $17, $18, $19
         )
       `,
       [
@@ -153,6 +170,10 @@ export async function createTask(task: Task): Promise<Task> {
         task.escrowAddress,
         task.escrowId,
         task.escrowStatus,
+        task.escrowFundingTxId ?? null,
+        task.escrowFundingState ?? "not_configured",
+        task.escrowReleaseTxId ?? null,
+        task.escrowReleaseState ?? "not_released",
         task.ciphertext,
         task.createdAt,
         task.assignedAt ?? null,
@@ -179,7 +200,8 @@ export async function listTasks(): Promise<Task[]> {
     const result = await getPool().query<TaskRow>(`
       SELECT
         id, title, description, reward, min_rep, creator_address, agent_id, agent_address, status,
-        escrow_address, escrow_id, escrow_status, ciphertext, created_at, assigned_at
+        escrow_address, escrow_id, escrow_status, escrow_funding_tx_id, escrow_funding_state,
+        escrow_release_tx_id, escrow_release_state, ciphertext, created_at, assigned_at
       FROM tasks
       ORDER BY created_at DESC
     `);
@@ -204,7 +226,8 @@ export async function getTaskById(id: string): Promise<Task | null> {
       `
         SELECT
           id, title, description, reward, min_rep, creator_address, agent_id, agent_address, status,
-          escrow_address, escrow_id, escrow_status, ciphertext, created_at, assigned_at
+          escrow_address, escrow_id, escrow_status, escrow_funding_tx_id, escrow_funding_state,
+          escrow_release_tx_id, escrow_release_state, ciphertext, created_at, assigned_at
         FROM tasks
         WHERE id = $1
         LIMIT 1
@@ -301,6 +324,96 @@ export async function updateTaskStatus(id: string, status: Task["status"]): Prom
     }
     const updated = { ...existing, status };
     inMemoryTasks.set(id, updated);
+    return updated;
+  }
+}
+
+export async function recordEscrowFunding(params: {
+  id: string;
+  fundingTxId: string | null;
+  fundingState: NonNullable<Task["escrowFundingState"]>;
+}): Promise<Task | null> {
+  if (shouldUseInMemoryStore()) {
+    const existing = inMemoryTasks.get(params.id);
+    if (!existing) {
+      return null;
+    }
+    const updated: Task = {
+      ...existing,
+      escrowFundingTxId: params.fundingTxId,
+      escrowFundingState: params.fundingState,
+    };
+    inMemoryTasks.set(params.id, updated);
+    return updated;
+  }
+
+  try {
+    await ensureSchema();
+    await getPool().query(
+      "UPDATE tasks SET escrow_funding_tx_id = $1, escrow_funding_state = $2 WHERE id = $3",
+      [params.fundingTxId, params.fundingState, params.id]
+    );
+    return getTaskById(params.id);
+  } catch (error) {
+    markInMemoryFallback(error);
+    if (!shouldUseInMemoryStore()) {
+      throw error;
+    }
+    const existing = inMemoryTasks.get(params.id);
+    if (!existing) {
+      return null;
+    }
+    const updated: Task = {
+      ...existing,
+      escrowFundingTxId: params.fundingTxId,
+      escrowFundingState: params.fundingState,
+    };
+    inMemoryTasks.set(params.id, updated);
+    return updated;
+  }
+}
+
+export async function recordEscrowRelease(params: {
+  id: string;
+  releaseTxId: string | null;
+  releaseState: NonNullable<Task["escrowReleaseState"]>;
+}): Promise<Task | null> {
+  if (shouldUseInMemoryStore()) {
+    const existing = inMemoryTasks.get(params.id);
+    if (!existing) {
+      return null;
+    }
+    const updated: Task = {
+      ...existing,
+      escrowReleaseTxId: params.releaseTxId,
+      escrowReleaseState: params.releaseState,
+    };
+    inMemoryTasks.set(params.id, updated);
+    return updated;
+  }
+
+  try {
+    await ensureSchema();
+    await getPool().query(
+      "UPDATE tasks SET escrow_release_tx_id = $1, escrow_release_state = $2 WHERE id = $3",
+      [params.releaseTxId, params.releaseState, params.id]
+    );
+    return getTaskById(params.id);
+  } catch (error) {
+    markInMemoryFallback(error);
+    if (!shouldUseInMemoryStore()) {
+      throw error;
+    }
+    const existing = inMemoryTasks.get(params.id);
+    if (!existing) {
+      return null;
+    }
+    const updated: Task = {
+      ...existing,
+      escrowReleaseTxId: params.releaseTxId,
+      escrowReleaseState: params.releaseState,
+    };
+    inMemoryTasks.set(params.id, updated);
     return updated;
   }
 }

@@ -22,13 +22,13 @@ function getErrorMessage(error: unknown): string {
 
 export async function POST(req: Request) {
   const ip = getClientIp(req);
-  const limit = checkRateLimit({
+  const ipLimit = checkRateLimit({
     endpoint: "agents/register",
     key: `ip:${ip}`,
     max: 10,
     windowMs: 60_000,
   });
-  if (!limit.allowed) {
+  if (!ipLimit.allowed) {
     logAuditEvent({
       endpoint: "agents/register",
       action: "register_agent",
@@ -38,7 +38,7 @@ export async function POST(req: Request) {
     });
     return NextResponse.json(
       { error: "Too many requests. Please try again later." },
-      { status: 429, headers: { "Retry-After": String(limit.retryAfterSeconds) } }
+      { status: 429, headers: { "Retry-After": String(ipLimit.retryAfterSeconds) } }
     );
   }
 
@@ -53,6 +53,26 @@ export async function POST(req: Request) {
         message: "Missing auth session",
       });
       return NextResponse.json({ error: "Unauthorized: sign in with wallet first" }, { status: 401 });
+    }
+    const actorLimit = checkRateLimit({
+      endpoint: "agents/register",
+      key: `actor:${callerAddress.toLowerCase()}`,
+      max: 10,
+      windowMs: 60_000,
+    });
+    if (!actorLimit.allowed) {
+      logAuditEvent({
+        endpoint: "agents/register",
+        action: "register_agent",
+        actorAddress: callerAddress,
+        ip,
+        status: "rate_limited",
+        message: "Too many registration requests for this wallet",
+      });
+      return NextResponse.json(
+        { error: "Too many requests. Please try again later." },
+        { status: 429, headers: { "Retry-After": String(actorLimit.retryAfterSeconds) } }
+      );
     }
 
     const apiKey = process.env.CIRCLE_API_KEY!;

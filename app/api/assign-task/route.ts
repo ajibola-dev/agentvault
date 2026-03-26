@@ -19,13 +19,13 @@ function getErrorMessage(error: unknown): string {
 
 export async function POST(req: Request) {
   const ip = getClientIp(req);
-  const limit = checkRateLimit({
+  const ipLimit = checkRateLimit({
     endpoint: "tasks/assign",
     key: `ip:${ip}`,
     max: 30,
     windowMs: 60_000,
   });
-  if (!limit.allowed) {
+  if (!ipLimit.allowed) {
     logAuditEvent({
       endpoint: "tasks/assign",
       action: "assign_task",
@@ -35,7 +35,7 @@ export async function POST(req: Request) {
     });
     return NextResponse.json(
       { error: "Too many requests. Please try again later." },
-      { status: 429, headers: { "Retry-After": String(limit.retryAfterSeconds) } }
+      { status: 429, headers: { "Retry-After": String(ipLimit.retryAfterSeconds) } }
     );
   }
 
@@ -50,6 +50,26 @@ export async function POST(req: Request) {
         message: "Missing auth session",
       });
       return NextResponse.json({ error: "Unauthorized: sign in with wallet first" }, { status: 401 });
+    }
+    const actorLimit = checkRateLimit({
+      endpoint: "tasks/assign",
+      key: `actor:${callerAddress.toLowerCase()}`,
+      max: 30,
+      windowMs: 60_000,
+    });
+    if (!actorLimit.allowed) {
+      logAuditEvent({
+        endpoint: "tasks/assign",
+        action: "assign_task",
+        actorAddress: callerAddress,
+        ip,
+        status: "rate_limited",
+        message: "Too many assignment requests for this wallet",
+      });
+      return NextResponse.json(
+        { error: "Too many requests. Please try again later." },
+        { status: 429, headers: { "Retry-After": String(actorLimit.retryAfterSeconds) } }
+      );
     }
 
     const { taskId, agentId, agentAddress } = await req.json() as AssignTaskRequest;

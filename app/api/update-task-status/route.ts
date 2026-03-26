@@ -38,13 +38,13 @@ function canTransition(task: Task, nextStatus: Task["status"], callerAddress: st
 
 export async function POST(req: Request) {
   const ip = getClientIp(req);
-  const limit = checkRateLimit({
+  const ipLimit = checkRateLimit({
     endpoint: "tasks/update-status",
     key: `ip:${ip}`,
     max: 40,
     windowMs: 60_000,
   });
-  if (!limit.allowed) {
+  if (!ipLimit.allowed) {
     logAuditEvent({
       endpoint: "tasks/update-status",
       action: "update_task_status",
@@ -54,7 +54,7 @@ export async function POST(req: Request) {
     });
     return NextResponse.json(
       { error: "Too many requests. Please try again later." },
-      { status: 429, headers: { "Retry-After": String(limit.retryAfterSeconds) } }
+      { status: 429, headers: { "Retry-After": String(ipLimit.retryAfterSeconds) } }
     );
   }
 
@@ -69,6 +69,26 @@ export async function POST(req: Request) {
         message: "Missing auth session",
       });
       return NextResponse.json({ error: "Unauthorized: sign in with wallet first" }, { status: 401 });
+    }
+    const actorLimit = checkRateLimit({
+      endpoint: "tasks/update-status",
+      key: `actor:${callerAddress.toLowerCase()}`,
+      max: 40,
+      windowMs: 60_000,
+    });
+    if (!actorLimit.allowed) {
+      logAuditEvent({
+        endpoint: "tasks/update-status",
+        action: "update_task_status",
+        actorAddress: callerAddress,
+        ip,
+        status: "rate_limited",
+        message: "Too many status update requests for this wallet",
+      });
+      return NextResponse.json(
+        { error: "Too many requests. Please try again later." },
+        { status: 429, headers: { "Retry-After": String(actorLimit.retryAfterSeconds) } }
+      );
     }
 
     const { taskId, status } = await req.json() as UpdateTaskStatusRequest;

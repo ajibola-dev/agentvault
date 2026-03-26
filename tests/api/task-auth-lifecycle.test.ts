@@ -70,11 +70,11 @@ function buildTask(params: {
 }
 
 describe("task auth and lifecycle APIs", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     clearAuthState();
     clearRateLimits();
     clearAuditLogs();
-    clearTasks();
+    await clearTasks();
   });
 
   it("creates auth session and exposes it through /api/auth/session", async () => {
@@ -104,7 +104,7 @@ describe("task auth and lifecycle APIs", () => {
     const agentCookie = await authenticate(agent.address, async (message) => agent.signMessage({ message }));
     const outsiderCookie = await authenticate(outsider.address, async (message) => outsider.signMessage({ message }));
 
-    createTask(buildTask({ id: "task-1", creatorAddress: creator.address }));
+    await createTask(buildTask({ id: "task-1", creatorAddress: creator.address }));
 
     const forbiddenAssignReq = new Request("http://localhost/api/assign-task", {
       method: "POST",
@@ -162,7 +162,7 @@ describe("task auth and lifecycle APIs", () => {
     const payRes = await updateTaskStatusPost(payReq);
     expect(payRes.status).toBe(200);
 
-    const task = getTaskById("task-1");
+    const task = await getTaskById("task-1");
     expect(task?.status).toBe("paid");
   });
 });

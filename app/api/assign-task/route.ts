@@ -86,7 +86,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Missing taskId or agentId" }, { status: 400 });
     }
 
-    const task = getTaskById(taskId);
+    const task = await getTaskById(taskId);
     if (!task) {
       logAuditEvent({
         endpoint: "tasks/assign",
@@ -126,7 +126,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Task already assigned" }, { status: 400 });
     }
 
-    const updatedTask = assignTask({
+    const updatedTask = await assignTask({
       id: taskId,
       agentId,
       agentAddress: agentAddress ?? null,

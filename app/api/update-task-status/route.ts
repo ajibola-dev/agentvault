@@ -118,7 +118,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Invalid target status" }, { status: 400 });
     }
 
-    const task = getTaskById(taskId);
+    const task = await getTaskById(taskId);
     if (!task) {
       logAuditEvent({
         endpoint: "tasks/update-status",
@@ -145,7 +145,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Forbidden: invalid transition for caller" }, { status: 403 });
     }
 
-    const updated = updateTaskStatus(task.id, status);
+    const updated = await updateTaskStatus(task.id, status);
     if (!updated) {
       logAuditEvent({
         endpoint: "tasks/update-status",

@@ -59,14 +59,14 @@ async function authenticate(address: `0x${string}`, signMessage: (message: strin
 }
 
 describe("post-task and get-tasks APIs", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     process.env.CIRCLE_API_KEY = "test-api-key";
     process.env.CIRCLE_ENTITY_SECRET = "test-entity-secret";
 
     clearAuthState();
     clearRateLimits();
     clearAuditLogs();
-    clearTasks();
+    await clearTasks();
 
     mockGenerateCiphertext.mockReset();
     mockCreateWalletSet.mockReset();

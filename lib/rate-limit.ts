@@ -1,5 +1,3 @@
-import db from "@/lib/db";
-
 type RateLimitParams = {
   endpoint: string;
   key: string;
@@ -13,26 +11,14 @@ type RateLimitResult = {
   retryAfterSeconds: number;
 };
 
-const upsertStmt = db.prepare(`
-  INSERT INTO rate_limits (endpoint, key, windowStart, count)
-  VALUES (@endpoint, @key, @windowStart, 1)
-  ON CONFLICT(endpoint, key, windowStart)
-  DO UPDATE SET count = count + 1
-`);
-
-const readStmt = db.prepare(`
-  SELECT count
-  FROM rate_limits
-  WHERE endpoint = @endpoint AND key = @key AND windowStart = @windowStart
-`);
-
-const clearExpiredStmt = db.prepare(`
-  DELETE FROM rate_limits
-  WHERE windowStart < @minWindowStart
-`);
+const counters = new Map<string, number>();
 
 function now(): number {
   return Date.now();
+}
+
+function makeBucketKey(endpoint: string, key: string, windowStart: number): string {
+  return `${endpoint}|${key}|${windowStart}`;
 }
 
 export function checkRateLimit(params: RateLimitParams): RateLimitResult {
@@ -40,31 +26,28 @@ export function checkRateLimit(params: RateLimitParams): RateLimitResult {
   const windowStart = Math.floor(ts / params.windowMs) * params.windowMs;
   const minWindowStart = windowStart - params.windowMs * 2;
 
-  clearExpiredStmt.run({ minWindowStart });
+  for (const bucketKey of counters.keys()) {
+    const parts = bucketKey.split("|");
+    const bucketWindowStart = Number(parts[parts.length - 1]);
+    if (Number.isFinite(bucketWindowStart) && bucketWindowStart < minWindowStart) {
+      counters.delete(bucketKey);
+    }
+  }
 
-  upsertStmt.run({
-    endpoint: params.endpoint,
-    key: params.key,
-    windowStart,
-  });
+  const bucketKey = makeBucketKey(params.endpoint, params.key, windowStart);
+  const nextCount = (counters.get(bucketKey) ?? 0) + 1;
+  counters.set(bucketKey, nextCount);
 
-  const row = readStmt.get({
-    endpoint: params.endpoint,
-    key: params.key,
-    windowStart,
-  }) as { count: number } | undefined;
-
-  const count = row?.count ?? 0;
-  const remaining = Math.max(0, params.max - count);
+  const remaining = Math.max(0, params.max - nextCount);
   const retryAfterSeconds = Math.max(1, Math.ceil((windowStart + params.windowMs - ts) / 1000));
 
   return {
-    allowed: count <= params.max,
+    allowed: nextCount <= params.max,
     remaining,
     retryAfterSeconds,
   };
 }
 
 export function clearRateLimits(): void {
-  db.exec("DELETE FROM rate_limits");
+  counters.clear();
 }

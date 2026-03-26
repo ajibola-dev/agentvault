@@ -167,7 +167,7 @@ export async function POST(req: Request) {
       createdAt:    new Date().toISOString(),
     };
 
-    createTask(task);
+    await createTask(task);
     logAuditEvent({
       endpoint: "tasks/post",
       action: "post_task",
@@ -195,5 +195,5 @@ export async function POST(req: Request) {
 }
 
 export async function GET() {
-  return NextResponse.json({ tasks: listTasks() });
+  return NextResponse.json({ tasks: await listTasks() });
 }

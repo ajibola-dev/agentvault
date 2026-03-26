@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Block accidental commits of dotenv files.
+staged_files="$(git diff --cached --name-only)"
+if echo "$staged_files" | rg -q '(^|/)\.env(\..*)?$'; then
+  echo "pre-commit: blocked commit containing .env file(s)." >&2
+  echo "Remove them from the index with: git restore --staged .env .env.local .env.*" >&2
+  exit 1
+fi

@@ -43,6 +43,7 @@ check_status "/api/auth/session" "GET" "200"
 check_status "/api/post-task" "POST" "401" '{"title":"x","description":"y","reward":"1"}'
 check_status "/api/assign-task" "POST" "401" '{"taskId":"x","agentId":"y"}'
 check_status "/api/update-task-status" "POST" "401" '{"taskId":"x","status":"in_progress"}'
+check_status "/api/audit-logs" "GET" "401"
 check_status "/api/register-agent" "POST" "401"
 check_status "/api/auth/nonce" "POST" "200" '{"address":"0x1111111111111111111111111111111111111111"}'
 

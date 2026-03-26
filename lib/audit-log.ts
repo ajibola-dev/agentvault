@@ -33,8 +33,22 @@ type AuditLogRow = {
   createdAt: string;
 };
 
+type DbAuditLogRow = {
+  id: string;
+  endpoint: string;
+  action: string;
+  actor_address: string | null;
+  ip: string | null;
+  status: AuditStatus;
+  resource_id: string | null;
+  message: string | null;
+  metadata: string | null;
+  created_at: string;
+};
+
 const auditLogs: AuditLogRow[] = [];
 let schemaReady: Promise<void> | null = null;
+const AUDIT_RETENTION_DAYS = 30;
 
 async function ensureSchema(): Promise<void> {
   if (shouldUseInMemoryStore()) {
@@ -106,6 +120,8 @@ export function logAuditEvent(event: AuditEventInput): void {
           row.createdAt,
         ]
       );
+      const cutoff = new Date(Date.now() - AUDIT_RETENTION_DAYS * 24 * 60 * 60 * 1000).toISOString();
+      await getPool().query("DELETE FROM audit_logs WHERE created_at < $1", [cutoff]);
     } catch (error) {
       markInMemoryFallback(error);
     }
@@ -132,4 +148,66 @@ export function listAuditLogs(limit = 100): Array<AuditLogRow & { parsedMetadata
     ...row,
     parsedMetadata: row.metadata ? JSON.parse(row.metadata) as Record<string, unknown> : null,
   }));
+}
+
+function mapDbRow(row: DbAuditLogRow): AuditLogRow {
+  return {
+    id: row.id,
+    endpoint: row.endpoint,
+    action: row.action,
+    actorAddress: row.actor_address,
+    ip: row.ip,
+    status: row.status,
+    resourceId: row.resource_id,
+    message: row.message,
+    metadata: row.metadata,
+    createdAt: row.created_at,
+  };
+}
+
+export async function listAuditLogsDurable(
+  limit = 100,
+  actorAddress?: string
+): Promise<Array<AuditLogRow & { parsedMetadata: Record<string, unknown> | null }>> {
+  const safeLimit = Math.max(1, Math.min(limit, 200));
+  if (shouldUseInMemoryStore()) {
+    return listAuditLogs(safeLimit);
+  }
+
+  try {
+    await ensureSchema();
+    const args: unknown[] = [];
+    let where = "";
+    if (actorAddress) {
+      where = "WHERE lower(actor_address) = lower($1)";
+      args.push(actorAddress);
+      args.push(safeLimit);
+    } else {
+      args.push(safeLimit);
+    }
+    const limitPlaceholder = actorAddress ? "$2" : "$1";
+    const query = `
+      SELECT id, endpoint, action, actor_address, ip, status, resource_id, message, metadata, created_at
+      FROM audit_logs
+      ${where}
+      ORDER BY created_at DESC
+      LIMIT ${limitPlaceholder}
+    `;
+    const result = await getPool().query<DbAuditLogRow>(query, args);
+    return result.rows.map((row) => {
+      const mapped = mapDbRow(row);
+      return {
+        ...mapped,
+        parsedMetadata: mapped.metadata ? JSON.parse(mapped.metadata) as Record<string, unknown> : null,
+      };
+    });
+  } catch (error) {
+    markInMemoryFallback(error);
+    if (actorAddress) {
+      return listAuditLogs(safeLimit).filter((row) =>
+        row.actorAddress?.toLowerCase() === actorAddress.toLowerCase()
+      );
+    }
+    return listAuditLogs(safeLimit);
+  }
 }

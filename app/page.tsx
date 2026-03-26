@@ -184,6 +184,7 @@ export default function Home() {
   const [isAuthed, setIsAuthed] = useState(false);
   const [authenticating, setAuthenticating] = useState(false);
   const [authStatus, setAuthStatus] = useState("");
+  const [isMobile, setIsMobile] = useState(false);
   const connectedAddress = address ? `${address.slice(0, 6)}...${address.slice(-4)}` : "";
 
   const fetchAgents = async () => {
@@ -211,6 +212,14 @@ export default function Home() {
       fetchAgents();
     }
   }, [page]);
+
+  useEffect(() => {
+    const media = window.matchMedia("(max-width: 900px)");
+    const onChange = () => setIsMobile(media.matches);
+    onChange();
+    media.addEventListener("change", onChange);
+    return () => media.removeEventListener("change", onChange);
+  }, []);
 
   useEffect(() => {
     const checkSession = async () => {
@@ -623,7 +632,7 @@ export default function Home() {
                 Built on ERC-8004 onchain agent identity
               </h2>
               <div style={{
-                display: "grid", gridTemplateColumns: "repeat(3,1fr)",
+                display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(3,1fr)",
                 gap: 1, background: "var(--border)", borderRadius: 12,
                 overflow: "hidden", border: "1px solid var(--border)",
               }}>
@@ -670,7 +679,7 @@ export default function Home() {
               }}>
                 Live on Arc Testnet
               </h2>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 12 }}>
+              <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(3,1fr)", gap: 12 }}>
                 {[
                   { name: "IDENTITY REGISTRY",    addr: "0x8004A818BFB912233c491871b3d84c89A494BD9e" },
                   { name: "REPUTATION REGISTRY",  addr: "0x8004B663056A597Dffe9eCcC1965A193B7388713" },
@@ -727,21 +736,83 @@ export default function Home() {
                     </div>
                   ))}
 
+                  <div style={{ display: "flex", gap: 8, marginTop: 14, marginBottom: 8 }}>
+                    <ConnectButton.Custom>
+                      {({
+                        account,
+                        chain,
+                        mounted,
+                        authenticationStatus,
+                        openChainModal,
+                        openConnectModal,
+                      }) => {
+                        const ready = mounted && authenticationStatus !== "loading";
+                        const connected = ready && account && chain && (!authenticationStatus || authenticationStatus === "authenticated");
+                        if (!connected) {
+                          return (
+                            <button
+                              onClick={openConnectModal}
+                              style={{
+                                width: "100%", padding: "10px", borderRadius: 8,
+                                border: "1px solid var(--border-hi)", background: "rgba(212,170,80,.08)",
+                                color: "var(--gold)", cursor: "pointer", fontFamily: "'DM Mono', monospace", fontSize: 11,
+                              }}
+                            >
+                              Connect Wallet
+                            </button>
+                          );
+                        }
+                        if (chain.unsupported) {
+                          return (
+                            <button
+                              onClick={openChainModal}
+                              style={{
+                                width: "100%", padding: "10px", borderRadius: 8,
+                                border: "1px solid var(--border-hi)", background: "rgba(232,84,84,.08)",
+                                color: "var(--red)", cursor: "pointer", fontFamily: "'DM Mono', monospace", fontSize: 11,
+                              }}
+                            >
+                              Switch Network
+                            </button>
+                          );
+                        }
+                        return (
+                          <button
+                            onClick={() => void authenticateWallet()}
+                            disabled={authenticating || isAuthed}
+                            style={{
+                              width: "100%", padding: "10px", borderRadius: 8,
+                              border: "1px solid var(--border)", background: "var(--bg2)",
+                              color: isAuthed ? "var(--green)" : "var(--gold)",
+                              cursor: authenticating || isAuthed ? "not-allowed" : "pointer",
+                              opacity: authenticating || isAuthed ? 0.65 : 1,
+                              fontFamily: "'DM Mono', monospace", fontSize: 11,
+                            }}
+                          >
+                            {authenticating ? "Authenticating..." : isAuthed ? "Wallet Authenticated" : "Authenticate Wallet"}
+                          </button>
+                        );
+                      }}
+                    </ConnectButton.Custom>
+                  </div>
+
                   <button
                     onClick={handleRegister}
-                    disabled={registering || !isConnected}
+                    disabled={registering || !isConnected || !isAuthed}
                     style={{
                       width: "100%", marginTop: 20, padding: "13px",
                       background: "linear-gradient(135deg, var(--gold), var(--amber))",
-                      color: "#0a0905", border: "none", cursor: registering || !isConnected ? "not-allowed" : "pointer",
+                      color: "#0a0905", border: "none", cursor: registering || !isConnected || !isAuthed ? "not-allowed" : "pointer",
                       fontFamily: "var(--font-syne), sans-serif", fontWeight: 700,
                       fontSize: 14, letterSpacing: ".04em", borderRadius: 10,
-                      opacity: registering || !isConnected ? 0.6 : 1,
+                      opacity: registering || !isConnected || !isAuthed ? 0.6 : 1,
                     }}
                   >
                     {registering
                       ? <><span className="spinner" />Registering...</>
-                      : isConnected ? "Register Agent →" : "Connect Wallet to Register"
+                      : !isConnected ? "Connect Wallet to Register"
+                      : !isAuthed ? "Authenticate Wallet to Register"
+                      : "Register Agent →"
                     }
                   </button>
 
@@ -845,7 +916,7 @@ export default function Home() {
           {!loadingAgents && (
             <div style={{
               display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
+              gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fill, minmax(300px, 1fr))",
               gap: 16, padding: "8px 0 80px",
             }}>
               {displayAgents.map((agent, i) => (
@@ -958,7 +1029,7 @@ export default function Home() {
 
           {/* two-col layout */}
           <div style={{
-            display: "grid", gridTemplateColumns: "1fr 360px",
+            display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 360px",
             gap: 24, padding: "32px 0 80px", alignItems: "start",
           }}>
 
@@ -1234,7 +1305,7 @@ export default function Home() {
               <div style={{ fontSize: 12, color: "var(--text3)", marginBottom: 24 }}>USDC is locked in escrow until task completion</div>
               <button
                 onClick={() => void authenticateWallet()}
-                disabled={!isConnected || authenticating}
+                disabled={!isConnected || authenticating || isAuthed}
                 style={{
                   width: "100%",
                   marginBottom: 12,
@@ -1243,8 +1314,8 @@ export default function Home() {
                   border: "1px solid var(--border)",
                   background: "var(--bg2)",
                   color: isAuthed ? "var(--green)" : "var(--gold)",
-                  cursor: !isConnected || authenticating ? "not-allowed" : "pointer",
-                  opacity: !isConnected || authenticating ? 0.65 : 1,
+                  cursor: !isConnected || authenticating || isAuthed ? "not-allowed" : "pointer",
+                  opacity: !isConnected || authenticating || isAuthed ? 0.65 : 1,
                   fontFamily: "'DM Mono', monospace",
                   fontSize: 11,
                 }}
@@ -1368,7 +1439,11 @@ export default function Home() {
       }}>
         <div style={{
           ...S.container,
-          display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8,
+          display: "flex",
+          justifyContent: isMobile ? "center" : "space-between",
+          alignItems: "center",
+          flexWrap: "wrap",
+          gap: 8,
         }}>
           <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--text3)" }}>@devajibola · AgentVault</span>
           <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--text3)" }}>ERC-8004 · Arc Testnet</span>

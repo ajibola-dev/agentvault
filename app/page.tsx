@@ -455,13 +455,7 @@ export default function Home() {
     { owner: "0x2b7d…e594", validator: "0xff6h…9j54", reputation: 85, createdAt: Date.now(), _demo: true, name: "Guardian",     emoji: "🛡️", tags: ["Security","Monitoring","Circle"], status: "active", tasks: 38 },
   ];
 
-  const displayTasks: Task[] = tasks.length > 0 ? tasks : [
-    { id: "demo-1", title: "Audit Uniswap V4 hook — reentrancy & flash loan vectors", description: "Thorough audit of a custom Uniswap V4 hook. Focus on reentrancy guards, flash loan attack surfaces, and access control patterns.", reward: "250", status: "open", minRep: 80,  ago: "2h ago"  },
-    { id: "demo-2", title: "Real-time token price feed — Arc + Ethereum bridge",       description: "Build and maintain a price feed agent syncing token prices between Arc Testnet and Ethereum mainnet. 20+ token pairs, sub-5s latency.",  reward: "120", status: "open", minRep: 60,  ago: "5h ago"  },
-    { id: "demo-3", title: "Governance proposal analysis — Aave V3",                   description: "Summarize and risk-assess 3 pending Aave governance proposals with parameter change impact and community sentiment analysis.",            reward: "80",  status: "open", minRep: 40,  ago: "1d ago"  },
-    { id: "demo-4", title: "ERC-8004 integration docs for external devs",              description: "Write comprehensive integration docs for ERC-8004 targeting developers building agent-based dApps. Solidity + TypeScript examples.",     reward: "150", status: "open", minRep: 50,  ago: "1d ago"  },
-    { id: "demo-5", title: "Cross-chain arbitrage opportunity scanner",                description: "Monitor price discrepancies across Arc, Base, and Arbitrum for 15 token pairs. Output structured opportunity data with ROI estimates.",   reward: "300", status: "open", minRep: 85,  ago: "3d ago"  },
-  ];
+  const displayTasks: Task[] = tasks;
 
   /* ════ RENDER ════════════════════════════════════════════════ */
   return (
@@ -1051,6 +1045,14 @@ export default function Home() {
 
             {/* tasks list */}
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+	    {displayTasks.length === 0 && (
+             <div style={{
+             padding: "60px 24px", textAlign: "center",
+            color: "var(--text3)", fontFamily: "'DM Mono', monospace", fontSize: 13,
+          }}>
+            No tasks yet. Be the first to post one.
+          </div>
+          )}
               {displayTasks.map((task, i) => {
                 const isCreator = Boolean(address && task.creatorAddress && task.creatorAddress.toLowerCase() === address.toLowerCase());
                 const isAgent = Boolean(address && task.agentAddress && task.agentAddress.toLowerCase() === address.toLowerCase());
@@ -1129,7 +1131,23 @@ export default function Home() {
                           fontSize: 10,
                           ...statusToneMap[task.status],
                         }}>{statusLabelMap[task.status]}</span>
-                        <span style={{ padding: "3px 8px", borderRadius: 4, fontFamily: "'DM Mono', monospace", fontSize: 10, color: "var(--gold-dim)", border: "1px solid var(--border)", background: "rgba(212,170,80,.04)" }}>⬡ Escrow locked</span>
+                        <span style={{
+  padding: "3px 8px", borderRadius: 4,
+  fontFamily: "'DM Mono', monospace", fontSize: 10,
+  color: (task as any).escrowFundingState === "submitted" ? "var(--green)"
+       : (task as any).escrowFundingState === "error" ? "var(--red)"
+       : "var(--gold-dim)",
+  border: (task as any).escrowFundingState === "submitted" ? "1px solid rgba(78,203,141,.25)"
+        : (task as any).escrowFundingState === "error" ? "1px solid rgba(232,84,84,.25)"
+        : "1px solid var(--border)",
+  background: (task as any).escrowFundingState === "submitted" ? "rgba(78,203,141,.05)"
+            : (task as any).escrowFundingState === "error" ? "rgba(232,84,84,.05)"
+            : "rgba(212,170,80,.04)",
+}}>
+  {(task as any).escrowFundingState === "submitted" ? "⬡ Funded"
+   : (task as any).escrowFundingState === "error" ? "⬡ Escrow error"
+   : "○ Escrow locked"}
+</span>
                         <span style={{ padding: "3px 8px", borderRadius: 4, fontFamily: "'DM Mono', monospace", fontSize: 10, color: "var(--blue)", border: "1px solid rgba(90,156,245,.25)", background: "rgba(90,156,245,.05)" }}>Rep ≥ {task.minRep ?? 50}</span>
                       </div>
                       <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: "var(--text3)" }}>{task.ago ?? "recently"}</span>

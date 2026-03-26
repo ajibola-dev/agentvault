@@ -67,6 +67,17 @@ function getErrorMessage(error: unknown): string {
   return error instanceof Error ? error.message : "Unknown error";
 }
 
+function toUserFacingError(message: string): string {
+  const normalized = message.toLowerCase();
+  if (
+    normalized.includes("self-signed certificate in certificate chain") ||
+    normalized.includes("unable to verify the first certificate")
+  ) {
+    return "Network TLS handshake issue detected. Retry in a few seconds. If it persists, re-check DATABASE_URL SSL settings on Vercel.";
+  }
+  return message;
+}
+
 /* ── inline styles as a plain object so nothing breaks without Tailwind ── */
 const S = {
   // layout
@@ -249,6 +260,11 @@ export default function Home() {
   }, [address, isConnected]);
 
   const authenticateWallet = async (): Promise<boolean> => {
+    if (isAuthed) {
+      setAuthStatus("Wallet authenticated");
+      return true;
+    }
+
     if (!isConnected || !address) {
       setAuthStatus("Connect wallet to authenticate");
       return false;
@@ -356,7 +372,7 @@ export default function Home() {
       setShowAssignModal(null);
       setAssignStatus("");
     } catch (err: unknown) {
-      setAssignStatus("Error: " + getErrorMessage(err));
+      setAssignStatus("Error: " + toUserFacingError(getErrorMessage(err)));
     }
     setAssigning(false);
   };
@@ -390,7 +406,7 @@ export default function Home() {
       setTasks((prev) => prev.map((t) => t.id === taskId ? data.task! : t));
       setAssignStatus("");
     } catch (err: unknown) {
-      setAssignStatus("Error: " + getErrorMessage(err));
+      setAssignStatus("Error: " + toUserFacingError(getErrorMessage(err)));
     }
     setAssigning(false);
   };
@@ -424,7 +440,7 @@ export default function Home() {
       setTaskStatus("Task posted successfully!");
       setTimeout(() => setTaskStatus(""), 3000);
     } catch (err: unknown) {
-      setTaskStatus("Error: " + getErrorMessage(err));
+      setTaskStatus("Error: " + toUserFacingError(getErrorMessage(err)));
     }
     setPostingTask(false);
   };

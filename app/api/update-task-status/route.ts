@@ -13,7 +13,7 @@ import { arc32Testnet } from "viem/chains";
 const REPUTATION_REGISTRY_ADDRESS = "0x8004B663056A597Dffe9eCcC1965A193B7388713";
 
 const arcClient = createPublicClient({
-  chain: arc32Testnet,
+  chain: arcTestnet,
   transport: http("https://arc-testnet.drpc.org"),
 });
 

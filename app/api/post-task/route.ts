@@ -1,7 +1,6 @@
-import { 
-  initiateDeveloperControlledWalletsClient,
-  generateEntitySecretCiphertext
-} from "@circle-fin/developer-controlled-wallets";
+// ~/agentvault-next/app/api/post-task/route.ts
+import { initiateDeveloperControlledWalletsClient, generateEntitySecretCiphertext } from "@circle-fin/developer-controlled-wallets";
+import { recordEscrowFunding } from "@/lib/task-repo";
 import { NextResponse } from "next/server";
 import type { Task } from "@/lib/task-store";
 import { getAuthenticatedAddress } from "@/lib/auth";
@@ -9,6 +8,8 @@ import { createTask, listTasks } from "@/lib/task-repo";
 import { getClientIp } from "@/lib/request-meta";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { logAuditEvent } from "@/lib/audit-log";
+
+const USDC_TOKEN_ID = process.env.CIRCLE_USDC_TOKEN_ID!;
 
 export const runtime = "nodejs";
 
@@ -18,39 +19,23 @@ type PostTaskRequest = {
   reward?: string;
   minRep?: number;
   agentId?: string | null;
+  walletId?: string;          // Circle wallet ID that owns the USDC
 };
 
-type CircleWallet = {
-  id?: string;
-  address?: string;
-};
-type CircleTransferResponse = {
-  data?: {
-    id?: string;
-  };
-};
+type CircleWallet = { id?: string; address?: string };
+type CircleTransferResponse = { data?: { id?: string } };
 
 function getErrorMessage(error: unknown): string {
-  if (error instanceof Error) {
-    return error.message;
-  }
-  if (typeof error === "object" && error !== null && "message" in error) {
-    const { message } = error as { message?: unknown };
-    if (typeof message === "string") {
-      return message;
-    }
-  }
-  return "Unknown error";
+  return error instanceof Error ? error.message : "Unknown error";
 }
-
 function getErrorCode(error: unknown): string | undefined {
-  if (typeof error === "object" && error !== null && "code" in error) {
+  if (typeof error === "object" && error !== null) {
     const { code } = error as { code?: unknown };
     return typeof code === "string" ? code : undefined;
   }
-
   return undefined;
 }
+
 export async function POST(req: Request) {
   const ip = getClientIp(req);
   const ipLimit = await checkRateLimit({
@@ -65,7 +50,7 @@ export async function POST(req: Request) {
       action: "post_task",
       ip,
       status: "rate_limited",
-      message: "Too many task creation requests",
+      message: "Too many requests. Please try again later.",
     });
     return NextResponse.json(
       { error: "Too many requests. Please try again later." },
@@ -83,8 +68,12 @@ export async function POST(req: Request) {
         status: "unauthorized",
         message: "Missing auth session",
       });
-      return NextResponse.json({ error: "Unauthorized: sign in with wallet first" }, { status: 401 });
+      return NextResponse.json(
+        { error: "Unauthorized: sign in with wallet first" },
+        { status: 401 }
+      );
     }
+
     const actorLimit = await checkRateLimit({
       endpoint: "tasks/post",
       key: `actor:${callerAddress.toLowerCase()}`,
@@ -98,7 +87,7 @@ export async function POST(req: Request) {
         actorAddress: callerAddress,
         ip,
         status: "rate_limited",
-        message: "Too many task creation requests for this wallet",
+        message: "Too many requests for this wallet",
       });
       return NextResponse.json(
         { error: "Too many requests. Please try again later." },
@@ -106,7 +95,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const { title, description, reward, minRep, agentId } = await req.json() as PostTaskRequest;
+    const { title, description, reward, minRep, agentId, walletId } = await req.json() as PostTaskRequest;
 
     if (!title || !description || !reward) {
       logAuditEvent({
@@ -133,64 +122,70 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Invalid reward amount" }, { status: 400 });
     }
 
-    const apiKey       = process.env.CIRCLE_API_KEY!;
+    const apiKey = process.env.CIRCLE_API_KEY!;
     const entitySecret = process.env.CIRCLE_ENTITY_SECRET!;
 
-    // Generate fresh ciphertext for this request
-    const ciphertext = await generateEntitySecretCiphertext({ apiKey, entitySecret });
+    await generateEntitySecretCiphertext({ apiKey, entitySecret });
 
-    const client = initiateDeveloperControlledWalletsClient({ apiKey, entitySecret });
+    const client = initiateDeveloperControlledWalletsClient({
+      apiKey,
+      entitySecret,
+    });
 
     const walletSet = await client.createWalletSet({
       name: `AV-Escrow-${title.slice(0, 30)}`,
     });
 
     const wallets = await client.createWallets({
-      blockchains:  ["ARC-TESTNET"],
-      count:        1,
-      walletSetId:  walletSet.data?.walletSet?.id ?? "",
-      accountType:  "SCA",
+      blockchains: ["ARC-TESTNET"],
+      count: 1,
+      walletSetId: walletSet.data?.walletSet?.id ?? "",
+      accountType: "SCA",
     });
 
-    const escrowWallet  = wallets.data?.wallets?.[0] as CircleWallet | undefined;
+    const escrowWallet = wallets.data?.wallets?.[0] as CircleWallet | undefined;
     const escrowAddress = escrowWallet?.address ?? null;
-    const escrowId      = escrowWallet?.id ?? null;
-    const sourceWalletId = process.env.ESCROW_SOURCE_WALLET_ID;
-    const usdcTokenId = process.env.CIRCLE_USDC_TOKEN_ID;
-    const enforceFunding = process.env.ESCROW_ENFORCE_FUNDING === "true";
+    const escrowId = escrowWallet?.id ?? null;
 
+    // ---------- USDC transfer to escrow ----------
     let escrowFundingTxId: string | null = null;
     let escrowFundingState: "not_configured" | "submitted" | "error" = "not_configured";
 
-    if (sourceWalletId && usdcTokenId && escrowAddress) {
+    if (walletId && USDC_TOKEN_ID && escrowAddress) {
       try {
-        const fundingTx = await client.createTransaction({
-          idempotencyKey: crypto.randomUUID(),
-          walletId: sourceWalletId,
-          tokenId: usdcTokenId,
+        const transferResult = await client.createTransferTransaction({
+          tokenId: USDC_TOKEN_ID,
+          walletId: walletId,
           destinationAddress: escrowAddress,
-          amount: [rewardNum.toString()],
-          fee: { type: "level", config: { feeLevel: "MEDIUM" } },
-        }) as CircleTransferResponse;
-        escrowFundingTxId = fundingTx.data?.id ?? null;
+          amounts: [BigInt(rewardNum)],
+        });
+
+        escrowFundingTxId = transferResult?.transaction?.id ?? null;
         escrowFundingState = "submitted";
-      } catch (fundingError) {
+        await recordEscrowFunding(escrowId, escrowFundingTxId, "submitted");
+      } catch (error) {
         escrowFundingState = "error";
-        if (enforceFunding) {
-          throw fundingError;
-        }
+        logAuditEvent({
+          endpoint: "tasks/post",
+          action: "transfer_error",
+          ip,
+          status: "error",
+          actorAddress: callerAddress,
+          message: getErrorMessage(error),
+        });
       }
     }
+    // ---------------------------------------------
 
     const task: Task = {
-      id:           crypto.randomUUID(),
+      id: crypto.randomUUID(),
       title,
       description,
-      reward:       rewardNum.toString(),
-      minRep:       minRep ?? 50,
+      reward: rewardNum.toString(),
+      minRep: minRep ?? 50,
       creatorAddress: callerAddress,
-      agentId:      agentId ?? null,
-      status:       "open",
+      agentId: agentId ?? null,
+      status: "open",
       escrowAddress,
       escrowId,
       escrowStatus: escrowAddress ? "wallet_created" : "pending",
@@ -198,11 +193,12 @@ export async function POST(req: Request) {
       escrowFundingState,
       escrowReleaseTxId: null,
       escrowReleaseState: "not_released",
-      ciphertext,
-      createdAt:    new Date().toISOString(),
+      ciphertext: "",
+      createdAt: new Date().toISOString(),
     };
 
     await createTask(task);
+
     logAuditEvent({
       endpoint: "tasks/post",
       action: "post_task",
@@ -211,8 +207,8 @@ export async function POST(req: Request) {
       status: "success",
       resourceId: task.id,
     });
-    return NextResponse.json({ task });
 
+    return NextResponse.json({ task });
   } catch (err: unknown) {
     logAuditEvent({
       endpoint: "tasks/post",
@@ -220,15 +216,15 @@ export async function POST(req: Request) {
       ip,
       status: "error",
       message: getErrorMessage(err),
-      metadata: { code: getErrorCode(err) },
     });
-    return NextResponse.json({
-      error: getErrorMessage(err),
-      code:  getErrorCode(err),
-    }, { status: 500 });
+    return NextResponse.json(
+      { error: getErrorMessage(err), code: getErrorCode(err) },
+      { status: 500 }
+    );
   }
 }
 
 export async function GET() {
   return NextResponse.json({ tasks: await listTasks() });
 }
+

@@ -1,26 +1,27 @@
+// ~/agentvault-next/app/api/update-task-status/route.ts
 import { NextResponse } from "next/server";
-import {
-  generateEntitySecretCiphertext,
-  initiateDeveloperControlledWalletsClient,
-} from "@circle-fin/developer-controlled-wallets";
-import { getAuthenticatedAddress, sameAddress } from "@/lib/auth";
-import { getTaskById, recordEscrowRelease, updateTaskStatus } from "@/lib/task-repo";
 import type { Task } from "@/lib/task-store";
+import { getAuthenticatedAddress, sameAddress } from "@/lib/auth";
+import { getTaskById, updateTaskStatus, recordEscrowRelease } from "@/lib/task-repo";
 import { getClientIp } from "@/lib/request-meta";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { logAuditEvent } from "@/lib/audit-log";
+import { initiateDeveloperControlledWalletsClient, generateEntitySecretCiphertext } from "@circle-fin/developer-controlled-wallets";
+import { createPublicClient, http } from "viem";
+import { arc32Testnet } from "viem/chains";
+
+const REPUTATION_REGISTRY_ADDRESS = "0x8004B663056A597Dffe9eCcC1965A193B7388713";
+
+const arcClient = createPublicClient({
+  chain: arc32Testnet,
+  transport: http("https://arc-testnet.drpc.org"),
+});
 
 export const runtime = "nodejs";
 
 type UpdateTaskStatusRequest = {
   taskId?: string;
   status?: Task["status"];
-};
-
-type CircleTransferResponse = {
-  data?: {
-    id?: string;
-  };
 };
 
 function getErrorMessage(error: unknown): string {
@@ -31,22 +32,17 @@ function isAssignedAgent(task: Task, callerAddress: string): boolean {
   return Boolean(task.agentAddress && sameAddress(task.agentAddress, callerAddress));
 }
 
-function canTransition(task: Task, nextStatus: Task["status"], callerAddress: string): boolean {
+function canTransition(
+  task: Task,
+  nextStatus: Task["status"],
+  callerAddress: string
+): boolean {
   const isCreator = sameAddress(task.creatorAddress, callerAddress);
   const isAgent = isAssignedAgent(task, callerAddress);
 
-  if (task.status === "assigned" && nextStatus === "in_progress") {
-    return isAgent;
-  }
-
-  if (task.status === "in_progress" && nextStatus === "completed") {
-    return isAgent;
-  }
-
-  if (task.status === "completed" && nextStatus === "paid") {
-    return isCreator;
-  }
-
+  if (task.status === "assigned" && nextStatus === "in_progress") return isAgent;
+  if (task.status === "in_progress" && nextStatus === "completed") return isAgent;
+  if (task.status === "completed" && nextStatus === "paid") return isCreator;
   return false;
 }
 
@@ -58,6 +54,7 @@ export async function POST(req: Request) {
     max: 40,
     windowMs: 60_000,
   });
+
   if (!ipLimit.allowed) {
     logAuditEvent({
       endpoint: "tasks/update-status",
@@ -82,8 +79,12 @@ export async function POST(req: Request) {
         status: "unauthorized",
         message: "Missing auth session",
       });
-      return NextResponse.json({ error: "Unauthorized: sign in with wallet first" }, { status: 401 });
+      return NextResponse.json(
+        { error: "Unauthorized: sign in with wallet first" },
+        { status: 401 }
+      );
     }
+
     const actorLimit = await checkRateLimit({
       endpoint: "tasks/update-status",
       key: `actor:${callerAddress.toLowerCase()}`,
@@ -156,76 +157,97 @@ export async function POST(req: Request) {
         resourceId: taskId,
         message: "Invalid transition for caller",
       });
-      return NextResponse.json({ error: "Forbidden: invalid transition for caller" }, { status: 403 });
+      return NextResponse.json(
+        { error: "Forbidden: invalid transition for caller" },
+        { status: 403 }
+      );
     }
 
+    // ------- Handle 'paid' transition -------
     if (status === "paid") {
       const usdcTokenId = process.env.CIRCLE_USDC_TOKEN_ID;
-      if (!usdcTokenId) {
+      if (!usdcTokenId || !task.agentAddress || !task.escrowId) {
         await recordEscrowRelease({
           id: task.id,
           releaseTxId: null,
           releaseState: "not_configured",
         });
       } else {
-        if (!task.agentAddress || !task.escrowId) {
-          logAuditEvent({
-            endpoint: "tasks/update-status",
-            action: "update_task_status",
-            actorAddress: callerAddress,
-            ip,
-            status: "validation_error",
-            resourceId: taskId,
-            message: "Missing escrow wallet or assignee address for payout",
-          });
-          return NextResponse.json(
-            { error: "Missing escrow wallet or assignee address for payout" },
-            { status: 400 }
-          );
-        }
-
         try {
           const apiKey = process.env.CIRCLE_API_KEY!;
           const entitySecret = process.env.CIRCLE_ENTITY_SECRET!;
           await generateEntitySecretCiphertext({ apiKey, entitySecret });
+
           const circleClient = initiateDeveloperControlledWalletsClient({
             apiKey,
             entitySecret,
           });
 
-          const payoutTx = await circleClient.createTransaction({
+          const payoutTxRes = await circleClient.createTransaction({
             idempotencyKey: crypto.randomUUID(),
             walletId: task.escrowId,
             tokenId: usdcTokenId,
             destinationAddress: task.agentAddress,
             amount: [task.reward],
             fee: { type: "level", config: { feeLevel: "MEDIUM" } },
-          }) as CircleTransferResponse;
+          });
+
+          const payoutTx = payoutTxRes as unknown as { data?: { id?: string } };
 
           await recordEscrowRelease({
             id: task.id,
             releaseTxId: payoutTx.data?.id ?? null,
             releaseState: "submitted",
           });
-        } catch (payoutError) {
+
+          // ---- Reputation bump ----
+          const currentRepRaw = await arcClient.readContract({
+            address: REPUTATION_REGISTRY_ADDRESS,
+            abi: [
+              {
+                name: "getReputation",
+                inputs: [{ name: "addr", type: "address" }],
+                outputs: [{ name: "", type: "uint256" }],
+                type: "function",
+                stateMutability: "view",
+              },
+            ],
+            functionName: "getReputation",
+            args: [task.agentAddress],
+          });
+
+          const currentRep = Number(currentRepRaw);
+          const newScore = currentRep + 1;
+
+          await circleClient.createContractExecutionTransaction({
+            contractAddress: REPUTATION_REGISTRY_ADDRESS,
+            abiFunctionSignature: "recordReputation(address,uint256,string)",
+            abiParameters: [task.agentAddress, BigInt(newScore), "task_completed"],
+          });
+        } catch (error) {
           await recordEscrowRelease({
             id: task.id,
             releaseTxId: null,
             releaseState: "error",
           });
+
           logAuditEvent({
             endpoint: "tasks/update-status",
             action: "update_task_status",
             actorAddress: callerAddress,
             ip,
             status: "error",
-            resourceId: taskId,
-            message: `Escrow payout failed: ${getErrorMessage(payoutError)}`,
+            message: `Escrow payout failed: ${getErrorMessage(error)}`,
           });
-          return NextResponse.json({ error: `Escrow payout failed: ${getErrorMessage(payoutError)}` }, { status: 502 });
+
+          return NextResponse.json(
+            { error: `Escrow payout failed: ${getErrorMessage(error)}` },
+            { status: 502 }
+          );
         }
       }
     }
+    // ---------------------------------
 
     const updated = await updateTaskStatus(task.id, status);
     if (!updated) {
@@ -240,6 +262,7 @@ export async function POST(req: Request) {
       });
       return NextResponse.json({ error: "Task not found" }, { status: 404 });
     }
+
     logAuditEvent({
       endpoint: "tasks/update-status",
       action: "update_task_status",
@@ -262,3 +285,4 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Failed to update task status" }, { status: 500 });
   }
 }
+

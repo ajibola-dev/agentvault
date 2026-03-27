@@ -2,6 +2,15 @@ import {
   generateEntitySecretCiphertext,
   initiateDeveloperControlledWalletsClient,
 } from "@circle-fin/developer-controlled-wallets";
+import { supabase } from '@/lib/supabase';
+
+// Payload sent from the UI
+type RegisterAgentRequest = {
+  name?: string;          // agent display name
+  tags?: string[];        // comma‑separated tags
+  emoji?: string;         // emoji string
+  walletId?: string;       // Circle wallet ID that owns the agent’s funds
+};
 import { NextResponse } from "next/server";
 import { getAuthenticatedAddress } from "@/lib/auth";
 import { getClientIp } from "@/lib/request-meta";
@@ -43,6 +52,7 @@ export async function POST(req: Request) {
   }
 
   try {
+    const requestBody = await req.json() as RegisterAgentRequest;
     const callerAddress = await getAuthenticatedAddress(req);
     if (!callerAddress) {
       logAuditEvent({
@@ -117,6 +127,22 @@ export async function POST(req: Request) {
       abiParameters:        [ownerAddress!, "1", "initial_registration"],
       fee: { type: "level", config: { feeLevel: "MEDIUM" } },
     });
+    // Persist metadata in Supabase
+const agentId = walletSet.data?.walletSet?.id ?? "";
+const walletAddress = ownerAddress ?? "";
+
+await supabase
+  .from('agents')
+  .insert({
+    id: agentId,
+    wallet_address: walletAddress,
+    name: requestBody.name ?? null,
+    tags: requestBody.tags ?? [],
+    emoji: requestBody.emoji ?? null,
+    reputation: 1,
+    created_at: new Date().toISOString(),
+  })
+  .single();
     logAuditEvent({
       endpoint: "agents/register",
       action: "register_agent",

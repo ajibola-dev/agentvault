@@ -29,6 +29,9 @@ type Task = {
   ago?: string;
   agentId?: string | null;
   agentAddress?: string | null;
+  escrowAddress?: string | null;
+  escrowFundingState?: "not_configured" | "submitted" | "error";
+  escrowReleaseState?: "not_released" | "submitted" | "error" | "not_configured";
 };
 
 type TaskFormState = {
@@ -1134,18 +1137,18 @@ export default function Home() {
                         <span style={{
   padding: "3px 8px", borderRadius: 4,
   fontFamily: "'DM Mono', monospace", fontSize: 10,
-  color: (task as any).escrowFundingState === "submitted" ? "var(--green)"
-       : (task as any).escrowFundingState === "error" ? "var(--red)"
+  color: task.escrowFundingState === "submitted" ? "var(--green)"
+       : task.escrowFundingState === "error" ? "var(--red)"
        : "var(--gold-dim)",
-  border: (task as any).escrowFundingState === "submitted" ? "1px solid rgba(78,203,141,.25)"
-        : (task as any).escrowFundingState === "error" ? "1px solid rgba(232,84,84,.25)"
+  border: task.escrowFundingState === "submitted" ? "1px solid rgba(78,203,141,.25)"
+        : task.escrowFundingState === "error" ? "1px solid rgba(232,84,84,.25)"
         : "1px solid var(--border)",
-  background: (task as any).escrowFundingState === "submitted" ? "rgba(78,203,141,.05)"
-            : (task as any).escrowFundingState === "error" ? "rgba(232,84,84,.05)"
+  background: task.escrowFundingState === "submitted" ? "rgba(78,203,141,.05)"
+            : task.escrowFundingState === "error" ? "rgba(232,84,84,.05)"
             : "rgba(212,170,80,.04)",
 }}>
-  {(task as any).escrowFundingState === "submitted" ? "⬡ Funded"
-   : (task as any).escrowFundingState === "error" ? "⬡ Escrow error"
+  {task.escrowFundingState === "submitted" ? "⬡ Funded"
+   : task.escrowFundingState === "error" ? "⬡ Escrow error"
    : "○ Escrow locked"}
 </span>
                         <span style={{ padding: "3px 8px", borderRadius: 4, fontFamily: "'DM Mono', monospace", fontSize: 10, color: "var(--blue)", border: "1px solid rgba(90,156,245,.25)", background: "rgba(90,156,245,.05)" }}>Rep ≥ {task.minRep ?? 50}</span>

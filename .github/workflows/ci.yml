@@ -1,0 +1,43 @@
+name: CI
+on:
+  push:
+    branches:
+      - main
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      CIRCLE_API_KEY: ${{ secrets.CIRCLE_API_KEY }}
+      CIRCLE_ENTITY_SECRET: ${{ secrets.CIRCLE_ENTITY_SECRET }}
+name: CI
+on:
+  push:
+    branches:
+      - main
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      CIRCLE_API_KEY: ${{ secrets.CIRCLE_API_KEY }}
+      CIRCLE_ENTITY_SECRET: ${{ secrets.CIRCLE_ENTITY_SECRET }}
+

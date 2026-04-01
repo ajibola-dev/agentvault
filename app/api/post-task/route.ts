@@ -155,7 +155,7 @@ let escrowFundingState: "not_configured" | "submitted" | "error" = "not_configur
 if (walletId && USDC_TOKEN_ID && escrowAddress) {
   try {
     const transferResult = await client.createTransaction({
-      walletId: walletId,
+      walletId: CIRCLE_PLATFORM_WALLET_ID,
       tokenId: USDC_TOKEN_ID,
       destinationAddress: escrowAddress,
       amount: [rewardNum.toString()],

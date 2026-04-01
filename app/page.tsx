@@ -434,7 +434,7 @@ export default function Home() {
       const res  = await fetch("/api/post-task", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(taskForm),
+        body: JSON.stringify({ ...taskForm, walletId: address }),
       });
       const data = await res.json() as { error?: string; task: Task };
       if (data.error) throw new Error(data.error);

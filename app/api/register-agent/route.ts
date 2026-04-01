@@ -2,7 +2,7 @@ import {
   generateEntitySecretCiphertext,
   initiateDeveloperControlledWalletsClient,
 } from "@circle-fin/developer-controlled-wallets";
-import { supabase } from '@/lib/supabase';
+import { getSupabaseServerClient } from '@/lib/supabase';
 
 // Payload sent from the UI
 type RegisterAgentRequest = {
@@ -131,8 +131,10 @@ export async function POST(req: Request) {
 const agentId = walletSet.data?.walletSet?.id ?? "";
 const walletAddress = ownerAddress ?? "";
 
-await supabase
-  .from('agents')
+const supabase = getSupabaseServerClient();
+
+const { error: insertError } = await supabase
+  .from("agents")
   .insert({
     id: agentId,
     wallet_address: walletAddress,
@@ -141,8 +143,11 @@ await supabase
     emoji: requestBody.emoji ?? null,
     reputation: 1,
     created_at: new Date().toISOString(),
-  })
-  .single();
+  });
+
+if (insertError) {
+  throw new Error(`Supabase insert failed: ${insertError.message}`);
+}
     logAuditEvent({
       endpoint: "agents/register",
       action: "register_agent",

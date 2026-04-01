@@ -146,39 +146,52 @@ export async function POST(req: Request) {
     const escrowWallet = wallets.data?.wallets?.[0] as CircleWallet | undefined;
     const escrowAddress = escrowWallet?.address ?? null;
     const escrowId = escrowWallet?.id ?? null;
+    const taskId = crypto.randomUUID();
 
     // ---------- USDC transfer to escrow ----------
-    let escrowFundingTxId: string | null = null;
-    let escrowFundingState: "not_configured" | "submitted" | "error" = "not_configured";
+let escrowFundingTxId: string | null = null;
+let escrowFundingState: "not_configured" | "submitted" | "error" = "not_configured";
 
-    if (walletId && USDC_TOKEN_ID && escrowAddress) {
-      try {
-        const transferResult = await client.createTransferTransaction({
-          tokenId: USDC_TOKEN_ID,
-          walletId: walletId,
-          destinationAddress: escrowAddress,
-          amounts: [BigInt(rewardNum)],
-        });
+if (walletId && USDC_TOKEN_ID && escrowAddress) {
+  try {
+    const transferResult = await client.createTransaction({
+      walletId: walletId,
+      tokenId: USDC_TOKEN_ID,
+      destinationAddress: escrowAddress,
+      amount: [rewardNum.toString()],
+      fee: {
+        type: "level",
+        config: {
+          feeLevel: "MEDIUM",
+        },
+      },
+      idempotencyKey: crypto.randomUUID(),
+    });
 
-        escrowFundingTxId = transferResult?.transaction?.id ?? null;
-        escrowFundingState = "submitted";
-        await recordEscrowFunding(escrowId, escrowFundingTxId, "submitted");
-      } catch (error) {
-        escrowFundingState = "error";
-        logAuditEvent({
-          endpoint: "tasks/post",
-          action: "transfer_error",
-          ip,
-          status: "error",
-          actorAddress: callerAddress,
-          message: getErrorMessage(error),
-        });
-      }
-    }
-    // ---------------------------------------------
+    escrowFundingTxId = transferResult.data?.id ?? null;
+    escrowFundingState = "submitted";
+
+    await recordEscrowFunding({
+      id: taskId,
+      fundingTxId: escrowFundingTxId,
+      fundingState: "submitted",
+    });
+  } catch (error) {
+    escrowFundingState = "error";
+    logAuditEvent({
+      endpoint: "tasks/post",
+      action: "transfer_error",
+      ip,
+      status: "error",
+      actorAddress: callerAddress,
+      message: getErrorMessage(error),
+    });
+  }
+}
+// ---------------------------------------------
 
     const task: Task = {
-      id: crypto.randomUUID(),
+      id: taskId,
       title,
       description,
       reward: rewardNum.toString(),

@@ -14,9 +14,11 @@ export const arcTestnet = defineChain({
   testnet: true,
 });
 
-export const config = getDefaultConfig({
-  appName: "AgentVault",
-  projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID!,
-  chains: [arcTestnet],
-  ssr: true,
-});
+export function getWagmiConfig() {
+  return getDefaultConfig({
+    appName: "AgentVault",
+    projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID!,
+    chains: [arcTestnet],
+    ssr: false,
+  });
+}

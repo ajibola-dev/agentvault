@@ -1,6 +1,22 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
-const supabaseUrl = process.env.SUPABASE_URL!;
-const supabaseAnonKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;   // use service‑role key for writes
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+let supabaseInstance: SupabaseClient | null = null;
 
+export function getSupabaseServerClient(): SupabaseClient {
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!supabaseUrl) {
+    throw new Error("Missing SUPABASE_URL");
+  }
+
+  if (!supabaseServiceRoleKey) {
+    throw new Error("Missing SUPABASE_SERVICE_ROLE_KEY");
+  }
+
+  if (!supabaseInstance) {
+    supabaseInstance = createClient(supabaseUrl, supabaseServiceRoleKey);
+  }
+
+  return supabaseInstance;
+}

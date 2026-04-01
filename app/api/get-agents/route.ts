@@ -1,10 +1,9 @@
-import { initiateDeveloperControlledWalletsClient, generateEntitySecretCiphertext } from "@circle-fin/developer-controlled-wallets";
 import { NextResponse } from "next/server";
 import { createPublicClient, http } from "viem";
+import { getSupabaseServerClient } from "@/lib/supabase";
 
 const REPUTATION_REGISTRY = "0x8004B663056A597Dffe9eCcC1965A193B7388713";
 
-// Arc Testnet chain definition
 const arcTestnet = {
   id: 5042002,
   name: "Arc Testnet",
@@ -22,38 +21,7 @@ const reputationAbi = [
     inputs: [{ name: "agent", type: "address" }],
     outputs: [{ name: "", type: "uint256" }],
   },
-  {
-    name: "reputation",
-    type: "function",
-    stateMutability: "view",
-    inputs: [{ name: "", type: "address" }],
-    outputs: [{ name: "", type: "uint256" }],
-  },
 ] as const;
-
-type CircleWalletSet = {
-  id: string;
-  name?: string;
-  createDate?: string;
-};
-
-type CircleWallet = {
-  address?: string;
-};
-
-type Agent = {
-  id: string;
-  name?: string;
-  owner?: string;
-  validator?: string;
-  reputation: number;
-  createdAt?: string;
-  status: "active";
-};
-
-function getErrorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : "Unknown error";
-}
 
 async function getReputationScore(address: string): Promise<number> {
   try {
@@ -61,68 +29,47 @@ async function getReputationScore(address: string): Promise<number> {
       chain: arcTestnet,
       transport: http(),
     });
-
-    // Try getReputation first, fall back to reputation mapping
-    try {
-      const score = await client.readContract({
-        address: REPUTATION_REGISTRY as `0x${string}`,
-        abi: reputationAbi,
-        functionName: "getReputation",
-        args: [address as `0x${string}`],
-      });
-      return Number(score);
-    } catch {
-      const score = await client.readContract({
-        address: REPUTATION_REGISTRY as `0x${string}`,
-        abi: reputationAbi,
-        functionName: "reputation",
-        args: [address as `0x${string}`],
-      });
-      return Number(score);
-    }
+    const score = await client.readContract({
+      address: REPUTATION_REGISTRY as `0x${string}`,
+      abi: reputationAbi,
+      functionName: "getReputation",
+      args: [address as `0x${string}`],
+    });
+    return Number(score);
   } catch {
-    return 1; // fallback
+    return 1;
   }
+}
+
+function getErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : "Unknown error";
 }
 
 export async function GET() {
   try {
-    const apiKey       = process.env.CIRCLE_API_KEY!;
-    const entitySecret = process.env.CIRCLE_ENTITY_SECRET!;
+    const supabase = getSupabaseServerClient();
 
-    await generateEntitySecretCiphertext({ apiKey, entitySecret });
+    const { data: agents, error } = await supabase
+      .from("agents")
+      .select("id, wallet_address, name, tags, emoji, reputation, created_at")
+      .order("reputation", { ascending: false });
 
-    const client = initiateDeveloperControlledWalletsClient({ apiKey, entitySecret });
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
 
-    const walletSets = await client.listWalletSets({});
-    const allWalletSets = (walletSets.data?.walletSets as CircleWalletSet[] | undefined) ?? [];
-    const agentSets = allWalletSets.filter((ws) =>
-      ws.name?.includes("AgentVault") && !ws.name?.includes("Escrow")
-    );
-
-    const agents: Agent[] = await Promise.all(
-      agentSets.map(async (ws) => {
-        const wallets   = await client.listWallets({ walletSetId: ws.id });
-        const owner     = wallets.data?.wallets?.[0] as CircleWallet | undefined;
-        const validator = wallets.data?.wallets?.[1] as CircleWallet | undefined;
-
-        const reputation = owner?.address
-          ? await getReputationScore(owner.address)
-          : 1;
-
+    // Enrich with live onchain reputation
+    const enriched = await Promise.all(
+      (agents ?? []).map(async (agent) => {
+        const onchainRep = await getReputationScore(agent.wallet_address);
         return {
-          id:         ws.id,
-          name:       ws.name,
-          owner:      owner?.address,
-          validator:  validator?.address,
-          reputation,
-          createdAt:  ws.createDate,
-          status:     "active",
+          ...agent,
+          reputation: onchainRep,
         };
       })
     );
 
-    return NextResponse.json({ agents });
+    return NextResponse.json({ agents: enriched });
   } catch (err: unknown) {
     return NextResponse.json({ error: getErrorMessage(err) }, { status: 500 });
   }

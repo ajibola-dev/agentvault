@@ -331,7 +331,7 @@ export default function Home() {
     setRegistering(true);
     setRegStatus("Registering agent onchain...");
     try {
-      const res  = await fetch("/api/register-agent", { method: "POST" });
+      const res  = await fetch("/api/register-agent", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: "Agent", tags: [], emoji: "🤖" }) });
       const data = await res.json() as WalletRegistration & { error?: string };
       if (data.error) throw new Error(data.error);
       setWallets(data);

@@ -10,6 +10,7 @@ import { checkRateLimit } from "@/lib/rate-limit";
 import { logAuditEvent } from "@/lib/audit-log";
 
 const USDC_TOKEN_ID = process.env.CIRCLE_USDC_TOKEN_ID!;
+const CIRCLE_PLATFORM_WALLET_ID = process.env.CIRCLE_PLATFORM_WALLET_ID ?? "";
 
 export const runtime = "nodejs";
 

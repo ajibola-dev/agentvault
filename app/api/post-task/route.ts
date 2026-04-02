@@ -154,7 +154,7 @@ export async function POST(req: Request) {
 let escrowFundingTxId: string | null = null;
 let escrowFundingState: "not_configured" | "submitted" | "error" = "not_configured";
 
-if (CIRCLE_PLATFORM_WALLET_ADDRESS if (walletId && USDC_TOKEN_ID && escrowAddress)if (walletId && USDC_TOKEN_ID && escrowAddress) USDC_TOKEN_ID if (walletId && USDC_TOKEN_ID && escrowAddress)if (walletId && USDC_TOKEN_ID && escrowAddress) escrowAddress) {
+if (CIRCLE_PLATFORM_WALLET_ADDRESS && USDC_TOKEN_ID && escrowAddress) USDC_TOKEN_ID if (walletId && USDC_TOKEN_ID && escrowAddress)if (walletId && USDC_TOKEN_ID && escrowAddress) escrowAddress) {
   try {
     const transferResult = await client.createTransaction({
   walletAddress: process.env.CIRCLE_PLATFORM_WALLET_ADDRESS!,

@@ -11,6 +11,7 @@ import { logAuditEvent } from "@/lib/audit-log";
 
 const USDC_TOKEN_ID = process.env.CIRCLE_USDC_TOKEN_ID!;
 const CIRCLE_PLATFORM_WALLET_ID = process.env.CIRCLE_PLATFORM_WALLET_ID ?? "";
+const CIRCLE_PLATFORM_WALLET_ADDRESS = process.env.CIRCLE_PLATFORM_WALLET_ADDRESS ?? "";
 
 export const runtime = "nodejs";
 
@@ -153,7 +154,7 @@ export async function POST(req: Request) {
 let escrowFundingTxId: string | null = null;
 let escrowFundingState: "not_configured" | "submitted" | "error" = "not_configured";
 
-if (walletId && USDC_TOKEN_ID && escrowAddress) {
+if (CIRCLE_PLATFORM_WALLET_ADDRESS if (walletId && USDC_TOKEN_ID && escrowAddress)if (walletId && USDC_TOKEN_ID && escrowAddress) USDC_TOKEN_ID if (walletId && USDC_TOKEN_ID && escrowAddress)if (walletId && USDC_TOKEN_ID && escrowAddress) escrowAddress) {
   try {
     const transferResult = await client.createTransaction({
   walletAddress: process.env.CIRCLE_PLATFORM_WALLET_ADDRESS!,

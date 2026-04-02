@@ -156,18 +156,19 @@ let escrowFundingState: "not_configured" | "submitted" | "error" = "not_configur
 if (walletId && USDC_TOKEN_ID && escrowAddress) {
   try {
     const transferResult = await client.createTransaction({
-      walletId: CIRCLE_PLATFORM_WALLET_ID,
-      tokenId: USDC_TOKEN_ID,
-      destinationAddress: escrowAddress,
-      amount: [rewardNum.toString()],
-      fee: {
-        type: "level",
-        config: {
-          feeLevel: "MEDIUM",
-        },
-      },
-      idempotencyKey: crypto.randomUUID(),
-    });
+  walletAddress: process.env.CIRCLE_PLATFORM_WALLET_ADDRESS!,
+  tokenAddress: "0x3600000000000000000000000000000000000000",
+  blockchain: "ARC-TESTNET",
+  destinationAddress: escrowAddress,
+  amount: [rewardNum.toString()],
+  fee: {
+    type: "level",
+    config: {
+      feeLevel: "MEDIUM",
+    },
+  },
+  idempotencyKey: crypto.randomUUID(),
+});
 
     escrowFundingTxId = transferResult.data?.id ?? null;
     escrowFundingState = "submitted";

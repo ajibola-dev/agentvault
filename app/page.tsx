@@ -32,6 +32,7 @@ type Task = {
   escrowAddress?: string | null;
   escrowFundingState?: "not_configured" | "submitted" | "error";
   escrowReleaseState?: "not_released" | "submitted" | "error" | "not_configured";
+  _isPending?: boolean; // Optimistic update indicator
 };
 
 type TaskFormState = {
@@ -342,77 +343,150 @@ export default function Home() {
     setRegistering(false);
   };
 
-  const handleAssign = async (taskId: string, agentId: string, agentAddress: string) => {
-    if (!isConnected || !address) {
-      setAssignStatus("Connect wallet to assign");
+  const handleStatusUpdate = async (taskId: string, status: Task["status"]) => {
+  if (!isConnected || !address) {
+    setAssignStatus("Connect wallet to update task status");
+    return;
+  }
+  if (!isAuthed) {
+    const ok = await authenticateWallet();
+    if (!ok) {
+      setAssignStatus("Authentication required before status update");
       return;
     }
-    if (!isAuthed) {
-      const ok = await authenticateWallet();
-      if (!ok) {
-        setAssignStatus("Authentication required before assigning");
-        return;
-      }
+  }
+  
+  setAssigning(true);
+  setAssignStatus("Updating task status...");
+  
+  // Store previous state for rollback
+  const previousTasks = tasks;
+  
+  try {
+    // Optimistic update with pending indicator
+    setTasks((prev) => 
+      prev.map((t) => t.id === taskId 
+        ? { ...t, status, _isPending: true } 
+        : t
+      )
+    );
+    
+    const res = await fetch("/api/update-task-status", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ taskId, status }),
+    });
+    
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}: ${res.statusText}`);
     }
+    
+    const data = await res.json() as { error?: string; task?: Task };
+    
+    if (data.error) {
+      throw new Error(data.error);
+    }
+    
+    if (!data.task) {
+      throw new Error("No task data returned from server");
+    }
+    
+    // Confirm update - remove pending state
+    setTasks((prev) => 
+      prev.map((t) => t.id === taskId 
+        ? { ...data.task!, _isPending: false } 
+        : t
+      )
+    );
+    
+    setAssignStatus("Status updated successfully");
+    
+    setTimeout(() => {
+      setAssignStatus("");
+    }, 2000);
+    
+  } catch (err: unknown) {
+    // Rollback optimistic update
+    setTasks(previousTasks);
+    const errorMsg = toUserFacingError(getErrorMessage(err));
+    setAssignStatus(`Failed to update: ${errorMsg}`);
+    
+    // Keep error visible longer for rollback clarity
+    setTimeout(() => {
+      setAssignStatus("");
+    }, 4000);
+  } finally {
+    setAssigning(false);
+  }
+};
 
-    setAssigning(true);
-    setAssignStatus("Assigning agent...");
-    try {
-      if (taskId.startsWith("demo-")) {
+// Updated handleAssign with pending state (optional but recommended)
+const handleAssign = async (taskId: string, agentId: string, agentAddress: string) => {
+  if (!isConnected || !address) {
+    setAssignStatus("Connect wallet to assign");
+    return;
+  }
+  if (!isAuthed) {
+    const ok = await authenticateWallet();
+    if (!ok) {
+      setAssignStatus("Authentication required before assigning");
+      return;
+    }
+  }
+  
+  setAssigning(true);
+  setAssignStatus("Assigning agent...");
+  
+  try {
+    // Handle demo tasks
+    if (taskId.startsWith("demo-")) {
+      setAssignStatus("Demo tasks cannot be assigned");
+      setTimeout(() => {
         setShowAssignModal(null);
         setAssignStatus("");
-        setAssigning(false);
-        return;
-      }
-      const res  = await fetch("/api/assign-task", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ taskId, agentId, agentAddress }),
-      });
-      const data = await res.json() as { error?: string; task: Task };
-      if (data.error) throw new Error(data.error);
-      setTasks((prev) => prev.map((t) => t.id === taskId ? data.task : t));
-      setShowAssignModal(null);
-      setAssignStatus("");
-    } catch (err: unknown) {
-      setAssignStatus("Error: " + toUserFacingError(getErrorMessage(err)));
-    }
-    setAssigning(false);
-  };
-
-  const handleStatusUpdate = async (taskId: string, status: Task["status"]) => {
-    if (!isConnected || !address) {
-      setAssignStatus("Connect wallet to update task status");
+      }, 2000);
       return;
     }
-    if (!isAuthed) {
-      const ok = await authenticateWallet();
-      if (!ok) {
-        setAssignStatus("Authentication required before status update");
-        return;
-      }
+    
+    // Make API request
+    const res = await fetch("/api/assign-task", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ taskId, agentId, agentAddress }),
+    });
+    
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}: ${res.statusText}`);
     }
-
-    setAssigning(true);
-    setAssignStatus("Updating task status...");
-    try {
-      const res = await fetch("/api/update-task-status", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ taskId, status }),
-      });
-      const data = await res.json() as { error?: string; task?: Task };
-      if (!res.ok || data.error || !data.task) {
-        throw new Error(data.error ?? "Failed to update task status");
-      }
-
-      setTasks((prev) => prev.map((t) => t.id === taskId ? data.task! : t));
+    
+    const data = await res.json() as { error?: string; task?: Task };
+    
+    if (data.error) {
+      throw new Error(data.error);
+    }
+    
+    if (!data.task) {
+      throw new Error("No task data returned from server");
+    }
+    
+    // Update local state
+    setTasks((prev) => prev.map((t) => t.id === taskId ? data.task! : t));
+    setAssignStatus("Agent assigned successfully");
+    
+    // Close modal after brief success message
+    setTimeout(() => {
+      setShowAssignModal(null);
       setAssignStatus("");
-    } catch (err: unknown) {
-      setAssignStatus("Error: " + toUserFacingError(getErrorMessage(err)));
-    }
+    }, 1500);
+    
+  } catch (err: unknown) {
+    const errorMsg = toUserFacingError(getErrorMessage(err));
+    setAssignStatus(`Error: ${errorMsg}`);
+    // Keep modal open on error so user can retry
+  } finally {
     setAssigning(false);
-  };
+  }
+};
 
   const handlePostTask = async () => {
     if (!isConnected) {
@@ -1132,8 +1206,13 @@ export default function Home() {
                           borderRadius: 4,
                           fontFamily: "'DM Mono', monospace",
                           fontSize: 10,
+                          opacity: task._isPending ? 0.5 : 1,
+                          transition: "opacity 200ms ease",
                           ...statusToneMap[task.status],
-                        }}>{statusLabelMap[task.status]}</span>
+                        }}>
+                          {statusLabelMap[task.status]}
+                          {task._isPending && " ⋯"}
+                        </span>
                         <span style={{
   padding: "3px 8px", borderRadius: 4,
   fontFamily: "'DM Mono', monospace", fontSize: 10,

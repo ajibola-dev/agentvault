@@ -208,8 +208,9 @@ export async function POST(req: Request) {
 
           const payoutTxRes = await circleClient.createTransaction({
             idempotencyKey: crypto.randomUUID(),
-            walletId: task.escrowId,
-            tokenId: usdcTokenId,
+            walletAddress: process.env.CIRCLE_PLATFORM_WALLET_ADDRESS!,
+            tokenAddress: "0x3600000000000000000000000000000000000000",
+            blockchain: "ARC-TESTNET",
             destinationAddress: task.agentAddress,
             amount: [task.reward],
             fee: {

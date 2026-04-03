@@ -46,8 +46,8 @@ function canTransition(
   const isCreator = sameAddress(task.creatorAddress, callerAddress);
   const isAgent = isAssignedAgent(task, callerAddress);
 
-  if (task.status === "assigned" && nextStatus === "in_progress") return isAgent;
-  if (task.status === "in_progress" && nextStatus === "completed") return isAgent;
+  if (task.status === "assigned" && nextStatus === "in_progress") return isAgent || isCreator;
+  if (task.status === "in_progress" && nextStatus === "completed") return isAgent || isCreator;
   if (task.status === "completed" && nextStatus === "paid") return isCreator;
 
   return false;

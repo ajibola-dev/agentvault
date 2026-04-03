@@ -1134,8 +1134,8 @@ const handleAssign = async (taskId: string, agentId: string, agentAddress: strin
                 const isCreator = Boolean(address && task.creatorAddress && task.creatorAddress.toLowerCase() === address.toLowerCase());
                 const isAgent = Boolean(address && task.agentAddress && task.agentAddress.toLowerCase() === address.toLowerCase());
                 const canAssign = task.status === "open" && !task.agentId;
-                const canStart = task.status === "assigned" && isAgent;
-                const canComplete = task.status === "in_progress" && isAgent;
+                const canStart = task.status === "assigned" && (isAgent || isCreator);
+                const canComplete = task.status === "in_progress" && (isAgent || isCreator);
                 const canPay = task.status === "completed" && isCreator;
 
                 const statusLabelMap: Record<Task["status"], string> = {

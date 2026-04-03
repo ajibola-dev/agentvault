@@ -63,6 +63,7 @@ export async function GET() {
       (agents ?? []).map(async (agent) => {
         const onchainRep = await getReputationScore(agent.wallet_address);
         return {
+          owner: agent.wallet_address,
           ...agent,
           reputation: onchainRep,
         };

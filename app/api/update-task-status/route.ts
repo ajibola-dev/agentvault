@@ -288,8 +288,8 @@ export async function POST(req: Request) {
             message: `Escrow payout failed: ${errDetail}`,
           });
 
+          return NextResponse.json(
             { error: `Escrow payout failed: ${errDetail}` },
-            { error: `Escrow payout failed: ${getErrorMessage(error)}` },
             { status: 502 }
           );
         }

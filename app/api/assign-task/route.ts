@@ -25,6 +25,10 @@ export async function POST(req: Request) {
     max: 30,
     windowMs: 60_000,
   });
+  if (agentRep < task.minRep) {
+  return NextResponse.json({ error: "Agent reputation too low" }, { status: 403
+   });
+
   if (!ipLimit.allowed) {
     logAuditEvent({
       endpoint: "tasks/assign",

@@ -186,6 +186,9 @@ export async function POST(req: Request) {
       const usdcTokenId = process.env.CIRCLE_USDC_TOKEN_ID;
       const apiKey = process.env.CIRCLE_API_KEY;
       const entitySecret = process.env.CIRCLE_ENTITY_SECRET;
+      const FEE_BPS = 250; // 2.5%
+      const feeAmount = (parseFloat(task.reward) * FEE_BPS / 10000).toFixed(6);
+      const agentAmount = (parseFloat(task.reward) - parseFloat(feeAmount)).toFixed(6);
 
       if (!usdcTokenId || !task.agentAddress || !task.escrowId) {
         await recordEscrowRelease({
@@ -258,7 +261,7 @@ export async function POST(req: Request) {
             abiParameters: [
               task.agentAddress,
 	      String(newScore),
- 	      "task_completed",
+	      "task_completed",
 	    ],
             fee: {
               type: "level",
@@ -269,7 +272,7 @@ export async function POST(req: Request) {
             idempotencyKey: crypto.randomUUID(),
           });
         } catch (error) {
-          await recordEscrowRelease({
+          const errDetail = error instanceof Error ? error.message : JSON.stringify(error);
             id: task.id,
             releaseTxId: null,
             releaseState: "error",
@@ -281,10 +284,10 @@ export async function POST(req: Request) {
             actorAddress: callerAddress,
             ip,
             status: "error",
-            message: `Escrow payout failed: ${getErrorMessage(error)}`,
+            message: `Escrow payout failed: ${errDetail}`,
           });
 
-          return NextResponse.json(
+            { error: `Escrow payout failed: ${errDetail}` },
             { error: `Escrow payout failed: ${getErrorMessage(error)}` },
             { status: 502 }
           );
@@ -332,3 +335,4 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Failed to update task status" }, { status: 500 });
   }
 }
+

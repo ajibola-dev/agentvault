@@ -210,7 +210,6 @@ export async function POST(req: Request) {
             idempotencyKey: crypto.randomUUID(),
             walletId: task.escrowId!,
             tokenAddress: "0x3600000000000000000000000000000000000000",
-            blockchain: "ARC-TESTNET",
             destinationAddress: task.agentAddress,
             amount: [String(task.reward)],
             fee: {

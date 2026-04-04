@@ -273,6 +273,7 @@ export async function POST(req: Request) {
           });
         } catch (error) {
           const errDetail = error instanceof Error ? error.message : JSON.stringify(error);
+          await recordEscrowRelease({
             id: task.id,
             releaseTxId: null,
             releaseState: "error",

@@ -1,3 +1,4 @@
+// @ts-check
 import { NextResponse } from "next/server";
 import { getAuthenticatedAddress, sameAddress } from "@/lib/auth";
 import { assignTask, getTaskById } from "@/lib/task-repo";
@@ -25,9 +26,6 @@ export async function POST(req: Request) {
     max: 30,
     windowMs: 60_000,
   });
-  if (agentRep < task.minRep) {
-  return NextResponse.json({ error: "Agent reputation too low" }, { status: 403
-   });
 
   if (!ipLimit.allowed) {
     logAuditEvent({
@@ -170,3 +168,4 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: getErrorMessage(err) }, { status: 500 });
   }
 }
+

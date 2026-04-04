@@ -209,10 +209,13 @@ export async function POST(req: Request) {
             entitySecret,
           });
 
+          const escrowWallet = await circleClient.getWallet({ id: task.escrowId! });
+          const escrowAddress = escrowWallet.data?.wallet?.address;
           const payoutTxRes = await circleClient.createTransaction({
             idempotencyKey: crypto.randomUUID(),
-            walletId: task.escrowId!,
+            walletAddress: escrowAddress!,
             tokenAddress: "0x3600000000000000000000000000000000000000",
+            blockchain: "ARC-TESTNET",
             destinationAddress: task.agentAddress,
             amount: [String(task.reward)],
             fee: {

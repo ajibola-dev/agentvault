@@ -187,7 +187,7 @@ if (CIRCLE_PLATFORM_WALLET_ADDRESS && USDC_TOKEN_ID && escrowAddress) {
       ip,
       status: "error",
       actorAddress: callerAddress,
-      message: getErrorMessage(error),
+      message: error instanceof Error ? error.message : JSON.stringify(error),
     });
   }
 }

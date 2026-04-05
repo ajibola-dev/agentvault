@@ -149,6 +149,7 @@ export async function POST(req: Request) {
     const escrowAddress = escrowWallet?.address ?? null;
     const escrowId = escrowWallet?.id ?? null;
     const taskId = crypto.randomUUID();
+    console.log("[escrow]", { escrowAddress, escrowId, platformWallet: process.env.CIRCLE_PLATFORM_WALLET_ADDRESS, usdcTokenId: process.env.CIRCLE_USDC_TOKEN_ID });
 
     // ---------- USDC transfer to escrow ----------
 let escrowFundingTxId: string | null = null;

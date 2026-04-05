@@ -234,8 +234,8 @@ export async function POST(req: Request) {
             releaseState: "submitted",
           });
 
-          // ---- Reputation bump ----
-          const currentRepRaw = await arcClient.readContract({
+          // ---- Reputation bump (non-fatal) ----
+          try { const currentRepRaw = await arcClient.readContract({
             address: REPUTATION_REGISTRY_ADDRESS,
             abi: [
               {
@@ -274,6 +274,9 @@ export async function POST(req: Request) {
             },
             idempotencyKey: crypto.randomUUID(),
           });
+          } catch (repError) {
+            console.error("[rep] onchain write failed:", repError);
+          }
         } catch (error) {
           const errDetail = error instanceof Error ? error.message : JSON.stringify(error);
           await recordEscrowRelease({

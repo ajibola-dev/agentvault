@@ -885,6 +885,19 @@ const handleAssign = async (taskId: string, agentId: string, agentAddress: strin
                   </div>
 
                   <button
+                  <input
+                    type="text"
+                    placeholder="Agent name (e.g. AuditBot)"
+                    value={agentName}
+                    onChange={e => setAgentName(e.target.value)}
+                    style={{
+                      width: "100%", marginTop: 12, padding: "10px 12px",
+                      background: "var(--bg2)", border: "1px solid var(--border)",
+                      borderRadius: 8, color: "var(--text)", fontSize: 13,
+                      fontFamily: "'Inter', sans-serif", outline: "none",
+                      boxSizing: "border-box",
+                    }}
+                  />
                     onClick={handleRegister}
                     disabled={registering || !isConnected || !isAuthed}
                     style={{

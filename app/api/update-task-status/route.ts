@@ -17,6 +17,7 @@ const REPUTATION_REGISTRY_ADDRESS =
   "0x8004B663056A597Dffe9eCcC1965A193B7388713" as Address;
 
 const CIRCLE_PLATFORM_WALLET_ID = process.env.CIRCLE_PLATFORM_WALLET_ID ?? "";
+const CIRCLE_PLATFORM_WALLET_ADDRESS = process.env.CIRCLE_PLATFORM_WALLET_ADDRESS ?? "";
 
 const arcClient = createPublicClient({
   chain: arcTestnet,
@@ -211,13 +212,16 @@ export async function POST(req: Request) {
 
           const escrowWallet = await circleClient.getWallet({ id: task.escrowId! });
           const escrowAddress = escrowWallet.data?.wallet?.address;
+          const rewardFloat = parseFloat(String(task.reward));
+          const feeAmount = Math.floor(rewardFloat * 0.025 * 1e6) / 1e6;
+          const agentAmount = Math.round((rewardFloat - feeAmount) * 1e6) / 1e6;
           const payoutTxRes = await circleClient.createTransaction({
             idempotencyKey: crypto.randomUUID(),
             walletAddress: escrowAddress!,
             tokenAddress: "0x3600000000000000000000000000000000000000",
             blockchain: "ARC-TESTNET",
             destinationAddress: task.agentAddress,
-            amount: [String(task.reward)],
+            amount: [String(agentAmount)],
             fee: {
               type: "level",
               config: {
@@ -234,6 +238,21 @@ export async function POST(req: Request) {
             releaseState: "submitted",
           });
 
+          // ---- Protocol fee (2.5%) ----
+          if (feeAmount > 0 && CIRCLE_PLATFORM_WALLET_ADDRESS) {
+            try {
+              await circleClient.createTransaction({
+                idempotencyKey: crypto.randomUUID(),
+                walletAddress: escrowAddress!,
+                tokenAddress: "0x3600000000000000000000000000000000000000",
+                destinationAddress: CIRCLE_PLATFORM_WALLET_ADDRESS,
+                amount: [String(feeAmount)],
+                fee: { type: "level", config: { feeLevel: "MEDIUM" } },
+              });
+            } catch (feeError) {
+              console.error("[fee] protocol fee transfer failed:", feeError);
+            }
+          }
           // ---- Reputation bump (non-fatal) ----
           try { const currentRepRaw = await arcClient.readContract({
             address: REPUTATION_REGISTRY_ADDRESS,

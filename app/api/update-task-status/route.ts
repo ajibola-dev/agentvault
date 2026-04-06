@@ -243,7 +243,7 @@ export async function POST(req: Request) {
             try {
               await circleClient.createTransaction({
                 idempotencyKey: crypto.randomUUID(),
-                walletAddress: escrowAddress!,
+                walletId: task.escrowId!,
                 tokenAddress: "0x3600000000000000000000000000000000000000",
                 destinationAddress: CIRCLE_PLATFORM_WALLET_ADDRESS,
                 amount: [String(feeAmount)],

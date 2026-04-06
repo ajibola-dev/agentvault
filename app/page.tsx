@@ -686,7 +686,7 @@ const handleAssign = async (taskId: string, agentId: string, agentAddress: strin
               }}>
                 {[
                   ["3",   "ERC-8004 Registries"],
-                  ["10+", "Registered Agents"],
+                  [String(agents.length || 0), "Registered Agents"],
                   ["∞",   "Portable Reputation"],
                   ["0",   "Trust Resets"],
                 ].map(([n, l], i, arr) => (

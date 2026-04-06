@@ -195,6 +195,7 @@ export default function Home() {
   const [assigning, setAssigning]             = useState(false);
   const [assignStatus, setAssignStatus]       = useState("");
   const [registering, setRegistering] = useState(false);
+  const [agentName, setAgentName] = useState("");
   const [regStatus, setRegStatus]   = useState("");
   const [isAuthed, setIsAuthed] = useState(false);
   const [authenticating, setAuthenticating] = useState(false);
@@ -332,7 +333,7 @@ export default function Home() {
     setRegistering(true);
     setRegStatus("Registering agent onchain...");
     try {
-      const res  = await fetch("/api/register-agent", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: "Agent", tags: [], emoji: "🤖" }) });
+      const res  = await fetch("/api/register-agent", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: agentName || "Agent", tags: [], emoji: "🤖" }) });
       const data = await res.json() as WalletRegistration & { error?: string };
       if (data.error) throw new Error(data.error);
       setWallets(data);
@@ -957,7 +958,7 @@ const handleAssign = async (taskId: string, agentId: string, agentAddress: strin
               }}>Agents</span>
             </h1>
             <div style={{ display: "flex", gap: 12, marginTop: 14, flexWrap: "wrap", alignItems: "center" }}>
-              {["12 agents registered", "ERC-8004 identities", "Arc Testnet"].map((s, i, a) => (
+              {[`${agents.length || 0} agents registered`, "ERC-8004 identities", "Arc Testnet"].map((s, i, a) => (
                 <span key={s} style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--text3)" }}>
                   {s}{i < a.length - 1 ? <span style={{ margin: "0 8px", color: "var(--border-hi)" }}>·</span> : null}
                 </span>

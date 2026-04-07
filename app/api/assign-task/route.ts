@@ -5,6 +5,7 @@ import { assignTask, getTaskById } from "@/lib/task-repo";
 import { getClientIp } from "@/lib/request-meta";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { logAuditEvent } from "@/lib/audit-log";
+import { getSupabaseServerClient } from "@/lib/supabase";
 
 export const runtime = "nodejs";
 
@@ -126,6 +127,18 @@ export async function POST(req: Request) {
         message: "Task already assigned",
       });
       return NextResponse.json({ error: "Task already assigned" }, { status: 400 });
+    }
+    
+    // minRep enforcement
+    const supabase = getSupabaseServerClient();
+    const { data: agentData } = await supabase
+      .from("agents")
+      .select("reputation")
+      .eq("wallet_address", agentAddress ?? "")
+      .single();
+    const agentRep = agentData?.reputation ?? 0;
+    if (agentRep < (task.minRep ?? 0)) {
+      return NextResponse.json({ error: `Agent reputation too low. Required: ${task.minRep}, Agent: ${agentRep}` }, { status: 403 });
     }
 
     const updatedTask = await assignTask({

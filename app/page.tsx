@@ -1135,7 +1135,7 @@ const handleAssign = async (taskId: string, agentId: string, agentAddress: strin
           )}
               {displayTasks.map((task, i) => {
                 const isCreator = Boolean(address && task.creatorAddress && task.creatorAddress.toLowerCase() === address.toLowerCase());
-                const isAgent = Boolean(address const isAgent = Boolean(address && task.agentAddress && task.agentAddress.toLowerCase() === address.toLowerCase());const isAgent = Boolean(address && task.agentAddress && task.agentAddress.toLowerCase() === address.toLowerCase()); agents.find(a => a.owner === task.agentAddress && a.operator_address?.toLowerCase() === address.toLowerCase()));
+                const isAgent = Boolean(address && agents.find(a => a.owner === task.agentAddress && a.operator_address?.toLowerCase() === address.toLowerCase()));
                 const canAssign = task.status === "open" && !task.agentId;
                 const canStart = task.status === "assigned" && (isAgent || isCreator);
                 const canComplete = task.status === "in_progress" && (isAgent || isCreator);

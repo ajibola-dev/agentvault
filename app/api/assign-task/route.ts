@@ -138,7 +138,7 @@ export async function POST(req: Request) {
       .single();
     const agentRep = agentData?.reputation ?? 0;
     if (agentRep < (task.minRep ?? 0)) {
-      return NextResponse.json({ error: `Agent reputation too low. Required: ${task.minRep}, Agent: ${agentRep}` }, { status: 403 });
+      return NextResponse.json({ error: `Rep score too low. Task requires ${task.minRep}, Agent: ${agentRep}` }, { status: 403 });
     }
 
     const updatedTask = await assignTask({

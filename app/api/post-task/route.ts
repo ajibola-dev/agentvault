@@ -161,7 +161,7 @@ if (CIRCLE_PLATFORM_WALLET_ADDRESS && USDC_TOKEN_ID && escrowAddress) {
   tokenAddress: "0x3600000000000000000000000000000000000000",
   blockchain: "ARC-TESTNET",
   destinationAddress: escrowAddress,
-  amount: [rewardNum.toString()],
+  amount: [(rewardNum * 1.03).toFixed(6).toString()],
   fee: {
     type: "level",
     config: {

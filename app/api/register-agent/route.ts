@@ -142,6 +142,7 @@ const { error: insertError } = await supabase
     tags: requestBody.tags ?? [],
     emoji: requestBody.emoji ?? null,
     reputation: 1,
+    operator_address: callerAddress,
     created_at: new Date().toISOString(),
   });
 

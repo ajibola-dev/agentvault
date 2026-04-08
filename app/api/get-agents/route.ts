@@ -51,7 +51,7 @@ export async function GET() {
 
     const { data: agents, error } = await supabase
       .from("agents")
-      .select("id, wallet_address, name, tags, emoji, reputation, created_at")
+      .select("id, wallet_address, name, tags, emoji, reputation, created_at, operator_address")
       .order("reputation", { ascending: false });
 
     if (error) {

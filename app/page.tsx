@@ -24,7 +24,7 @@ type Task = {
   title: string;
   description: string;
   reward: string;
-  status: "open" | "assigned" | "in_progress" | "completed" | "paid";
+  status: "open" | "assigned" | "in_progress" | "completed" | "paid" | "cancelled";
   minRep: number;
   creatorAddress?: string;
   ago?: string;
@@ -204,7 +204,58 @@ export default function Home() {
   const [isMobile, setIsMobile] = useState(false);
   const connectedAddress = address ? `${address.slice(0, 6)}...${address.slice(-4)}` : "";
 
-  const fetchAgents = async () => {
+ const handleCancel = async (taskId: string) => {
+  if (!isConnected || !address) {
+    setAssignStatus("Connect wallet to cancel");
+    return;
+  }
+  if (!isAuthed) {
+    const ok = await authenticateWallet();
+    if (!ok) return;
+  }
+
+  const confirmed = window.confirm(
+    "Cancel this task? If escrow was funded, USDC will be returned to your wallet."
+  );
+  if (!confirmed) return;
+
+  setAssigning(true);
+  setAssignStatus("Cancelling task...");
+
+  const previousTasks = tasks;
+
+  try {
+    setTasks(prev =>
+      prev.map(t => t.id === taskId ? { ...t, _isPending: true } : t)
+    );
+
+    const res = await fetch(`/api/tasks/${taskId}/cancel`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ callerAddress: address }),
+    });
+
+    const data = await res.json() as { error?: string; success?: boolean; refundTxId?: string };
+
+    if (!res.ok || data.error) {
+      throw new Error(data.error || "Cancellation failed");
+    }
+
+    // Remove from list (cancelled tasks don't need to stay visible)
+    setTasks(prev => prev.filter(t => t.id !== taskId));
+    setAssignStatus("Task cancelled" + (data.refundTxId ? " — escrow refunded" : ""));
+    setTimeout(() => setAssignStatus(""), 3000);
+
+  } catch (err: unknown) {
+    setTasks(previousTasks);
+    setAssignStatus("Error: " + toUserFacingError(getErrorMessage(err)));
+    setTimeout(() => setAssignStatus(""), 4000);
+  } finally {
+    setAssigning(false);
+  }
+};
+
+ const fetchAgents = async () => {
     setLoadingAgents(true);
     try {
       const res = await fetch("/api/get-agents");
@@ -1141,12 +1192,13 @@ const handleAssign = async (taskId: string, agentId: string, agentAddress: strin
                 const canComplete = task.status === "in_progress" && (isAgent || isCreator);
                 const canPay = task.status === "completed" && isCreator;
 
-                const statusLabelMap: Record<Task["status"], string> = {
+const statusLabelMap: Record<Task["status"], string> = {
                   open: "● Open",
                   assigned: "◎ Assigned",
                   in_progress: "◔ In Progress",
                   completed: "✓ Completed",
                   paid: "◆ Paid",
+                  cancelled: "✕ Cancelled",
                 };
 
                 const statusToneMap: Record<Task["status"], { color: string; border: string; background: string }> = {
@@ -1175,6 +1227,11 @@ const handleAssign = async (taskId: string, agentId: string, agentAddress: strin
                     border: "1px solid rgba(212,170,80,.3)",
                     background: "rgba(212,170,80,.08)",
                   },
+		  cancelled: {
+		    color: "var(--red)",
+		    border: "1px solid rgba(232,84,84,.25)",
+		    background: "rgba(232,84,84,.05)",
+		  },
                 };
 
                 return (
@@ -1292,7 +1349,6 @@ const handleAssign = async (taskId: string, agentId: string, agentAddress: strin
                         Submit Complete →
                       </button>
                     )}
-
                     {canPay && (
                       <button
                         onClick={() => void handleStatusUpdate(task.id, "paid")}
@@ -1308,6 +1364,22 @@ const handleAssign = async (taskId: string, agentId: string, agentAddress: strin
                         Release Payment →
                       </button>
                     )}
+			
+		    {task.status === "open" && isCreator && (
+  <button
+    onClick={() => void handleCancel(task.id)}
+    disabled={assigning}
+    style={{
+      marginTop: 12, padding: "7px 16px", borderRadius: 6,
+      background: "rgba(232,84,84,.08)", border: "1px solid rgba(232,84,84,.25)",
+      color: "var(--red)", fontSize: 12, fontWeight: 500,
+      fontFamily: "var(--font-syne), sans-serif", cursor: "pointer",
+      opacity: assigning ? 0.65 : 1,
+    }}
+  >
+    Cancel Task ✕
+  </button>
+)}
 
                     {task.agentId && (
                       <div style={{

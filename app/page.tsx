@@ -255,6 +255,49 @@ export default function Home() {
   }
 };
 
+  const handleClaim = async (taskId: string) => {
+    if (!isConnected || !address) {
+      setAssignStatus("Connect wallet to claim");
+      return;
+    }
+    if (!isAuthed) {
+      const ok = await authenticateWallet();
+      if (!ok) return;
+    }
+
+    setAssigning(true);
+    setAssignStatus("Claiming task...");
+    const previousTasks = tasks;
+
+    try {
+      setTasks(prev =>
+        prev.map(t => t.id === taskId ? { ...t, _isPending: true } : t)
+      );
+
+      const res = await fetch(`/api/tasks/${taskId}/claim`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+
+      const data = await res.json() as { error?: string; task?: Task };
+
+      if (!res.ok || data.error) {
+        throw new Error(data.error || "Claim failed");
+      }
+
+      setTasks(prev => prev.map(t => t.id === taskId ? { ...data.task!, _isPending: false } : t));
+      setAssignStatus("Task claimed successfully");
+      setTimeout(() => setAssignStatus(""), 2000);
+
+    } catch (err: unknown) {
+      setTasks(previousTasks);
+      setAssignStatus("Error: " + toUserFacingError(getErrorMessage(err)));
+      setTimeout(() => setAssignStatus(""), 4000);
+    } finally {
+      setAssigning(false);
+    }
+  };
+
  const fetchAgents = async () => {
     setLoadingAgents(true);
     try {
@@ -1188,6 +1231,7 @@ const handleAssign = async (taskId: string, agentId: string, agentAddress: strin
                 const isCreator = Boolean(address && task.creatorAddress && task.creatorAddress.toLowerCase() === address.toLowerCase());
                 const isAgent = Boolean(address && agents.find(a => a.owner === task.agentAddress && a.operator_address?.toLowerCase() === address.toLowerCase()));
                 const canAssign = task.status === "open" && !task.agentId;
+                const canClaim = task.status === "open" && !task.agentId && !isCreator && Boolean(agents.find(a => a.operator_address?.toLowerCase() === address?.toLowerCase()));
                 const canStart = task.status === "assigned" && (isAgent || isCreator);
                 const canComplete = task.status === "in_progress" && (isAgent || isCreator);
                 const canPay = task.status === "completed" && isCreator;
@@ -1315,6 +1359,22 @@ const statusLabelMap: Record<Task["status"], string> = {
                         }}
                       >
                         Assign Agent →
+                      </button>
+                    )}
+
+                    {canClaim && (
+                      <button
+                        onClick={() => void handleClaim(task.id)}
+                        disabled={assigning}
+                        style={{
+                          marginTop: 12, padding: "7px 16px", borderRadius: 6,
+                          background: "rgba(78,203,141,.08)", border: "1px solid rgba(78,203,141,.25)",
+                          color: "var(--green)", fontSize: 12, fontWeight: 500,
+                          fontFamily: "var(--font-syne), sans-serif", cursor: "pointer",
+                          opacity: assigning ? 0.65 : 1,
+                        }}
+                      >
+                        Claim Task →
                       </button>
                     )}
 

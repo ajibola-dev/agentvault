@@ -1,0 +1,334 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { useAccount } from "wagmi";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
+import Link from "next/link";
+
+type AgentProfile = {
+  id: string;
+  wallet_address: string;
+  name: string | null;
+  emoji: string | null;
+  tags: string[];
+  reputation: number;
+  created_at: string;
+  operator_address: string;
+};
+
+type TaskSummary = {
+  id: string;
+  title: string;
+  description: string;
+  reward: string;
+  status: string;
+  created_at: string;
+  assigned_at: string | null;
+  escrow_release_tx_id: string | null;
+};
+
+type ProfileData = {
+  agent: AgentProfile;
+  stats: {
+    totalTasks: number;
+    activeTasks: number;
+    completedTasks: number;
+    totalEarned: number;
+  };
+  activeTask: TaskSummary | null;
+  taskHistory: TaskSummary[];
+};
+
+export default function ProfilePage() {
+  const { address, isConnected } = useAccount();
+  const [profile, setProfile] = useState<ProfileData | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!address) return;
+    setLoading(true);
+    setError(null);
+    fetch(`/api/profile?address=${address}`)
+      .then(r => r.json())
+      .then((data: ProfileData & { error?: string }) => {
+        if (data.error) { setError(data.error); return; }
+        setProfile(data);
+      })
+      .catch(() => setError("Failed to load profile"))
+      .finally(() => setLoading(false));
+  }, [address]);
+
+  if (!isConnected) {
+    return (
+      <div style={{
+        minHeight: "100vh", display: "flex", flexDirection: "column",
+        alignItems: "center", justifyContent: "center", gap: 16,
+      }}>
+        <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 13, color: "var(--text3)" }}>
+          Connect wallet to view your agent profile
+        </p>
+        <ConnectButton />
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div style={{
+        minHeight: "100vh", display: "flex", alignItems: "center",
+        justifyContent: "center",
+      }}>
+        <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 13, color: "var(--text3)" }}>
+          Loading profile...
+        </p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div style={{
+        minHeight: "100vh", display: "flex", flexDirection: "column",
+        alignItems: "center", justifyContent: "center", gap: 12,
+      }}>
+        <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 13, color: "var(--red)" }}>
+          {error === "No agent found for this wallet"
+            ? "This wallet has no registered agent."
+            : error}
+        </p>
+        <Link href="/" style={{
+          fontFamily: "'DM Mono', monospace", fontSize: 12,
+          color: "var(--gold)", textDecoration: "none",
+        }}>
+          ← Register an agent on the home page
+        </Link>
+      </div>
+    );
+  }
+
+  if (!profile) return null;
+
+  const { agent, stats, activeTask, taskHistory } = profile;
+
+  return (
+    <div style={{ maxWidth: 900, margin: "0 auto", padding: "60px 24px 80px" }}>
+
+      {/* Back */}
+      <Link href="/" style={{
+        fontFamily: "'DM Mono', monospace", fontSize: 11,
+        color: "var(--text3)", textDecoration: "none",
+        display: "inline-block", marginBottom: 32,
+      }}>
+        ← Back
+      </Link>
+
+      {/* Agent header */}
+      <div style={{
+        display: "flex", alignItems: "flex-start", gap: 20,
+        padding: 28, background: "var(--bg1)", border: "1px solid var(--border)",
+        borderRadius: 12, marginBottom: 24,
+      }}>
+        <div style={{
+          width: 56, height: 56, borderRadius: 10, fontSize: 26,
+          border: "1px solid var(--border)", display: "grid",
+          placeItems: "center", background: "linear-gradient(135deg, var(--bg2), var(--bg3))",
+          flexShrink: 0,
+        }}>
+          {agent.emoji ?? "🤖"}
+        </div>
+        <div style={{ flex: 1 }}>
+          <div style={{
+            fontFamily: "var(--font-syne), sans-serif", fontWeight: 700,
+            fontSize: 22, letterSpacing: "-.02em",
+          }}>
+            {agent.name ?? "Unnamed Agent"}
+          </div>
+          <div style={{
+            fontFamily: "'DM Mono', monospace", fontSize: 11,
+            color: "var(--text3)", marginTop: 4,
+          }}>
+            {agent.wallet_address}
+          </div>
+          {agent.tags?.length > 0 && (
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 10 }}>
+              {agent.tags.map((t: string) => (
+                <span key={t} style={{
+                  padding: "3px 8px", borderRadius: 4,
+                  fontFamily: "'DM Mono', monospace", fontSize: 10,
+                  color: "var(--text3)", background: "var(--bg2)",
+                  border: "1px solid var(--border)",
+                }}>{t}</span>
+              ))}
+            </div>
+          )}
+        </div>
+        <div style={{ textAlign: "right", flexShrink: 0 }}>
+          <div style={{
+            fontFamily: "var(--font-syne), sans-serif", fontWeight: 700,
+            fontSize: 36, color: "var(--gold-hi)", lineHeight: 1,
+          }}>
+            {agent.reputation}
+          </div>
+          <div style={{
+            fontFamily: "'DM Mono', monospace", fontSize: 10,
+            color: "var(--text3)", letterSpacing: ".06em", marginTop: 4,
+          }}>
+            REP SCORE
+          </div>
+        </div>
+      </div>
+
+      {/* Stats strip */}
+      <div style={{
+        display: "grid", gridTemplateColumns: "repeat(4, 1fr)",
+        border: "1px solid var(--border)", borderRadius: 12,
+        overflow: "hidden", background: "var(--bg1)", marginBottom: 24,
+      }}>
+        {[
+          ["Total Tasks", stats.totalTasks],
+          ["Active", stats.activeTasks],
+          ["Completed", stats.completedTasks],
+          [`${stats.totalEarned.toFixed(1)} USDC`, "Earned"],
+        ].map(([val, label], i, arr) => (
+          <div key={String(label)} style={{
+            padding: "20px 24px",
+            borderRight: i < arr.length - 1 ? "1px solid var(--border)" : "none",
+          }}>
+            <div style={{
+              fontFamily: "var(--font-syne), sans-serif", fontSize: 24,
+              fontWeight: 700, color: "var(--gold-hi)", lineHeight: 1,
+            }}>{val}</div>
+            <div style={{
+              fontFamily: "'DM Mono', monospace", fontSize: 10,
+              color: "var(--text3)", marginTop: 6, letterSpacing: ".04em",
+            }}>{label}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Active task */}
+      {activeTask && (
+        <div style={{ marginBottom: 24 }}>
+          <div style={{
+            fontFamily: "'DM Mono', monospace", fontSize: 10,
+            color: "var(--gold-dim)", letterSpacing: ".14em",
+            textTransform: "uppercase", marginBottom: 12,
+            display: "flex", alignItems: "center", gap: 10,
+          }}>
+            <span style={{ width: 24, height: 1, background: "var(--gold-dim)", display: "block" }} />
+            Active Task
+          </div>
+          <div style={{
+            padding: 20, background: "var(--bg1)",
+            border: "1px solid rgba(78,203,141,.25)", borderRadius: 12,
+          }}>
+            <div style={{
+              display: "flex", justifyContent: "space-between",
+              alignItems: "flex-start", gap: 12,
+            }}>
+              <div>
+                <div style={{
+                  fontFamily: "var(--font-syne), sans-serif",
+                  fontWeight: 600, fontSize: 15,
+                }}>{activeTask.title}</div>
+                <div style={{
+                  fontSize: 13, color: "var(--text2)",
+                  marginTop: 4, lineHeight: 1.6,
+                }}>{activeTask.description}</div>
+              </div>
+              <div style={{
+                fontFamily: "'DM Mono', monospace", fontSize: 13,
+                color: "var(--gold-hi)", flexShrink: 0,
+              }}>
+                {activeTask.reward} USDC
+              </div>
+            </div>
+            <div style={{
+              marginTop: 12, fontFamily: "'DM Mono', monospace",
+              fontSize: 10, color: "var(--green)",
+            }}>
+              ● {activeTask.status === "in_progress" ? "In Progress" : "Assigned"}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Task history */}
+      <div>
+        <div style={{
+          fontFamily: "'DM Mono', monospace", fontSize: 10,
+          color: "var(--gold-dim)", letterSpacing: ".14em",
+          textTransform: "uppercase", marginBottom: 12,
+          display: "flex", alignItems: "center", gap: 10,
+        }}>
+          <span style={{ width: 24, height: 1, background: "var(--gold-dim)", display: "block" }} />
+          Task History
+        </div>
+
+        {taskHistory.length === 0 ? (
+          <div style={{
+            padding: "40px 24px", textAlign: "center",
+            color: "var(--text3)", fontFamily: "'DM Mono', monospace", fontSize: 13,
+            border: "1px solid var(--border)", borderRadius: 12,
+          }}>
+            No completed tasks yet.
+          </div>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {taskHistory.map(task => (
+              <div key={task.id} style={{
+                padding: "16px 20px", background: "var(--bg1)",
+                border: "1px solid var(--border)", borderRadius: 10,
+                display: "flex", alignItems: "center",
+                justifyContent: "space-between", gap: 12,
+              }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{
+                    fontFamily: "var(--font-syne), sans-serif",
+                    fontWeight: 600, fontSize: 14,
+                    whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+                  }}>{task.title}</div>
+                  <div style={{
+                    fontFamily: "'DM Mono', monospace", fontSize: 10,
+                    color: "var(--text3)", marginTop: 4,
+                  }}>
+                    {task.assigned_at
+                      ? new Date(task.assigned_at).toLocaleDateString()
+                      : new Date(task.created_at).toLocaleDateString()}
+                    {task.escrow_release_tx_id && (
+                      <span style={{ marginLeft: 8, color: "var(--green)" }}>
+                        · tx: {task.escrow_release_tx_id.slice(0, 10)}...
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
+                  <span style={{
+                    fontFamily: "'DM Mono', monospace", fontSize: 13,
+                    color: "var(--gold-hi)", fontWeight: 500,
+                  }}>
+                    {task.reward} USDC
+                  </span>
+                  <span style={{
+                    padding: "3px 8px", borderRadius: 4,
+                    fontFamily: "'DM Mono', monospace", fontSize: 10,
+                    color: task.status === "paid" ? "var(--gold-hi)" : "var(--green)",
+                    border: task.status === "paid"
+                      ? "1px solid rgba(212,170,80,.3)"
+                      : "1px solid rgba(78,203,141,.25)",
+                    background: task.status === "paid"
+                      ? "rgba(212,170,80,.08)"
+                      : "rgba(78,203,141,.05)",
+                  }}>
+                    {task.status === "paid" ? "◆ Paid" : "✓ Completed"}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

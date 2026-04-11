@@ -642,10 +642,22 @@ const handleAssign = async (taskId: string, agentId: string, agentAddress: strin
             AgentVault
           </button>
           <div style={S.navLinks}>
-            <NavLink label="Home"     active={page === "home"}     onClick={() => setPage("home")}     />
+            <NavLink label="Discover" active={page === "discover"} onClick={() => setPage("discover")} />
+<NavLink label="Tasks"    active={page === "tasks"}    onClick={() => setPage("tasks")}    /><NavLink label="Home"     active={page === "home"}     onClick={() => setPage("home")}     />
             <NavLink label="Discover" active={page === "discover"} onClick={() => setPage("discover")} />
             <NavLink label="Tasks"    active={page === "tasks"}    onClick={() => setPage("tasks")}    />
           </div>
+	    {isConnected && (
+	      <a href="/profile" style={{
+                padding: "6px 14px", fontSize: 13, fontWeight: 400,
+                color: "var(--text2)", background: "none",
+                borderRadius: 6, border: "none", cursor: "pointer",
+                fontFamily: "'Inter', sans-serif", letterSpacing: ".01em",
+                textDecoration: "none", display: "inline-block",
+             }}>
+                Profile
+            </a>
+          )}
           <div style={S.navRight}>
             <span style={S.pillBadge}>ARC TESTNET</span>
             <ConnectButton.Custom>

@@ -33,6 +33,7 @@ type Task = {
   escrowAddress?: string | null;
   escrowFundingState?: "not_configured" | "submitted" | "error";
   escrowReleaseState?: "not_released" | "submitted" | "error" | "not_configured";
+  tags?: string[];
   _isPending?: boolean; // Optimistic update indicator
 };
 
@@ -41,6 +42,7 @@ type TaskFormState = {
   description: string;
   reward: string;
   minRep: number;
+  tags: string[];
 };
 
 type WalletRegistration = {
@@ -188,7 +190,7 @@ export default function Home() {
   const [agents, setAgents]         = useState<Agent[]>([]);
   const [loadingAgents, setLoadingAgents] = useState(false);
   const [tasks, setTasks]           = useState<Task[]>([]);
-  const [taskForm, setTaskForm]     = useState<TaskFormState>({ title: "", description: "", reward: "", minRep: 50 });
+  const [taskForm, setTaskForm]     = useState<TaskFormState>({ title: "", description: "", reward: "", minRep: 50, tags: [] });
   const [postingTask, setPostingTask] = useState(false);
   const [taskStatus, setTaskStatus] = useState("");
   const [wallets, setWallets]       = useState<WalletRegistration | null>(null);
@@ -207,6 +209,8 @@ export default function Home() {
   const [authStatus, setAuthStatus] = useState("");
   const [isMobile, setIsMobile] = useState(false);
   const connectedAddress = address ? `${address.slice(0, 6)}...${address.slice(-4)}` : "";
+  const [agentSearch, setAgentSearch] = useState("");
+  const [activeFilter, setActiveFilter] = useState("All");
 
  const handleCancel = async (taskId: string) => {
   if (!isConnected || !address) {
@@ -683,12 +687,12 @@ const handleAssign = async (taskId: string, agentId: string, agentAddress: strin
       const res  = await fetch("/api/post-task", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...taskForm, walletId: address }),
+        body: JSON.stringify({ ...taskForm, tags: taskForm.tags, walletId: address }),
       });
       const data = await res.json() as { error?: string; task: Task };
       if (data.error) throw new Error(data.error);
       setTasks((prev) => [data.task, ...prev]);
-      setTaskForm({ title: "", description: "", reward: "", minRep: 50 });
+      setTaskForm({ title: "", description: "", reward: "", minRep: 50, tags: [] });
       setTaskStatus("Task posted successfully!");
       setTimeout(() => setTaskStatus(""), 3000);
     } catch (err: unknown) {
@@ -698,7 +702,7 @@ const handleAssign = async (taskId: string, agentId: string, agentAddress: strin
   };
 
   /* ── DEMO agents shown when API returns empty ── */
-  const displayAgents: Agent[] = agents.length > 0 ? agents : [
+  const rawAgents: Agent[] = agents.length > 0 ? agents : [
     { owner: "0x3f4a…9b12", validator: "0xaa1c…3e09", reputation: 94, createdAt: Date.now(), _demo: true, name: "Nexus Alpha",    emoji: "🤖", tags: ["Solidity","Audit","EVM"],       status: "active", tasks: 47 },
     { owner: "0x7c2e…4d88", validator: "0xbb2d…5f10", reputation: 88, createdAt: Date.now(), _demo: true, name: "DataForge",     emoji: "📊", tags: ["DeFi","Analytics","APIs"],      status: "active", tasks: 31 },
     { owner: "0x1a9f…c331", validator: "0xcc3e…6g21", reputation: 76, createdAt: Date.now(), _demo: true, name: "ResearchNode",  emoji: "🔬", tags: ["Research","NLP","Reports"],     status: "idle",   tasks: 19 },
@@ -706,6 +710,17 @@ const handleAssign = async (taskId: string, agentId: string, agentAddress: strin
     { owner: "0x5e1c…0a47", validator: "0xee5g…8i43", reputation: 68, createdAt: Date.now(), _demo: true, name: "ContentMesh",  emoji: "✍️", tags: ["Writing","Docs","Web3"],         status: "idle",   tasks: 24 },
     { owner: "0x2b7d…e594", validator: "0xff6h…9j54", reputation: 85, createdAt: Date.now(), _demo: true, name: "Guardian",     emoji: "🛡️", tags: ["Security","Monitoring","Circle"], status: "active", tasks: 38 },
   ];
+
+  const displayAgents: Agent[] = rawAgents.filter(agent => {
+    const search = agentSearch.toLowerCase();
+    const matchesSearch = !search ||
+      agent.name?.toLowerCase().includes(search) ||
+      agent.tags?.some((t: string) => t.toLowerCase().includes(search)) ||
+      agent.owner?.toLowerCase().includes(search);
+    const matchesFilter = activeFilter === "All" ||
+      agent.tags?.some((t: string) => t.toLowerCase().includes(activeFilter.toLowerCase()));
+    return matchesSearch && matchesFilter;
+  });
 
   const displayTasks: Task[] = tasks;
 
@@ -722,7 +737,6 @@ const handleAssign = async (taskId: string, agentId: string, agentAddress: strin
           </button>
           <div style={S.navLinks}>
             <NavLink label="Discover" active={page === "discover"} onClick={() => setPage("discover")} />
-<NavLink label="Tasks"    active={page === "tasks"}    onClick={() => setPage("tasks")}    /><NavLink label="Home"     active={page === "home"}     onClick={() => setPage("home")}     />
             <NavLink label="Discover" active={page === "discover"} onClick={() => setPage("discover")} />
             <NavLink label="Tasks"    active={page === "tasks"}    onClick={() => setPage("tasks")}    />
           </div>
@@ -1163,6 +1177,8 @@ const handleAssign = async (taskId: string, agentId: string, agentAddress: strin
               <span style={{ color: "var(--text3)", fontSize: 14 }}>⌕</span>
               <input
                 type="text"
+                value={agentSearch}
+                onChange={e => setAgentSearch(e.target.value)}
                 placeholder="Search agents, capabilities..."
                 style={{
                   background: "none", border: "none", outline: "none",
@@ -1172,11 +1188,11 @@ const handleAssign = async (taskId: string, agentId: string, agentAddress: strin
               />
             </div>
             {["All","Data","Code","Research","Trading","Content"].map(f => (
-              <button key={f} style={{
+              <button key={f} onClick={() => setActiveFilter(f)} style={{
                 padding: "7px 14px", borderRadius: 99,
-                border: `1px solid ${f === "All" ? "var(--gold)" : "var(--border)"}`,
-                background: f === "All" ? "rgba(212,170,80,.06)" : "var(--bg1)",
-                color: f === "All" ? "var(--gold)" : "var(--text2)",
+                border: `1px solid ${f === activeFilter ? "var(--gold)" : "var(--border)"}`,
+                background: f === activeFilter ? "rgba(212,170,80,.06)" : "var(--bg1)",
+                color: f === activeFilter ? "var(--gold)" : "var(--text2)",
                 fontSize: 12, cursor: "pointer", fontFamily: "'Inter', sans-serif",
               }}>{f}</button>
             ))}
@@ -1265,12 +1281,13 @@ const handleAssign = async (taskId: string, agentId: string, agentAddress: strin
                     <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: "var(--text3)" }}>
                       {agent.tasks ?? 0} tasks
                     </span>
-                    <button style={{
+                    <a href={`/agents/${agent.owner}`} style={{
                       padding: "7px 16px", borderRadius: 6,
                       background: "rgba(212,170,80,.1)", border: "1px solid var(--border-hi)",
                       color: "var(--gold)", fontSize: 12, fontWeight: 500,
                       fontFamily: "var(--font-syne), sans-serif", cursor: "pointer",
-                    }}>Hire →</button>
+                      textDecoration: "none", display: "inline-block",
+                    }}>View →</a>
                   </div>
                 </div>
               ))}
@@ -1296,7 +1313,7 @@ const handleAssign = async (taskId: string, agentId: string, agentAddress: strin
               }}>Marketplace</span>
             </h1>
             <div style={{ display: "flex", gap: 12, marginTop: 14, flexWrap: "wrap" }}>
-              {["8 open tasks", "USDC escrow", "Reputation-gated"].map(s => (
+              {[`${tasks.filter(t => t.status === "open").length} open tasks`, "USDC escrow", "Reputation-gated"].map(s => (
                 <span key={s} style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--text3)" }}>{s}</span>
               ))}
             </div>
@@ -1870,6 +1887,29 @@ const handleAssign = async (taskId: string, agentId: string, agentAddress: strin
                   )}
                 </div>
               ))}
+
+              {/* task tags */}
+              <div style={{ marginBottom: 20 }}>
+                <label style={{ display: "block", fontFamily: "'DM Mono', monospace", fontSize: 10, color: "var(--text3)", letterSpacing: ".06em", textTransform: "uppercase", marginBottom: 8 }}>
+                  Tags
+                </label>
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                  {["Solidity","Audit","DeFi","Analytics","Research","NLP","Trading","Security","Content","APIs"].map(tag => (
+                    <button
+                      key={tag}
+                      type="button"
+                      onClick={() => setTaskForm(p => ({ ...p, tags: p.tags.includes(tag) ? p.tags.filter(t => t !== tag) : [...p.tags, tag] }))}
+                      style={{
+                        padding: "4px 10px", borderRadius: 99, fontSize: 11, cursor: "pointer",
+                        fontFamily: "'DM Mono', monospace",
+                        border: taskForm.tags.includes(tag) ? "1px solid var(--gold)" : "1px solid var(--border)",
+                        background: taskForm.tags.includes(tag) ? "rgba(212,170,80,.1)" : "var(--bg2)",
+                        color: taskForm.tags.includes(tag) ? "var(--gold)" : "var(--text3)",
+                      }}
+                    >{tag}</button>
+                  ))}
+                </div>
+              </div>
 
               {/* rep slider */}
               <div style={{ marginBottom: 20 }}>

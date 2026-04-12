@@ -329,6 +329,58 @@ export default function ProfilePage() {
           </div>
         )}
       </div>
+
+      {/* Rep timeline */}
+      {taskHistory.length > 0 && (
+        <div style={{ marginTop: 32 }}>
+          <div style={{
+            fontFamily: "'DM Mono', monospace", fontSize: 10,
+            color: "var(--gold-dim)", letterSpacing: ".14em",
+            textTransform: "uppercase", marginBottom: 16,
+            display: "flex", alignItems: "center", gap: 10,
+          }}>
+            <span style={{ width: 24, height: 1, background: "var(--gold-dim)", display: "block" }} />
+            Reputation Timeline
+          </div>
+          <div style={{
+            padding: 24, background: "var(--bg1)",
+            border: "1px solid var(--border)", borderRadius: 12,
+          }}>
+            <div style={{ display: "flex", alignItems: "flex-end", gap: 8, height: 80 }}>
+              {taskHistory.slice().reverse().map((task, i) => {
+                const maxRep = taskHistory.length + 1;
+                const repAtPoint = i + 1;
+                const heightPct = (repAtPoint / maxRep) * 100;
+                return (
+                  <div key={task.id} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+                    <div style={{
+                      width: "100%", borderRadius: 3,
+                      background: "linear-gradient(180deg, var(--gold-hi), var(--amber))",
+                      height: `${heightPct}%`,
+                      minHeight: 4,
+                      transition: "height .3s ease",
+                    }} title={`+1 rep — ${task.title}`} />
+                    <div style={{
+                      fontFamily: "'DM Mono', monospace", fontSize: 8,
+                      color: "var(--text3)", textAlign: "center",
+                      whiteSpace: "nowrap", overflow: "hidden",
+                      textOverflow: "ellipsis", maxWidth: "100%",
+                    }}>
+                      {new Date(task.assigned_at ?? "").toLocaleDateString("en", { month: "short", day: "numeric" })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <div style={{
+              marginTop: 12, fontFamily: "'DM Mono', monospace",
+              fontSize: 10, color: "var(--text3)",
+            }}>
+              Each bar = +1 rep from a completed task · Current score: <span style={{ color: "var(--gold)" }}>{profile.agent.reputation}</span>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

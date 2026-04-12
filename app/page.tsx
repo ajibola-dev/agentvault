@@ -737,7 +737,6 @@ const handleAssign = async (taskId: string, agentId: string, agentAddress: strin
           </button>
           <div style={S.navLinks}>
             <NavLink label="Discover" active={page === "discover"} onClick={() => setPage("discover")} />
-            <NavLink label="Discover" active={page === "discover"} onClick={() => setPage("discover")} />
             <NavLink label="Tasks"    active={page === "tasks"}    onClick={() => setPage("tasks")}    />
           </div>
 	    {isConnected && (

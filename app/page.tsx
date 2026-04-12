@@ -1419,6 +1419,19 @@ const handleAssign = async (taskId: string, agentId: string, agentAddress: strin
                       </div>
                     </div>
                     <p style={{ fontSize: 13, color: "var(--text2)", lineHeight: 1.6, marginBottom: 14 }}>{task.description}</p>
+                    {task.tags && task.tags.length > 0 && (
+                      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 10 }}>
+                        {task.tags.map((tag: string) => (
+                          <span key={tag} style={{
+                            padding: "2px 8px", borderRadius: 4,
+                            fontFamily: "'DM Mono', monospace",
+                            fontSize: 10, color: "var(--gold-dim)",
+                            background: "rgba(212,170,80,.06)",
+                            border: "1px solid var(--border)",
+                          }}>{tag}</span>
+                        ))}
+                      </div>
+                    )}
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
                       <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                         <span style={{

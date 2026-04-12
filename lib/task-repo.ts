@@ -8,6 +8,7 @@ type TaskRow = {
   reward: string;
   min_rep: number;
   creator_address: string;
+  tags: string[];
   agent_id: string | null;
   agent_address: string | null;
   status: Task["status"];
@@ -36,6 +37,7 @@ function rowToTask(row: TaskRow): Task {
     reward: row.reward,
     minRep: row.min_rep,
     creatorAddress: row.creator_address,
+    tags: row.tags ?? [],
     agentId: row.agent_id,
     agentAddress: row.agent_address,
     status: row.status,
@@ -123,7 +125,8 @@ async function ensureSchema(): Promise<void> {
             escrow_release_state TEXT NOT NULL DEFAULT 'not_released' CHECK (escrow_release_state IN ('not_released', 'submitted', 'error', 'not_configured')),
             ciphertext TEXT NOT NULL,
             created_at TEXT NOT NULL,
-            assigned_at TEXT
+            assigned_at TEXT,
+            tags TEXT[] DEFAULT '{}'
           )
         `);
         await client.query("ALTER TABLE tasks ADD COLUMN IF NOT EXISTS escrow_funding_tx_id TEXT");
@@ -151,10 +154,10 @@ export async function createTask(task: Task): Promise<Task> {
         INSERT INTO tasks (
           id, title, description, reward, min_rep, creator_address, agent_id, agent_address, status,
           escrow_address, escrow_id, escrow_status, escrow_funding_tx_id, escrow_funding_state,
-          escrow_release_tx_id, escrow_release_state, ciphertext, created_at, assigned_at
+          escrow_release_tx_id, escrow_release_state, ciphertext, created_at, assigned_at, tags
         ) VALUES (
           $1, $2, $3, $4, $5, $6, $7, $8, $9,
-          $10, $11, $12, $13, $14, $15, $16, $17, $18, $19
+          $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20
         )
       `,
       [
@@ -177,6 +180,7 @@ export async function createTask(task: Task): Promise<Task> {
         task.ciphertext,
         task.createdAt,
         task.assignedAt ?? null,
+        task.tags ?? [],
       ]
     );
     return task;
@@ -201,7 +205,7 @@ export async function listTasks(): Promise<Task[]> {
       SELECT
         id, title, description, reward, min_rep, creator_address, agent_id, agent_address, status,
         escrow_address, escrow_id, escrow_status, escrow_funding_tx_id, escrow_funding_state,
-        escrow_release_tx_id, escrow_release_state, ciphertext, created_at, assigned_at
+        escrow_release_tx_id, escrow_release_state, ciphertext, created_at, assigned_at, tags
       FROM tasks
       ORDER BY created_at DESC
     `);

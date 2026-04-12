@@ -22,6 +22,7 @@ type PostTaskRequest = {
   minRep?: number;
   agentId?: string | null;
   walletId?: string;          // Circle wallet ID that owns the USDC
+  tags?: string[];
 };
 
 type CircleWallet = { id?: string; address?: string };
@@ -97,7 +98,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const { title, description, reward, minRep, agentId, walletId } = await req.json() as PostTaskRequest;
+    const { title, description, reward, minRep, agentId, walletId, tags } = await req.json() as PostTaskRequest;
 
     if (!title || !description || !reward) {
       logAuditEvent({
@@ -211,6 +212,7 @@ if (CIRCLE_PLATFORM_WALLET_ADDRESS && USDC_TOKEN_ID && escrowAddress) {
       escrowReleaseState: "not_released",
       ciphertext: "",
       createdAt: new Date().toISOString(),
+      tags: tags ?? [],
     };
 
     await createTask(task);

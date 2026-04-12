@@ -4,6 +4,7 @@ export type Task = {
   description: string;
   reward: string;
   minRep: number;
+  tags?: string[];
   creatorAddress: string;
   agentId: string | null;
   agentAddress?: string | null;

@@ -24,7 +24,7 @@ type Task = {
   title: string;
   description: string;
   reward: string;
-  status: "open" | "assigned" | "in_progress" | "completed" | "paid" | "cancelled";
+  status: "open" | "assigned" | "in_progress" | "completed" | "paid" | "cancelled" | "disputed";
   minRep: number;
   creatorAddress?: string;
   ago?: string;
@@ -196,6 +196,10 @@ export default function Home() {
   const [assigning, setAssigning]             = useState(false);
   const [assignStatus, setAssignStatus]       = useState("");
   const [registering, setRegistering] = useState(false);
+  const [showDisputeModal, setShowDisputeModal] = useState<string | null>(null);
+  const [disputeReason, setDisputeReason] = useState("");
+  const [disputeResponse, setDisputeResponse] = useState("");
+  const [disputeStatus, setDisputeStatus] = useState("");
   const [agentName, setAgentName] = useState("");
   const [regStatus, setRegStatus]   = useState("");
   const [isAuthed, setIsAuthed] = useState(false);
@@ -295,6 +299,81 @@ export default function Home() {
       setTimeout(() => setAssignStatus(""), 4000);
     } finally {
       setAssigning(false);
+    }
+  };
+
+  const handleDispute = async (taskId: string) => {
+    if (!isConnected || !address) return;
+    if (!isAuthed) { const ok = await authenticateWallet(); if (!ok) return; }
+    if (!disputeReason.trim()) { setDisputeStatus("Please provide a reason for the dispute."); return; }
+
+    setDisputeStatus("Raising dispute...");
+    try {
+      const res = await fetch(`/api/tasks/${taskId}/dispute`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reason: disputeReason }),
+      });
+      const data = await res.json() as { error?: string };
+      if (!res.ok || data.error) throw new Error(data.error || "Failed to raise dispute");
+      setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status: "disputed" } : t));
+      setDisputeStatus("Dispute raised successfully.");
+      setShowDisputeModal(null);
+      setDisputeReason("");
+      setTimeout(() => setDisputeStatus(""), 3000);
+    } catch (err: unknown) {
+      setDisputeStatus("Error: " + getErrorMessage(err));
+    }
+  };
+
+  const handleDisputeResponse = async (taskId: string) => {
+    if (!isConnected || !address) return;
+    if (!isAuthed) { const ok = await authenticateWallet(); if (!ok) return; }
+    if (!disputeResponse.trim()) { setDisputeStatus("Please provide a response."); return; }
+
+    setDisputeStatus("Submitting response...");
+    try {
+      const res = await fetch(`/api/tasks/${taskId}/dispute/respond`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ response: disputeResponse }),
+      });
+      const data = await res.json() as { error?: string };
+      if (!res.ok || data.error) throw new Error(data.error || "Failed to submit response");
+      setDisputeStatus("Response submitted.");
+      setDisputeResponse("");
+      setTimeout(() => setDisputeStatus(""), 3000);
+    } catch (err: unknown) {
+      setDisputeStatus("Error: " + getErrorMessage(err));
+    }
+  };
+
+  const handleResolveDispute = async (taskId: string, resolution: "pay_agent" | "refund_creator") => {
+    if (!isConnected || !address) return;
+    if (!isAuthed) { const ok = await authenticateWallet(); if (!ok) return; }
+
+    const label = resolution === "pay_agent" ? "pay the agent" : "refund yourself";
+    const confirmed = window.confirm(`Resolve dispute: ${label}? This will trigger a Circle transfer.`);
+    if (!confirmed) return;
+
+    setDisputeStatus("Resolving dispute...");
+    try {
+      const res = await fetch(`/api/tasks/${taskId}/dispute/resolve`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ resolution }),
+      });
+      const data = await res.json() as { error?: string; resolution?: string };
+      if (!res.ok || data.error) throw new Error(data.error || "Failed to resolve dispute");
+      setTasks(prev => prev.map(t =>
+        t.id === taskId
+          ? { ...t, status: resolution === "pay_agent" ? "paid" : "cancelled" }
+          : t
+      ));
+      setDisputeStatus(`Dispute resolved — ${resolution === "pay_agent" ? "agent paid" : "escrow refunded"}.`);
+      setTimeout(() => setDisputeStatus(""), 4000);
+    } catch (err: unknown) {
+      setDisputeStatus("Error: " + getErrorMessage(err));
     }
   };
 
@@ -1247,14 +1326,18 @@ const handleAssign = async (taskId: string, agentId: string, agentAddress: strin
                 const canStart = task.status === "assigned" && (isAgent || isCreator);
                 const canComplete = task.status === "in_progress" && (isAgent || isCreator);
                 const canPay = task.status === "completed" && isCreator;
+		const canDispute = task.status === "completed" && isCreator;
+		const canRespondToDispute = task.status === "disputed" && isAgent;
+		const canResolveDispute = task.status === "disputed" && isCreator;
 
-const statusLabelMap: Record<Task["status"], string> = {
+                const statusLabelMap: Record<Task["status"], string> = {
                   open: "● Open",
                   assigned: "◎ Assigned",
                   in_progress: "◔ In Progress",
                   completed: "✓ Completed",
                   paid: "◆ Paid",
                   cancelled: "✕ Cancelled",
+                  disputed: "⚠ Disputed",
                 };
 
                 const statusToneMap: Record<Task["status"], { color: string; border: string; background: string }> = {
@@ -1288,6 +1371,11 @@ const statusLabelMap: Record<Task["status"], string> = {
 		    border: "1px solid rgba(232,84,84,.25)",
 		    background: "rgba(232,84,84,.05)",
 		  },
+                  disputed: {
+                    color: "var(--amber)",
+                    border: "1px solid rgba(245,166,35,.25)",
+                    background: "rgba(245,166,35,.05)",
+                  },
                 };
 
                 return (
@@ -1436,6 +1524,85 @@ const statusLabelMap: Record<Task["status"], string> = {
                         Release Payment →
                       </button>
                     )}
+
+		   {canDispute && (
+  <button
+    onClick={() => { setShowDisputeModal(task.id); setDisputeStatus(""); }}
+    style={{
+      marginTop: 8, marginLeft: 8, padding: "7px 16px", borderRadius: 6,
+      background: "rgba(245,166,35,.08)", border: "1px solid rgba(245,166,35,.25)",
+      color: "var(--amber)", fontSize: 12, fontWeight: 500,
+      fontFamily: "var(--font-syne), sans-serif", cursor: "pointer",
+    }}
+  >
+    Raise Dispute ⚠
+  </button>
+)}
+
+{canRespondToDispute && (
+  <div style={{ marginTop: 12 }}>
+    <textarea
+      value={disputeResponse}
+      onChange={e => setDisputeResponse(e.target.value)}
+      placeholder="Describe the work you delivered..."
+      style={{
+        width: "100%", padding: "8px 12px", borderRadius: 6,
+        background: "var(--bg2)", border: "1px solid var(--border)",
+        color: "var(--text)", fontSize: 12, resize: "vertical",
+        minHeight: 64, fontFamily: "'Inter', sans-serif", outline: "none",
+        boxSizing: "border-box",
+      }}
+    />
+    <button
+      onClick={() => void handleDisputeResponse(task.id)}
+      style={{
+        marginTop: 6, padding: "7px 16px", borderRadius: 6,
+        background: "rgba(90,156,245,.08)", border: "1px solid rgba(90,156,245,.25)",
+        color: "var(--blue)", fontSize: 12, fontWeight: 500,
+        fontFamily: "var(--font-syne), sans-serif", cursor: "pointer",
+      }}
+    >
+      Submit Response →
+    </button>
+    {disputeStatus && (
+      <p style={{ marginTop: 6, fontSize: 11, color: "var(--text3)", fontFamily: "'DM Mono', monospace" }}>
+        {disputeStatus}
+      </p>
+    )}
+  </div>
+)}
+
+{canResolveDispute && (
+  <div style={{ marginTop: 12, display: "flex", gap: 8 }}>
+    <button
+      onClick={() => void handleResolveDispute(task.id, "pay_agent")}
+      style={{
+        padding: "7px 16px", borderRadius: 6,
+        background: "rgba(78,203,141,.08)", border: "1px solid rgba(78,203,141,.25)",
+        color: "var(--green)", fontSize: 12, fontWeight: 500,
+        fontFamily: "var(--font-syne), sans-serif", cursor: "pointer",
+      }}
+    >
+      Pay Agent →
+    </button>
+    <button
+      onClick={() => void handleResolveDispute(task.id, "refund_creator")}
+      style={{
+        padding: "7px 16px", borderRadius: 6,
+        background: "rgba(232,84,84,.08)", border: "1px solid rgba(232,84,84,.25)",
+        color: "var(--red)", fontSize: 12, fontWeight: 500,
+        fontFamily: "var(--font-syne), sans-serif", cursor: "pointer",
+      }}
+    >
+      Refund Me →
+    </button>
+    {disputeStatus && (
+      <p style={{ fontSize: 11, color: "var(--text3)", fontFamily: "'DM Mono', monospace", alignSelf: "center" }}>
+        {disputeStatus}
+      </p>
+    )}
+  </div>
+)}
 			
 		    {task.status === "open" && isCreator && (
   <button
@@ -1558,6 +1725,77 @@ const statusLabelMap: Record<Task["status"], string> = {
                 </div>
               )}
             </div>
+
+	    {/* Dispute Modal */}
+{showDisputeModal && (
+  <div style={{
+    position: "fixed", inset: 0, zIndex: 200,
+    background: "rgba(0,0,0,.7)", display: "flex",
+    alignItems: "center", justifyContent: "center",
+    backdropFilter: "blur(4px)",
+  }}
+    onClick={() => setShowDisputeModal(null)}
+  >
+    <div
+      onClick={e => e.stopPropagation()}
+      style={{
+        background: "var(--bg1)", border: "1px solid rgba(245,166,35,.3)",
+        borderRadius: 16, padding: 32, width: "100%", maxWidth: 480,
+        margin: "0 24px",
+      }}
+    >
+      <div style={{
+        fontFamily: "var(--font-syne), sans-serif", fontWeight: 700,
+        fontSize: 18, letterSpacing: "-.02em", marginBottom: 4,
+        color: "var(--amber)",
+      }}>Raise Dispute ⚠</div>
+      <div style={{ fontSize: 12, color: "var(--text3)", marginBottom: 20 }}>
+        Describe why the submitted work does not meet requirements.
+        The agent will be notified and can respond before you resolve.
+      </div>
+      <textarea
+        value={disputeReason}
+        onChange={e => setDisputeReason(e.target.value)}
+        placeholder="e.g. The delivered report was incomplete — missing reentrancy analysis..."
+        style={{
+          width: "100%", padding: "10px 12px", borderRadius: 8,
+          background: "var(--bg2)", border: "1px solid var(--border-hi)",
+          color: "var(--text)", fontSize: 13, resize: "vertical",
+          minHeight: 100, fontFamily: "'Inter', sans-serif",
+          outline: "none", fontWeight: 300, boxSizing: "border-box",
+        }}
+      />
+      {disputeStatus && (
+        <p style={{ marginTop: 8, fontSize: 12, color: "var(--red)", fontFamily: "'DM Mono', monospace" }}>
+          {disputeStatus}
+        </p>
+      )}
+      <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
+        <button
+          onClick={() => void handleDispute(showDisputeModal)}
+          style={{
+            flex: 1, padding: "11px", borderRadius: 8,
+            background: "rgba(245,166,35,.1)", border: "1px solid rgba(245,166,35,.3)",
+            color: "var(--amber)", cursor: "pointer",
+            fontFamily: "var(--font-syne), sans-serif", fontWeight: 600, fontSize: 13,
+          }}
+        >
+          Submit Dispute →
+        </button>
+        <button
+          onClick={() => { setShowDisputeModal(null); setDisputeReason(""); setDisputeStatus(""); }}
+          style={{
+            padding: "11px 20px", background: "none",
+            border: "1px solid var(--border)", borderRadius: 8,
+            color: "var(--text3)", cursor: "pointer", fontSize: 13,
+          }}
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+)}
 
             {/* post task panel */}
             <div style={{

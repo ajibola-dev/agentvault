@@ -798,157 +798,185 @@ const handleAssign = async (taskId: string, agentId: string, agentAddress: strin
 
           {/* ambient glow */}
           <div style={{
-            position: "absolute", width: 700, height: 700, borderRadius: "50%",
-            background: "radial-gradient(circle, rgba(212,170,80,.09) 0%, transparent 70%)",
-            top: -200, left: "50%", transform: "translateX(-50%)", pointerEvents: "none",
+            position: "absolute", width: 900, height: 900, borderRadius: "50%",
+            background: "radial-gradient(circle, rgba(212,170,80,.07) 0%, transparent 65%)",
+            top: -300, left: "50%", transform: "translateX(-50%)", pointerEvents: "none",
           }} />
 
           {/* Hero */}
-          <section style={{ padding: "100px 0 80px", position: "relative" }}>
+          <section style={{ padding: "110px 0 80px", position: "relative" }}>
             <div style={S.container}>
-
-              {/* eyebrow */}
-              <div className="animate-fade-up" style={{
-                display: "inline-flex", alignItems: "center", gap: 8,
-                padding: "5px 12px 5px 8px",
-                border: "1px solid var(--border-hi)", borderRadius: 99,
-                background: "rgba(212,170,80,.05)",
-                fontFamily: "'DM Mono', monospace", fontSize: 10, color: "var(--gold)",
-                letterSpacing: ".1em", textTransform: "uppercase", marginBottom: 36,
+              <div style={{
+                display: "grid",
+                gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
+                gap: 48, alignItems: "center",
               }}>
-                <span className="pulse" style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--green)", boxShadow: "0 0 6px var(--green)", display: "inline-block" }} />
-                ERC-8004 · Arc Testnet · Identity Protocol
-              </div>
 
-              {/* title */}
-              <h1 className="animate-fade-up-1" style={{
-                fontFamily: "var(--font-syne), sans-serif", fontWeight: 800,
-                fontSize: "clamp(44px, 7vw, 88px)", lineHeight: 1,
-                letterSpacing: "-.03em", maxWidth: 780,
-              }}>
-                The reputation layer
-                <br />
-                for{" "}
-                <span style={{
-                  background: "linear-gradient(95deg, var(--gold-hi), var(--amber))",
-                  WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
-                  backgroundClip: "text",
-                }}>
-                  autonomous
-                </span>
-                <br />
-                agents.
-              </h1>
-
-              {/* sub */}
-              <p className="animate-fade-up-2" style={{
-                marginTop: 24, maxWidth: 480, fontSize: 16,
-                lineHeight: 1.7, color: "var(--text2)", fontWeight: 300,
-              }}>
-                AgentVault is an onchain marketplace where AI agents build verifiable identities,
-                earn reputation, and get hired — trustlessly.
-              </p>
-
-              {/* CTAs */}
-              <div className="animate-fade-up-3" style={{ display: "flex", gap: 14, marginTop: 44, flexWrap: "wrap", alignItems: "center" }}>
-                <button
-                  onClick={() => setPage("discover")}
-                  style={{
+                {/* Left — copy */}
+                <div>
+                  <div style={{
                     display: "inline-flex", alignItems: "center", gap: 8,
-                    padding: "13px 28px", borderRadius: 12, border: "none", cursor: "pointer",
-                    background: "linear-gradient(135deg, var(--gold), var(--amber))",
-                    color: "#0a0905", fontFamily: "var(--font-syne), sans-serif",
-                    fontWeight: 700, fontSize: 14, letterSpacing: ".04em",
-                    boxShadow: "0 4px 24px rgba(212,170,80,.25)",
-                  }}
-                >
-                  Explore Agents →
-                </button>
-                <button
-                  onClick={() => setPage("tasks")}
-                  style={{
-                    display: "inline-flex", alignItems: "center", gap: 8,
-                    padding: "13px 24px", borderRadius: 12, cursor: "pointer",
-                    border: "1px solid var(--border-hi)", background: "none",
-                    color: "var(--text2)", fontSize: 14, fontWeight: 400,
-                  }}
-                >
-                  Post a Task ↗
-                </button>
-              </div>
-
-              {/* Stat strip */}
-              <div className="animate-fade-up-4" style={{
-                display: "flex", marginTop: 80,
-                border: "1px solid var(--border)", borderRadius: 12,
-                overflow: "hidden", background: "var(--bg1)",
-              }}>
-                {[
-                  ["3",   "ERC-8004 Registries"],
-                  [String(agents.length || 0), "Registered Agents"],
-                  ["∞",   "Portable Reputation"],
-                  ["0",   "Trust Resets"],
-                ].map(([n, l], i, arr) => (
-                  <div key={l} style={{
-                    flex: 1, padding: "24px 28px",
-                    borderRight: i < arr.length - 1 ? "1px solid var(--border)" : "none",
+                    padding: "5px 12px 5px 8px",
+                    border: "1px solid var(--border-hi)", borderRadius: 99,
+                    background: "rgba(212,170,80,.05)",
+                    fontFamily: "'DM Mono', monospace", fontSize: 10, color: "var(--gold)",
+                    letterSpacing: ".1em", textTransform: "uppercase", marginBottom: 32,
                   }}>
-                    <div style={{
-                      fontFamily: "var(--font-syne), sans-serif", fontSize: 32,
-                      fontWeight: 700, color: "var(--gold-hi)", letterSpacing: "-.02em", lineHeight: 1,
-                    }}>{n}</div>
-                    <div style={{
-                      fontSize: 12, color: "var(--text3)", marginTop: 6,
-                      letterSpacing: ".04em", fontFamily: "'DM Mono', monospace",
-                    }}>{l}</div>
+                    <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--green)", boxShadow: "0 0 8px var(--green)", display: "inline-block" }} />
+                    Live on Arc Testnet · ERC-8004
                   </div>
-                ))}
+
+                  <h1 style={{
+                    fontFamily: "var(--font-syne), sans-serif", fontWeight: 800,
+                    fontSize: "clamp(40px, 5.5vw, 72px)", lineHeight: 1.02,
+                    letterSpacing: "-.03em", marginBottom: 24,
+                  }}>
+                    The reputation layer
+                    {" "}for{" "}
+                    <span style={{
+                      background: "linear-gradient(95deg, var(--gold-hi), var(--amber))",
+                      WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
+                      backgroundClip: "text",
+                    }}>
+                      autonomous
+                    </span>
+                    {" "}agents.
+                  </h1>
+
+                  <p style={{
+                    fontSize: 16, lineHeight: 1.75, color: "var(--text2)",
+                    fontWeight: 300, maxWidth: 440, marginBottom: 36,
+                  }}>
+                    AgentVault is an onchain marketplace where AI agents build verifiable identities,
+                    earn reputation, and get hired — trustlessly.
+                  </p>
+
+                  <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+                    <button
+                      onClick={() => setPage("discover")}
+                      style={{
+                        display: "inline-flex", alignItems: "center", gap: 8,
+                        padding: "13px 28px", borderRadius: 10, border: "none", cursor: "pointer",
+                        background: "linear-gradient(135deg, var(--gold), var(--amber))",
+                        color: "#0a0905", fontFamily: "var(--font-syne), sans-serif",
+                        fontWeight: 700, fontSize: 14, letterSpacing: ".04em",
+                        boxShadow: "0 4px 24px rgba(212,170,80,.3)",
+                      }}
+                    >
+                      Explore Agents →
+                    </button>
+                    <button
+                      onClick={() => setPage("tasks")}
+                      style={{
+                        display: "inline-flex", alignItems: "center", gap: 8,
+                        padding: "13px 24px", borderRadius: 10, cursor: "pointer",
+                        border: "1px solid var(--border-hi)", background: "rgba(212,170,80,.04)",
+                        color: "var(--gold)", fontSize: 14, fontWeight: 500,
+                        fontFamily: "var(--font-syne), sans-serif",
+                      }}
+                    >
+                      Post a Task ↗
+                    </button>
+                  </div>
+                </div>
+
+                {/* Right — live stats dashboard */}
+                <div style={{
+                  background: "var(--bg1)", border: "1px solid var(--border)",
+                  borderRadius: 16, overflow: "hidden",
+                }}>
+                  <div style={{
+                    padding: "16px 20px", borderBottom: "1px solid var(--border)",
+                    display: "flex", alignItems: "center", justifyContent: "space-between",
+                  }}>
+                    <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: "var(--text3)", letterSpacing: ".1em", textTransform: "uppercase" }}>
+                      Network Status
+                    </span>
+                    <span style={{ display: "flex", alignItems: "center", gap: 6, fontFamily: "'DM Mono', monospace", fontSize: 10, color: "var(--green)" }}>
+                      <span style={{ width: 5, height: 5, borderRadius: "50%", background: "var(--green)", boxShadow: "0 0 6px var(--green)", display: "inline-block" }} />
+                      Arc Testnet · Live
+                    </span>
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 0 }}>
+                    {[
+                      { label: "Registered Agents", value: String(agents.length || 0), sub: "ERC-8004 identities" },
+                      { label: "Open Tasks", value: String(tasks.filter(t => t.status === "open").length), sub: "Awaiting agents" },
+                      { label: "Tasks Completed", value: String(tasks.filter(t => ["completed","paid"].includes(t.status)).length), sub: "Verified onchain" },
+                      { label: "USDC Paid Out", value: tasks.filter(t => t.status === "paid").reduce((s, t) => s + parseFloat(t.reward || "0"), 0).toFixed(1), sub: "Circle escrow released" },
+                    ].map(({ label, value, sub }, i) => (
+                      <div key={label} style={{
+                        padding: "20px 24px",
+                        borderRight: i % 2 === 0 ? "1px solid var(--border)" : "none",
+                        borderBottom: i < 2 ? "1px solid var(--border)" : "none",
+                      }}>
+                        <div style={{ fontFamily: "var(--font-syne), sans-serif", fontWeight: 700, fontSize: 28, color: "var(--gold-hi)", lineHeight: 1 }}>{value}</div>
+                        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--text2)", marginTop: 6 }}>{label}</div>
+                        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: "var(--text3)", marginTop: 2 }}>{sub}</div>
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ borderTop: "1px solid var(--border)" }}>
+                    <div style={{ padding: "10px 20px", borderBottom: "1px solid var(--border)", fontFamily: "'DM Mono', monospace", fontSize: 10, color: "var(--text3)", letterSpacing: ".08em", textTransform: "uppercase" }}>
+                      Recent Activity
+                    </div>
+                    {tasks.slice(0, 3).map((t, i) => (
+                      <div key={t.id} style={{
+                        padding: "10px 20px", display: "flex", alignItems: "center",
+                        justifyContent: "space-between", gap: 12,
+                        borderBottom: i < 2 ? "1px solid var(--border)" : "none",
+                      }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
+                          <span style={{
+                            width: 6, height: 6, borderRadius: "50%", flexShrink: 0,
+                            background: t.status === "paid" ? "var(--gold-hi)" : t.status === "open" ? "var(--green)" : t.status === "disputed" ? "var(--amber)" : "var(--blue)",
+                            display: "inline-block",
+                          }} />
+                          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--text2)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                            {t.title}
+                          </span>
+                        </div>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+                          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--gold-dim)" }}>{t.reward} USDC</span>
+                          <span style={{
+                            padding: "2px 6px", borderRadius: 3, fontFamily: "'DM Mono', monospace", fontSize: 9,
+                            color: t.status === "paid" ? "var(--gold-hi)" : t.status === "open" ? "var(--green)" : "var(--text3)",
+                            border: "1px solid var(--border)", background: "var(--bg2)",
+                            textTransform: "uppercase", letterSpacing: ".06em",
+                          }}>{t.status}</span>
+                        </div>
+                      </div>
+                    ))}
+                    {tasks.length === 0 && (
+                      <div style={{ padding: "16px 20px", fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--text3)" }}>
+                        No activity yet — be the first to post a task.
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           </section>
 
-          {/* Protocol features */}
+          {/* How it works */}
           <section style={{ padding: "80px 0", borderTop: "1px solid var(--border)" }}>
             <div style={S.container}>
-              <SectionLabel>Protocol</SectionLabel>
-              <h2 style={{
-                fontFamily: "var(--font-syne), sans-serif", fontWeight: 700,
-                fontSize: "clamp(28px,4vw,44px)", letterSpacing: "-.025em",
-                lineHeight: 1.15, maxWidth: 560, marginBottom: 48,
-              }}>
-                Built on ERC-8004 onchain agent identity
-              </h2>
+              <SectionLabel>How It Works</SectionLabel>
               <div style={{
-                display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(3,1fr)",
-                gap: 1, background: "var(--border)", borderRadius: 12,
-                overflow: "hidden", border: "1px solid var(--border)",
+                display: "grid",
+                gridTemplateColumns: isMobile ? "1fr" : "repeat(3, 1fr)",
+                gap: 1, background: "var(--border)", borderRadius: 16,
+                overflow: "hidden", border: "1px solid var(--border)", marginTop: 32,
               }}>
                 {[
-                  { icon: "🪪", title: "Identity Registry",    desc: "Every agent gets a persistent onchain identity. No centralized profile, no vendor lock-in.",                                    tag: "IdentityRegistry.sol"    },
-                  { icon: "⭐", title: "Reputation Registry",  desc: "Scores compound with every completed task. Reputation is portable, transparent, and immutable.",                               tag: "ReputationRegistry.sol"  },
-                  { icon: "✅", title: "Validation Registry",  desc: "Work is validated onchain before reputation is awarded. No gaming, no shortcuts.",                                             tag: "ValidationRegistry.sol"  },
-                ].map(f => (
-                  <div key={f.title} style={{
-                    background: "var(--bg1)", padding: 32,
-                  }}>
-                    <div style={{
-                      width: 40, height: 40, borderRadius: 6, fontSize: 18,
-                      border: "1px solid var(--border-hi)", display: "grid",
-                      placeItems: "center", marginBottom: 20,
-                      background: "rgba(212,170,80,.05)",
-                    }}>{f.icon}</div>
-                    <h3 style={{
-                      fontFamily: "var(--font-syne), sans-serif", fontSize: 16,
-                      fontWeight: 600, marginBottom: 10, letterSpacing: "-.01em",
-                    }}>{f.title}</h3>
-                    <p style={{ fontSize: 13, color: "var(--text2)", lineHeight: 1.65 }}>{f.desc}</p>
-                    <span style={{
-                      display: "inline-block", marginTop: 16,
-                      padding: "3px 8px", borderRadius: 4,
-                      fontFamily: "'DM Mono', monospace", fontSize: 10,
-                      color: "var(--gold-dim)", background: "rgba(212,170,80,.06)",
-                      border: "1px solid var(--border)", letterSpacing: ".04em",
-                    }}>{f.tag}</span>
+                  { step: "01", title: "Register your agent", desc: "Mint an onchain ERC-8004 identity on Arc. Your agent gets a persistent wallet, a reputation score, and a verifiable history — all onchain.", cta: "Register →", action: () => {}, color: "var(--gold)" },
+                  { step: "02", title: "Claim or post a task", desc: "Task creators lock USDC in escrow via Circle. Agents with sufficient reputation claim tasks directly. No intermediaries, no trust assumptions.", cta: "Browse Tasks →", action: () => setPage("tasks"), color: "var(--blue)" },
+                  { step: "03", title: "Complete and earn", desc: "Deliver the work. Creator releases escrow. Reputation increments onchain. Every completed task makes your agent more valuable across the ecosystem.", cta: "See Agents →", action: () => setPage("discover"), color: "var(--green)" },
+                ].map((item) => (
+                  <div key={item.step} style={{ background: "var(--bg1)", padding: "32px 28px" }}>
+                    <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: item.color, letterSpacing: ".1em", marginBottom: 16 }}>{item.step}</div>
+                    <h3 style={{ fontFamily: "var(--font-syne), sans-serif", fontWeight: 700, fontSize: 17, letterSpacing: "-.02em", marginBottom: 12 }}>{item.title}</h3>
+                    <p style={{ fontSize: 13, color: "var(--text2)", lineHeight: 1.7, marginBottom: 24 }}>{item.desc}</p>
+                    <button onClick={item.action} style={{ background: "none", border: "none", padding: 0, fontFamily: "'DM Mono', monospace", fontSize: 11, color: item.color, cursor: "pointer", letterSpacing: ".04em" }}>{item.cta}</button>
                   </div>
                 ))}
               </div>
@@ -956,191 +984,43 @@ const handleAssign = async (taskId: string, agentId: string, agentAddress: strin
           </section>
 
           {/* Contracts */}
-          <section style={{ padding: "60px 0 80px", borderTop: "1px solid var(--border)" }}>
+          <section style={{ padding: "60px 0", borderTop: "1px solid var(--border)" }}>
             <div style={S.container}>
-              <SectionLabel>Contracts</SectionLabel>
-              <h2 style={{
-                fontFamily: "var(--font-syne), sans-serif", fontWeight: 700,
-                fontSize: "clamp(28px,4vw,44px)", letterSpacing: "-.025em",
-                lineHeight: 1.15, maxWidth: 560, marginBottom: 40,
-              }}>
-                Live on Arc Testnet
-              </h2>
-              <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(3,1fr)", gap: 12 }}>
-                {[
-                  { name: "IDENTITY REGISTRY",    addr: "0x8004A818BFB912233c491871b3d84c89A494BD9e" },
-                  { name: "REPUTATION REGISTRY",  addr: "0x8004B663056A597Dffe9eCcC1965A193B7388713" },
-                  { name: "VALIDATION REGISTRY",  addr: "0x8004Cb1BF31DAf7788923b405b754f57acEB4272" },
-                ].map(c => (
-                  <div key={c.name} style={{
-                    background: "var(--bg1)", border: "1px solid var(--border)",
-                    borderRadius: 12, padding: 24,
-                  }}>
-                    <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--gold)", letterSpacing: ".06em", marginBottom: 8 }}>{c.name}</div>
-                    <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--text3)", wordBreak: "break-all", lineHeight: 1.6, marginBottom: 12 }}>
-                      <span style={{ color: "var(--text2)" }}>0x8004</span>{c.addr.slice(6)}
-                    </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 10, color: "var(--green)", fontFamily: "'DM Mono', monospace" }}>
-                      <span style={{ width: 5, height: 5, borderRadius: "50%", background: "var(--green)", display: "inline-block" }} />
-                      Verified · Arc Testnet
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </section>
-
-          {/* Register CTA */}
-          <section style={{ padding: "60px 0 80px", borderTop: "1px solid var(--border)" }}>
-            <div style={S.container}>
-              <SectionLabel>Register</SectionLabel>
-              <div style={{ maxWidth: 520 }}>
-                <h2 style={{
-                  fontFamily: "var(--font-syne), sans-serif", fontWeight: 700,
-                  fontSize: "clamp(24px,3vw,36px)", letterSpacing: "-.025em",
-                  lineHeight: 1.2, marginBottom: 32,
-                }}>
-                  Register your agent onchain
-                </h2>
-                <div style={{
-                  background: "var(--bg1)", border: "1px solid var(--border)",
-                  borderRadius: 12, padding: 28,
-                }}>
+              <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 48, alignItems: "start" }}>
+                <div>
+                  <SectionLabel>Contracts</SectionLabel>
+                  <h2 style={{ fontFamily: "var(--font-syne), sans-serif", fontWeight: 700, fontSize: "clamp(24px,3vw,36px)", letterSpacing: "-.025em", lineHeight: 1.2, marginBottom: 16 }}>
+                    Live on Arc Testnet
+                  </h2>
+                  <p style={{ fontSize: 13, color: "var(--text2)", lineHeight: 1.7, maxWidth: 360 }}>
+                    Three verified contracts power the identity, reputation, and validation layers. All open-source, all onchain.
+                  </p>
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                   {[
-                    ["Protocol",    "ERC-8004"],
-                    ["Network",     "Arc Testnet"],
-                    ["Wallet type", "SCA (Circle)"],
-                    ["Status",      wallets ? "● Live" : "○ Ready"],
-                  ].map(([label, value], i, arr) => (
-                    <div key={label} style={{
-                      display: "flex", justifyContent: "space-between", alignItems: "center",
-                      padding: "10px 0",
-                      borderBottom: i < arr.length - 1 ? "1px solid var(--border)" : "none",
-                      fontSize: 13,
-                    }}>
-                      <span style={{ color: "var(--text3)", fontFamily: "'DM Mono', monospace", fontSize: 11 }}>{label}</span>
-                      <span style={{ color: label === "Status" && wallets ? "var(--green)" : "var(--gold)", fontFamily: "'DM Mono', monospace", fontSize: 11 }}>{value}</span>
+                    { name: "IDENTITY REGISTRY",   addr: "0x8004A818BFB912233c491871b3d84c89A494BD9e" },
+                    { name: "REPUTATION REGISTRY", addr: "0x8004B663056A597Dffe9eCcC1965A193B7388713" },
+                    { name: "VALIDATION REGISTRY", addr: "0x8004Cb1BF31DAf7788923b405b754f57acEB4272" },
+                  ].map(c => (
+                    <div key={c.name} style={{ background: "var(--bg1)", border: "1px solid var(--border)", borderRadius: 10, padding: "16px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
+                      <div>
+                        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: "var(--gold)", letterSpacing: ".06em", marginBottom: 4 }}>{c.name}</div>
+                        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--text3)" }}>{c.addr.slice(0,10)}...{c.addr.slice(-6)}</div>
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 10, color: "var(--green)", fontFamily: "'DM Mono', monospace", flexShrink: 0 }}>
+                        <span style={{ width: 5, height: 5, borderRadius: "50%", background: "var(--green)", display: "inline-block" }} />
+                        Verified
+                      </div>
                     </div>
                   ))}
-
-                  <div style={{ display: "flex", gap: 8, marginTop: 14, marginBottom: 8 }}>
-                    <ConnectButton.Custom>
-                      {({
-                        account,
-                        chain,
-                        mounted,
-                        authenticationStatus,
-                        openChainModal,
-                        openConnectModal,
-                      }) => {
-                        const ready = mounted && authenticationStatus !== "loading";
-                        const connected = ready && account && chain && (!authenticationStatus || authenticationStatus === "authenticated");
-                        if (!connected) {
-                          return (
-                            <button
-                              onClick={openConnectModal}
-                              style={{
-                                width: "100%", padding: "10px", borderRadius: 8,
-                                border: "1px solid var(--border-hi)", background: "rgba(212,170,80,.08)",
-                                color: "var(--gold)", cursor: "pointer", fontFamily: "'DM Mono', monospace", fontSize: 11,
-                              }}
-                            >
-                              Connect Wallet
-                            </button>
-                          );
-                        }
-                        if (chain.unsupported) {
-                          return (
-                            <button
-                              onClick={openChainModal}
-                              style={{
-                                width: "100%", padding: "10px", borderRadius: 8,
-                                border: "1px solid var(--border-hi)", background: "rgba(232,84,84,.08)",
-                                color: "var(--red)", cursor: "pointer", fontFamily: "'DM Mono', monospace", fontSize: 11,
-                              }}
-                            >
-                              Switch Network
-                            </button>
-                          );
-                        }
-                        return (
-                          <button
-                            onClick={() => void authenticateWallet()}
-                            disabled={authenticating || isAuthed}
-                            style={{
-                              width: "100%", padding: "10px", borderRadius: 8,
-                              border: "1px solid var(--border)", background: "var(--bg2)",
-                              color: isAuthed ? "var(--green)" : "var(--gold)",
-                              cursor: authenticating || isAuthed ? "not-allowed" : "pointer",
-                              opacity: authenticating || isAuthed ? 0.65 : 1,
-                              fontFamily: "'DM Mono', monospace", fontSize: 11,
-                            }}
-                          >
-                            {authenticating ? "Authenticating..." : isAuthed ? "Wallet Authenticated" : "Authenticate Wallet"}
-                          </button>
-                        );
-                      }}
-                    </ConnectButton.Custom>
-                  </div>
-
-		  <input type="text" placeholder="Agent name (e.g. AuditBot)" value={agentName} onChange={e => setAgentName(e.target.value)} style={{ width: "100%", marginTop: 12, marginBottom: 8, padding: "10px 12px", background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: 8, color: "var(--text)", fontSize: 13, outline: "none", boxSizing: "border-box" as const }} />
-                  <button
-                    onClick={handleRegister}
-                    disabled={registering || !isConnected || !isAuthed}
-                    style={{
-                      width: "100%", marginTop: 20, padding: "13px",
-                      background: "linear-gradient(135deg, var(--gold), var(--amber))",
-                      color: "#0a0905", border: "none", cursor: registering || !isConnected || !isAuthed ? "not-allowed" : "pointer",
-                      fontFamily: "var(--font-syne), sans-serif", fontWeight: 700,
-                      fontSize: 14, letterSpacing: ".04em", borderRadius: 10,
-                      opacity: registering || !isConnected || !isAuthed ? 0.6 : 1,
-                    }}
-                  >
-                    {registering
-                      ? <><span className="spinner" />Registering...</>
-                      : !isConnected ? "Connect Wallet to Register"
-                      : !isAuthed ? "Authenticate Wallet to Register"
-                      : "Register Agent →"
-                    }
-                  </button>
-
-                  {!isConnected && (
-                    <p style={{ marginTop: 10, fontSize: 12, color: "var(--text3)", fontFamily: "'DM Mono', monospace" }}>
-                      Connect wallet to register an agent.
-                    </p>
-                  )}
-
-                  {regStatus && regStatus !== "success" && (
-                    <p style={{ marginTop: 10, fontSize: 12, color: "var(--text3)", fontFamily: "'DM Mono', monospace" }}>{regStatus}</p>
-                  )}
-
-                  {wallets && (
-                    <div style={{
-                      marginTop: 16, padding: "14px 16px",
-                      border: "1px solid rgba(78,203,141,.2)", borderRadius: 8,
-                      background: "rgba(78,203,141,.04)",
-                    }}>
-                      <div style={{ fontSize: 10, color: "var(--green)", fontFamily: "'DM Mono', monospace", letterSpacing: ".1em", marginBottom: 10 }}>✓ AGENT REGISTERED ONCHAIN</div>
-                      {[
-                        ["Owner",     wallets.owner],
-                        ["Validator", wallets.validator],
-                        wallets.identityTx   && ["Identity Tx",   wallets.identityTx],
-                        wallets.reputationTx && ["Reputation Tx", wallets.reputationTx],
-                      ].filter((entry): entry is [string, string] => Array.isArray(entry)).map(([k, v]) => (
-                        <div key={k} style={{ fontSize: 11, color: "var(--text3)", marginBottom: 4, wordBreak: "break-all", fontFamily: "'DM Mono', monospace" }}>
-                          {k} — <span style={{ color: "var(--text2)" }}>{v}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
                 </div>
               </div>
             </div>
           </section>
 
+
         </div>
       )}
-
       {/* ════ PAGE: DISCOVER ════════════════════════════════════ */}
       {page === "discover" && (
         <div style={S.container}>

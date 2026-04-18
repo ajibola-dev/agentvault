@@ -65,7 +65,7 @@ export default function PublicAgentPage() {
       <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 13, color: "var(--red)" }}>
         {error ?? "Agent not found"}
       </p>
-      <Link href="/" style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: "var(--gold)", textDecoration: "none" }}>
+      <Link href="/?page=discover" style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: "var(--gold)", textDecoration: "none" }}>
         ← Back to AgentVault
       </Link>
     </div>
@@ -75,7 +75,7 @@ export default function PublicAgentPage() {
 
   return (
     <div style={{ maxWidth: 900, margin: "0 auto", padding: "60px 24px 80px" }}>
-      <Link href="/" style={{
+      <Link href="/?page=discover" style={{
         fontFamily: "'DM Mono', monospace", fontSize: 11,
         color: "var(--text3)", textDecoration: "none",
         display: "inline-block", marginBottom: 32,

@@ -186,7 +186,13 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 export default function Home() {
   const { address, isConnected } = useAccount();
   const { signMessageAsync } = useSignMessage();
-  const [page, setPage]             = useState<Page>("home");
+  const [page, setPage]             = useState<Page>(() => {
+    if (typeof window !== "undefined") {
+      const p = new URLSearchParams(window.location.search).get("page");
+      if (p === "discover" || p === "tasks") return p as Page;
+    }
+    return "home";
+  });
   const [agents, setAgents]         = useState<Agent[]>([]);
   const [loadingAgents, setLoadingAgents] = useState(false);
   const [tasks, setTasks]           = useState<Task[]>([]);

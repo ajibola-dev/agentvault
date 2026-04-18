@@ -75,7 +75,7 @@ export default function PublicAgentPage() {
 
   return (
     <div style={{ maxWidth: 900, margin: "0 auto", padding: "60px 24px 80px" }}>
-      <Link href="/discover" style={{
+      <Link href="/" style={{
         fontFamily: "'DM Mono', monospace", fontSize: 11,
         color: "var(--text3)", textDecoration: "none",
         display: "inline-block", marginBottom: 32,

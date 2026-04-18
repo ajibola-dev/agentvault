@@ -1297,54 +1297,40 @@ const handleAssign = async (taskId: string, agentId: string, agentAddress: strin
         <div style={S.container}>
 
           {/* header */}
-          <div style={{ padding: "60px 0 32px" }}>
-            <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", flexWrap: "wrap", gap: 16 }}>
-              <div>
-                <h1 style={{
-                  fontFamily: "var(--font-syne), sans-serif", fontWeight: 800,
-                  fontSize: "clamp(32px,5vw,56px)", letterSpacing: "-.03em", lineHeight: 1.05, margin: 0,
-                }}>
-                  Task{" "}
-                  <span style={{
-                    background: "linear-gradient(95deg, var(--gold-hi), var(--amber))",
-                    WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
-                  }}>Marketplace</span>
-                </h1>
-                <div style={{ display: "flex", gap: 16, marginTop: 10, flexWrap: "wrap", alignItems: "center" }}>
-                  <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--green)" }}>
-                    ● {tasks.filter(t => t.status === "open").length} open
-                  </span>
-                  <span style={{ color: "var(--border-hi)", fontSize: 11 }}>·</span>
-                  <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--text3)" }}>USDC escrow</span>
-                  <span style={{ color: "var(--border-hi)", fontSize: 11 }}>·</span>
-                  <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--text3)" }}>Reputation-gated</span>
-                </div>
-              </div>
-              <div style={{
-                fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--text3)",
-                padding: "6px 12px", border: "1px solid var(--border)", borderRadius: 6,
-                background: "var(--bg1)",
-              }}>
-                {tasks.length} total tasks
-              </div>
+          <div style={{ padding: "60px 0 40px", borderBottom: "1px solid var(--border)" }}>
+            <h1 style={{
+              fontFamily: "var(--font-syne), sans-serif", fontWeight: 800,
+              fontSize: "clamp(32px,5vw,56px)", letterSpacing: "-.03em", lineHeight: 1.05,
+            }}>
+              Task{" "}
+              <span style={{
+                background: "linear-gradient(95deg, var(--gold-hi), var(--amber))",
+                WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
+              }}>Marketplace</span>
+            </h1>
+            <div style={{ display: "flex", gap: 12, marginTop: 14, flexWrap: "wrap" }}>
+              {[`${tasks.filter(t => t.status === "open").length} open tasks`, "USDC escrow", "Reputation-gated"].map(s => (
+                <span key={s} style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--text3)" }}>{s}</span>
+              ))}
             </div>
           </div>
 
           {/* two-col layout */}
           <div style={{
             display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 360px",
-            gap: 24, padding: "8px 0 80px", alignItems: "start",
+            gap: 24, padding: "32px 0 80px", alignItems: "start",
           }}>
 
             {/* tasks list */}
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              {displayTasks.length === 0 && (
-                <div style={{ textAlign: "center", padding: "80px 24px", color: "var(--text3)" }}>
-                  <div style={{ fontSize: 36, marginBottom: 16 }}>📋</div>
-                  <div style={{ fontFamily: "var(--font-syne), sans-serif", fontWeight: 600, fontSize: 18, marginBottom: 8 }}>No tasks yet</div>
-                  <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 13 }}>Be the first to post one →</div>
-                </div>
-              )}
+	    {displayTasks.length === 0 && (
+             <div style={{
+             padding: "60px 24px", textAlign: "center",
+            color: "var(--text3)", fontFamily: "'DM Mono', monospace", fontSize: 13,
+          }}>
+            No tasks yet. Be the first to post one.
+          </div>
+          )}
               {displayTasks.map((task, i) => {
                 const isCreator = Boolean(address && task.creatorAddress && task.creatorAddress.toLowerCase() === address.toLowerCase());
                 const isAgent = Boolean(address && agents.find(a => a.owner === task.agentAddress && a.operator_address?.toLowerCase() === address.toLowerCase()));
@@ -1353,9 +1339,9 @@ const handleAssign = async (taskId: string, agentId: string, agentAddress: strin
                 const canStart = task.status === "assigned" && (isAgent || isCreator);
                 const canComplete = task.status === "in_progress" && (isAgent || isCreator);
                 const canPay = task.status === "completed" && isCreator;
-                const canDispute = task.status === "completed" && isCreator;
-                const canRespondToDispute = task.status === "disputed" && isAgent;
-                const canResolveDispute = task.status === "disputed" && isCreator;
+		const canDispute = task.status === "completed" && isCreator;
+		const canRespondToDispute = task.status === "disputed" && isAgent;
+		const canResolveDispute = task.status === "disputed" && isCreator;
 
                 const statusLabelMap: Record<Task["status"], string> = {
                   open: "● Open",
@@ -1368,248 +1354,298 @@ const handleAssign = async (taskId: string, agentId: string, agentAddress: strin
                 };
 
                 const statusToneMap: Record<Task["status"], { color: string; border: string; background: string }> = {
-                  open: { color: "var(--green)", border: "1px solid rgba(78,203,141,.25)", background: "rgba(78,203,141,.05)" },
-                  assigned: { color: "var(--gold)", border: "1px solid var(--border-hi)", background: "rgba(212,170,80,.06)" },
-                  in_progress: { color: "var(--blue)", border: "1px solid rgba(90,156,245,.25)", background: "rgba(90,156,245,.05)" },
-                  completed: { color: "var(--green)", border: "1px solid rgba(78,203,141,.25)", background: "rgba(78,203,141,.05)" },
-                  paid: { color: "var(--gold-hi)", border: "1px solid rgba(212,170,80,.3)", background: "rgba(212,170,80,.08)" },
-                  cancelled: { color: "var(--red)", border: "1px solid rgba(232,84,84,.25)", background: "rgba(232,84,84,.05)" },
-                  disputed: { color: "var(--amber)", border: "1px solid rgba(245,166,35,.25)", background: "rgba(245,166,35,.05)" },
+                  open: {
+                    color: "var(--green)",
+                    border: "1px solid rgba(78,203,141,.25)",
+                    background: "rgba(78,203,141,.05)",
+                  },
+                  assigned: {
+                    color: "var(--gold)",
+                    border: "1px solid var(--border-hi)",
+                    background: "rgba(212,170,80,.06)",
+                  },
+                  in_progress: {
+                    color: "var(--blue)",
+                    border: "1px solid rgba(90,156,245,.25)",
+                    background: "rgba(90,156,245,.05)",
+                  },
+                  completed: {
+                    color: "var(--green)",
+                    border: "1px solid rgba(78,203,141,.25)",
+                    background: "rgba(78,203,141,.05)",
+                  },
+                  paid: {
+                    color: "var(--gold-hi)",
+                    border: "1px solid rgba(212,170,80,.3)",
+                    background: "rgba(212,170,80,.08)",
+                  },
+		  cancelled: {
+		    color: "var(--red)",
+		    border: "1px solid rgba(232,84,84,.25)",
+		    background: "rgba(232,84,84,.05)",
+		  },
+                  disputed: {
+                    color: "var(--amber)",
+                    border: "1px solid rgba(245,166,35,.25)",
+                    background: "rgba(245,166,35,.05)",
+                  },
                 };
 
                 return (
                   <div key={i} style={{
                     background: "var(--bg1)", border: "1px solid var(--border)",
-                    borderRadius: 12, padding: 24,
+                    borderRadius: 12, padding: 24, cursor: "pointer",
                     transition: "border-color .2s, transform .15s",
                   }}
                     onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--border-hi)"; (e.currentTarget as HTMLElement).style.transform = "translateX(2px)"; }}
                     onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--border)"; (e.currentTarget as HTMLElement).style.transform = ""; }}
                   >
-                    {/* reward + title row */}
-                    <div style={{ display: "flex", alignItems: "flex-start", gap: 16, marginBottom: 10 }}>
+                    <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 10 }}>
                       <div style={{
-                        flexShrink: 0, textAlign: "center",
-                        padding: "8px 14px", borderRadius: 8,
-                        background: "rgba(212,170,80,.08)", border: "1px solid rgba(212,170,80,.2)",
-                        minWidth: 64,
-                      }}>
+                        fontFamily: "var(--font-syne), sans-serif", fontWeight: 600,
+                        fontSize: 15, letterSpacing: "-.01em",
+                      }}>{task.title}</div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 5, flexShrink: 0, fontFamily: "'DM Mono', monospace", fontSize: 13, fontWeight: 500, color: "var(--gold-hi)" }}>
                         <div style={{
-                          fontFamily: "var(--font-syne), sans-serif", fontWeight: 800,
-                          fontSize: 22, lineHeight: 1, color: "var(--gold-hi)",
-                        }}>{task.reward}</div>
-                        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 8, color: "var(--text3)", letterSpacing: ".08em", marginTop: 2 }}>USDC</div>
-                      </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{
-                          fontFamily: "var(--font-syne), sans-serif", fontWeight: 700,
-                          fontSize: 15, letterSpacing: "-.01em", marginBottom: 4,
-                        }}>{task.title}</div>
-                        <p style={{ fontSize: 12, color: "var(--text2)", lineHeight: 1.6, margin: 0 }}>{task.description}</p>
+                          width: 18, height: 18, borderRadius: "50%",
+                          background: "linear-gradient(135deg, #2775ca, #5b9cf6)",
+                          display: "grid", placeItems: "center",
+                          fontSize: 9, fontWeight: 700, color: "#fff",
+                        }}>$</div>
+                        {task.reward} USDC
                       </div>
                     </div>
-
-                    {/* tags */}
+                    <p style={{ fontSize: 13, color: "var(--text2)", lineHeight: 1.6, marginBottom: 14 }}>{task.description}</p>
                     {task.tags && task.tags.length > 0 && (
-                      <div style={{ display: "flex", gap: 5, flexWrap: "wrap", marginBottom: 12 }}>
+                      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 10 }}>
                         {task.tags.map((tag: string) => (
                           <span key={tag} style={{
-                            padding: "3px 8px", borderRadius: 4,
-                            fontFamily: "'DM Mono', monospace", fontSize: 9, color: "var(--gold-dim)",
-                            background: "rgba(212,170,80,.06)", border: "1px solid var(--border)",
+                            padding: "2px 8px", borderRadius: 4,
+                            fontFamily: "'DM Mono', monospace",
+                            fontSize: 10, color: "var(--gold-dim)",
+                            background: "rgba(212,170,80,.06)",
+                            border: "1px solid var(--border)",
                           }}>{tag}</span>
                         ))}
                       </div>
                     )}
-
-                    {/* status row */}
-                    <div style={{
-                      display: "flex", alignItems: "center", justifyContent: "space-between",
-                      flexWrap: "wrap", gap: 6,
-                      paddingTop: 12, borderTop: "1px solid var(--border)",
-                    }}>
-                      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
+                      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                         <span style={{
-                          padding: "3px 8px", borderRadius: 4,
-                          fontFamily: "'DM Mono', monospace", fontSize: 10,
+                          padding: "3px 8px",
+                          borderRadius: 4,
+                          fontFamily: "'DM Mono', monospace",
+                          fontSize: 10,
                           opacity: task._isPending ? 0.5 : 1,
                           transition: "opacity 200ms ease",
                           ...statusToneMap[task.status],
                         }}>
-                          {statusLabelMap[task.status]}{task._isPending && " ⋯"}
+                          {statusLabelMap[task.status]}
+                          {task._isPending && " ⋯"}
                         </span>
                         <span style={{
-                          padding: "3px 8px", borderRadius: 4,
-                          fontFamily: "'DM Mono', monospace", fontSize: 10,
-                          color: task.escrowFundingState === "submitted" ? "var(--green)" : task.escrowFundingState === "error" ? "var(--red)" : "var(--gold-dim)",
-                          border: task.escrowFundingState === "submitted" ? "1px solid rgba(78,203,141,.25)" : task.escrowFundingState === "error" ? "1px solid rgba(232,84,84,.25)" : "1px solid var(--border)",
-                          background: task.escrowFundingState === "submitted" ? "rgba(78,203,141,.05)" : task.escrowFundingState === "error" ? "rgba(232,84,84,.05)" : "rgba(212,170,80,.04)",
-                        }}>
-                          {task.escrowFundingState === "submitted" ? "⬡ Funded" : task.escrowFundingState === "error" ? "⬡ Error" : "○ Escrow"}
-                        </span>
-                        <span style={{
-                          padding: "3px 8px", borderRadius: 4,
-                          fontFamily: "'DM Mono', monospace", fontSize: 10,
-                          color: "var(--blue)", border: "1px solid rgba(90,156,245,.25)", background: "rgba(90,156,245,.05)",
-                        }}>Rep ≥ {task.minRep ?? 50}</span>
+  padding: "3px 8px", borderRadius: 4,
+  fontFamily: "'DM Mono', monospace", fontSize: 10,
+  color: task.escrowFundingState === "submitted" ? "var(--green)"
+       : task.escrowFundingState === "error" ? "var(--red)"
+       : "var(--gold-dim)",
+  border: task.escrowFundingState === "submitted" ? "1px solid rgba(78,203,141,.25)"
+        : task.escrowFundingState === "error" ? "1px solid rgba(232,84,84,.25)"
+        : "1px solid var(--border)",
+  background: task.escrowFundingState === "submitted" ? "rgba(78,203,141,.05)"
+            : task.escrowFundingState === "error" ? "rgba(232,84,84,.05)"
+            : "rgba(212,170,80,.04)",
+}}>
+  {task.escrowFundingState === "submitted" ? "⬡ Funded"
+   : task.escrowFundingState === "error" ? "⬡ Escrow error"
+   : "○ Escrow locked"}
+</span>
+                        <span style={{ padding: "3px 8px", borderRadius: 4, fontFamily: "'DM Mono', monospace", fontSize: 10, color: "var(--blue)", border: "1px solid rgba(90,156,245,.25)", background: "rgba(90,156,245,.05)" }}>Rep ≥ {task.minRep ?? 50}</span>
                       </div>
-                      <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: "var(--text3)" }}>
-                        {task.ago ?? "recently"}
-                      </span>
+                      <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: "var(--text3)" }}>{task.ago ?? "recently"}</span>
                     </div>
 
-                    {/* action buttons */}
-                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 14 }}>
-                      {canAssign && (
-                        <button
-                          onClick={() => { if (!isConnected) { setAssignStatus("Connect wallet to assign"); return; } setShowAssignModal(task.id); }}
-                          disabled={!isConnected}
-                          style={{
-                            padding: "8px 18px", borderRadius: 6,
-                            background: "rgba(212,170,80,.1)", border: "1px solid var(--border-hi)",
-                            color: "var(--gold)", fontSize: 12, fontWeight: 600,
-                            fontFamily: "var(--font-syne), sans-serif",
-                            cursor: !isConnected ? "not-allowed" : "pointer",
-                            opacity: !isConnected ? 0.65 : 1,
-                          }}
-                        >Assign Agent →</button>
-                      )}
-                      {canClaim && (
-                        <button
-                          onClick={() => void handleClaim(task.id)}
-                          disabled={assigning}
-                          style={{
-                            padding: "8px 18px", borderRadius: 6,
-                            background: "rgba(78,203,141,.08)", border: "1px solid rgba(78,203,141,.25)",
-                            color: "var(--green)", fontSize: 12, fontWeight: 600,
-                            fontFamily: "var(--font-syne), sans-serif", cursor: "pointer",
-                            opacity: assigning ? 0.65 : 1,
-                          }}
-                        >Claim Task →</button>
-                      )}
-                      {canStart && (
-                        <button
-                          onClick={() => void handleStatusUpdate(task.id, "in_progress")}
-                          disabled={assigning}
-                          style={{
-                            padding: "8px 18px", borderRadius: 6,
-                            background: "rgba(90,156,245,.1)", border: "1px solid rgba(90,156,245,.3)",
-                            color: "var(--blue)", fontSize: 12, fontWeight: 600,
-                            fontFamily: "var(--font-syne), sans-serif", cursor: "pointer",
-                            opacity: assigning ? 0.65 : 1,
-                          }}
-                        >Start Work →</button>
-                      )}
-                      {canComplete && (
-                        <button
-                          onClick={() => void handleStatusUpdate(task.id, "completed")}
-                          disabled={assigning}
-                          style={{
-                            padding: "8px 18px", borderRadius: 6,
-                            background: "rgba(78,203,141,.08)", border: "1px solid rgba(78,203,141,.25)",
-                            color: "var(--green)", fontSize: 12, fontWeight: 600,
-                            fontFamily: "var(--font-syne), sans-serif", cursor: "pointer",
-                            opacity: assigning ? 0.65 : 1,
-                          }}
-                        >Submit Complete →</button>
-                      )}
-                      {canPay && (
-                        <button
-                          onClick={() => void handleStatusUpdate(task.id, "paid")}
-                          disabled={assigning}
-                          style={{
-                            padding: "8px 18px", borderRadius: 6,
-                            background: "rgba(212,170,80,.1)", border: "1px solid var(--border-hi)",
-                            color: "var(--gold-hi)", fontSize: 12, fontWeight: 600,
-                            fontFamily: "var(--font-syne), sans-serif", cursor: "pointer",
-                            opacity: assigning ? 0.65 : 1,
-                          }}
-                        >Release Payment →</button>
-                      )}
-                      {canDispute && (
-                        <button
-                          onClick={() => { setShowDisputeModal(task.id); setDisputeStatus(""); }}
-                          style={{
-                            padding: "8px 18px", borderRadius: 6,
-                            background: "rgba(245,166,35,.08)", border: "1px solid rgba(245,166,35,.25)",
-                            color: "var(--amber)", fontSize: 12, fontWeight: 600,
-                            fontFamily: "var(--font-syne), sans-serif", cursor: "pointer",
-                          }}
-                        >Raise Dispute ⚠</button>
-                      )}
-                      {task.status === "open" && isCreator && (
-                        <button
-                          onClick={() => void handleCancel(task.id)}
-                          disabled={assigning}
-                          style={{
-                            padding: "8px 18px", borderRadius: 6,
-                            background: "rgba(232,84,84,.08)", border: "1px solid rgba(232,84,84,.25)",
-                            color: "var(--red)", fontSize: 12, fontWeight: 600,
-                            fontFamily: "var(--font-syne), sans-serif", cursor: "pointer",
-                            opacity: assigning ? 0.65 : 1,
-                          }}
-                        >Cancel Task ✕</button>
-                      )}
-                    </div>
-
-                    {/* dispute response (agent) */}
-                    {canRespondToDispute && (
-                      <div style={{ marginTop: 14, padding: 14, borderRadius: 8, background: "rgba(90,156,245,.04)", border: "1px solid rgba(90,156,245,.2)" }}>
-                        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: "var(--blue)", marginBottom: 8 }}>RESPOND TO DISPUTE</div>
-                        <textarea
-                          value={disputeResponse}
-                          onChange={e => setDisputeResponse(e.target.value)}
-                          placeholder="Describe the work you delivered..."
-                          style={{
-                            width: "100%", padding: "8px 12px", borderRadius: 6,
-                            background: "var(--bg2)", border: "1px solid var(--border)",
-                            color: "var(--text)", fontSize: 12, resize: "vertical",
-                            minHeight: 64, fontFamily: "'Inter', sans-serif", outline: "none",
-                            boxSizing: "border-box",
-                          }}
-                        />
-                        <button
-                          onClick={() => void handleDisputeResponse(task.id)}
-                          style={{
-                            marginTop: 8, padding: "7px 16px", borderRadius: 6,
-                            background: "rgba(90,156,245,.08)", border: "1px solid rgba(90,156,245,.25)",
-                            color: "var(--blue)", fontSize: 12, fontWeight: 600,
-                            fontFamily: "var(--font-syne), sans-serif", cursor: "pointer",
-                          }}
-                        >Submit Response →</button>
-                        {disputeStatus && <p style={{ marginTop: 6, fontSize: 11, color: "var(--text3)", fontFamily: "'DM Mono', monospace" }}>{disputeStatus}</p>}
-                      </div>
+                    {canAssign && (
+                      <button
+                        onClick={() => {
+                          if (!isConnected) {
+                            setAssignStatus("Connect wallet to assign");
+                            return;
+                          }
+                          setShowAssignModal(task.id);
+                        }}
+                        disabled={!isConnected}
+                        style={{
+                          marginTop: 12, padding: "7px 16px", borderRadius: 6,
+                          background: "rgba(212,170,80,.1)", border: "1px solid var(--border-hi)",
+                          color: "var(--gold)", fontSize: 12, fontWeight: 500,
+                          fontFamily: "var(--font-syne), sans-serif",
+                          cursor: !isConnected ? "not-allowed" : "pointer",
+                          opacity: !isConnected ? 0.65 : 1,
+                        }}
+                      >
+                        Assign Agent →
+                      </button>
                     )}
 
-                    {/* dispute resolve (creator) */}
-                    {canResolveDispute && (
-                      <div style={{ marginTop: 14, padding: 14, borderRadius: 8, background: "rgba(245,166,35,.04)", border: "1px solid rgba(245,166,35,.2)" }}>
-                        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: "var(--amber)", marginBottom: 10 }}>RESOLVE DISPUTE</div>
-                        <div style={{ display: "flex", gap: 8 }}>
-                          <button
-                            onClick={() => void handleResolveDispute(task.id, "pay_agent")}
-                            style={{
-                              flex: 1, padding: "8px", borderRadius: 6,
-                              background: "rgba(78,203,141,.08)", border: "1px solid rgba(78,203,141,.25)",
-                              color: "var(--green)", fontSize: 12, fontWeight: 600,
-                              fontFamily: "var(--font-syne), sans-serif", cursor: "pointer",
-                            }}
-                          >Pay Agent →</button>
-                          <button
-                            onClick={() => void handleResolveDispute(task.id, "refund_creator")}
-                            style={{
-                              flex: 1, padding: "8px", borderRadius: 6,
-                              background: "rgba(232,84,84,.08)", border: "1px solid rgba(232,84,84,.25)",
-                              color: "var(--red)", fontSize: 12, fontWeight: 600,
-                              fontFamily: "var(--font-syne), sans-serif", cursor: "pointer",
-                            }}
-                          >Refund Me →</button>
-                        </div>
-                        {disputeStatus && <p style={{ marginTop: 8, fontSize: 11, color: "var(--text3)", fontFamily: "'DM Mono', monospace", alignSelf: "center" }}>{disputeStatus}</p>}
-                      </div>
+                    {canClaim && (
+                      <button
+                        onClick={() => void handleClaim(task.id)}
+                        disabled={assigning}
+                        style={{
+                          marginTop: 12, padding: "7px 16px", borderRadius: 6,
+                          background: "rgba(78,203,141,.08)", border: "1px solid rgba(78,203,141,.25)",
+                          color: "var(--green)", fontSize: 12, fontWeight: 500,
+                          fontFamily: "var(--font-syne), sans-serif", cursor: "pointer",
+                          opacity: assigning ? 0.65 : 1,
+                        }}
+                      >
+                        Claim Task →
+                      </button>
                     )}
 
-                    {/* assigned agent chip */}
+                    {canStart && (
+                      <button
+                        onClick={() => void handleStatusUpdate(task.id, "in_progress")}
+                        disabled={assigning}
+                        style={{
+                          marginTop: 12, padding: "7px 16px", borderRadius: 6,
+                          background: "rgba(90,156,245,.1)", border: "1px solid rgba(90,156,245,.3)",
+                          color: "var(--blue)", fontSize: 12, fontWeight: 500,
+                          fontFamily: "var(--font-syne), sans-serif", cursor: "pointer",
+                          opacity: assigning ? 0.65 : 1,
+                        }}
+                      >
+                        Start Work →
+                      </button>
+                    )}
+
+                    {canComplete && (
+                      <button
+                        onClick={() => void handleStatusUpdate(task.id, "completed")}
+                        disabled={assigning}
+                        style={{
+                          marginTop: 12, padding: "7px 16px", borderRadius: 6,
+                          background: "rgba(78,203,141,.08)", border: "1px solid rgba(78,203,141,.25)",
+                          color: "var(--green)", fontSize: 12, fontWeight: 500,
+                          fontFamily: "var(--font-syne), sans-serif", cursor: "pointer",
+                          opacity: assigning ? 0.65 : 1,
+                        }}
+                      >
+                        Submit Complete →
+                      </button>
+                    )}
+                    {canPay && (
+                      <button
+                        onClick={() => void handleStatusUpdate(task.id, "paid")}
+                        disabled={assigning}
+                        style={{
+                          marginTop: 12, padding: "7px 16px", borderRadius: 6,
+                          background: "rgba(212,170,80,.1)", border: "1px solid var(--border-hi)",
+                          color: "var(--gold-hi)", fontSize: 12, fontWeight: 500,
+                          fontFamily: "var(--font-syne), sans-serif", cursor: "pointer",
+                          opacity: assigning ? 0.65 : 1,
+                        }}
+                      >
+                        Release Payment →
+                      </button>
+                    )}
+
+		   {canDispute && (
+  <button
+    onClick={() => { setShowDisputeModal(task.id); setDisputeStatus(""); }}
+    style={{
+      marginTop: 8, marginLeft: 8, padding: "7px 16px", borderRadius: 6,
+      background: "rgba(245,166,35,.08)", border: "1px solid rgba(245,166,35,.25)",
+      color: "var(--amber)", fontSize: 12, fontWeight: 500,
+      fontFamily: "var(--font-syne), sans-serif", cursor: "pointer",
+    }}
+  >
+    Raise Dispute ⚠
+  </button>
+)}
+
+{canRespondToDispute && (
+  <div style={{ marginTop: 12 }}>
+    <textarea
+      value={disputeResponse}
+      onChange={e => setDisputeResponse(e.target.value)}
+      placeholder="Describe the work you delivered..."
+      style={{
+        width: "100%", padding: "8px 12px", borderRadius: 6,
+        background: "var(--bg2)", border: "1px solid var(--border)",
+        color: "var(--text)", fontSize: 12, resize: "vertical",
+        minHeight: 64, fontFamily: "'Inter', sans-serif", outline: "none",
+        boxSizing: "border-box",
+      }}
+    />
+    <button
+      onClick={() => void handleDisputeResponse(task.id)}
+      style={{
+        marginTop: 6, padding: "7px 16px", borderRadius: 6,
+        background: "rgba(90,156,245,.08)", border: "1px solid rgba(90,156,245,.25)",
+        color: "var(--blue)", fontSize: 12, fontWeight: 500,
+        fontFamily: "var(--font-syne), sans-serif", cursor: "pointer",
+      }}
+    >
+      Submit Response →
+    </button>
+    {disputeStatus && (
+      <p style={{ marginTop: 6, fontSize: 11, color: "var(--text3)", fontFamily: "'DM Mono', monospace" }}>
+        {disputeStatus}
+      </p>
+    )}
+  </div>
+)}
+
+{canResolveDispute && (
+  <div style={{ marginTop: 12, display: "flex", gap: 8 }}>
+    <button
+      onClick={() => void handleResolveDispute(task.id, "pay_agent")}
+      style={{
+        padding: "7px 16px", borderRadius: 6,
+        background: "rgba(78,203,141,.08)", border: "1px solid rgba(78,203,141,.25)",
+        color: "var(--green)", fontSize: 12, fontWeight: 500,
+        fontFamily: "var(--font-syne), sans-serif", cursor: "pointer",
+      }}
+    >
+      Pay Agent →
+    </button>
+    <button
+      onClick={() => void handleResolveDispute(task.id, "refund_creator")}
+      style={{
+        padding: "7px 16px", borderRadius: 6,
+        background: "rgba(232,84,84,.08)", border: "1px solid rgba(232,84,84,.25)",
+        color: "var(--red)", fontSize: 12, fontWeight: 500,
+        fontFamily: "var(--font-syne), sans-serif", cursor: "pointer",
+      }}
+    >
+      Refund Me →
+    </button>
+    {disputeStatus && (
+      <p style={{ fontSize: 11, color: "var(--text3)", fontFamily: "'DM Mono', monospace", alignSelf: "center" }}>
+        {disputeStatus}
+      </p>
+    )}
+  </div>
+)}
+			
+		    {task.status === "open" && isCreator && (
+  <button
+    onClick={() => void handleCancel(task.id)}
+    disabled={assigning}
+    style={{
+      marginTop: 12, padding: "7px 16px", borderRadius: 6,
+      background: "rgba(232,84,84,.08)", border: "1px solid rgba(232,84,84,.25)",
+      color: "var(--red)", fontSize: 12, fontWeight: 500,
+      fontFamily: "var(--font-syne), sans-serif", cursor: "pointer",
+      opacity: assigning ? 0.65 : 1,
+    }}
+  >
+    Cancel Task ✕
+  </button>
+)}
+
                     {task.agentId && (
                       <div style={{
                         marginTop: 12, padding: "7px 12px", borderRadius: 6,
@@ -1677,100 +1713,115 @@ const handleAssign = async (taskId: string, agentId: string, agentAddress: strin
                               fontFamily: "var(--font-syne), sans-serif", fontWeight: 600,
                               fontSize: 13, color: "var(--text)", marginBottom: 4,
                             }}>Agent #{i + 1}</div>
-                            <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: "var(--text3)" }}>
-                              {agent.owner?.slice(0, 20)}...
-                            </div>
+                            <div style={{
+                              fontFamily: "'DM Mono', monospace", fontSize: 10,
+                              color: "var(--text3)",
+                            }}>{agent.owner?.slice(0, 20)}...</div>
                           </div>
                           <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
                             <span style={{
                               fontFamily: "var(--font-syne), sans-serif", fontWeight: 700,
                               fontSize: 18, color: "var(--gold-hi)",
                             }}>{agent.reputation ?? 1}</span>
-                            <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: "var(--text3)", letterSpacing: ".06em" }}>REP</span>
+                            <span style={{
+                              fontFamily: "'DM Mono', monospace", fontSize: 9,
+                              color: "var(--text3)", letterSpacing: ".06em",
+                            }}>REP</span>
                           </div>
                         </button>
                       ))}
                     </div>
                     {assignStatus && (
-                      <p style={{ marginTop: 12, fontSize: 12, color: "var(--text3)", fontFamily: "'DM Mono', monospace" }}>{assignStatus}</p>
+                      <p style={{ marginTop: 12, fontSize: 12, color: "var(--text3)", fontFamily: "'DM Mono', monospace" }}>
+                        {assignStatus}
+                      </p>
                     )}
                     <button
                       onClick={() => setShowAssignModal(null)}
                       style={{
                         marginTop: 16, width: "100%", padding: "10px",
                         background: "none", border: "1px solid var(--border)",
-                        borderRadius: 8, color: "var(--text3)", cursor: "pointer", fontSize: 13,
+                        borderRadius: 8, color: "var(--text3)", cursor: "pointer",
+                        fontSize: 13,
                       }}
-                    >Cancel</button>
+                    >
+                      Cancel
+                    </button>
                   </div>
                 </div>
               )}
             </div>
 
-            {/* Dispute Modal */}
-            {showDisputeModal && (
-              <div style={{
-                position: "fixed", inset: 0, zIndex: 200,
-                background: "rgba(0,0,0,.7)", display: "flex",
-                alignItems: "center", justifyContent: "center",
-                backdropFilter: "blur(4px)",
-              }}
-                onClick={() => setShowDisputeModal(null)}
-              >
-                <div
-                  onClick={e => e.stopPropagation()}
-                  style={{
-                    background: "var(--bg1)", border: "1px solid rgba(245,166,35,.3)",
-                    borderRadius: 16, padding: 32, width: "100%", maxWidth: 480,
-                    margin: "0 24px",
-                  }}
-                >
-                  <div style={{
-                    fontFamily: "var(--font-syne), sans-serif", fontWeight: 700,
-                    fontSize: 18, letterSpacing: "-.02em", marginBottom: 4,
-                    color: "var(--amber)",
-                  }}>Raise Dispute ⚠</div>
-                  <div style={{ fontSize: 12, color: "var(--text3)", marginBottom: 20 }}>
-                    Describe why the submitted work does not meet requirements.
-                    The agent will be notified and can respond before you resolve.
-                  </div>
-                  <textarea
-                    value={disputeReason}
-                    onChange={e => setDisputeReason(e.target.value)}
-                    placeholder="e.g. The delivered report was incomplete — missing reentrancy analysis..."
-                    style={{
-                      width: "100%", padding: "10px 12px", borderRadius: 8,
-                      background: "var(--bg2)", border: "1px solid var(--border-hi)",
-                      color: "var(--text)", fontSize: 13, resize: "vertical",
-                      minHeight: 100, fontFamily: "'Inter', sans-serif",
-                      outline: "none", fontWeight: 300, boxSizing: "border-box",
-                    }}
-                  />
-                  {disputeStatus && (
-                    <p style={{ marginTop: 8, fontSize: 12, color: "var(--red)", fontFamily: "'DM Mono', monospace" }}>{disputeStatus}</p>
-                  )}
-                  <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
-                    <button
-                      onClick={() => void handleDispute(showDisputeModal)}
-                      style={{
-                        flex: 1, padding: "11px", borderRadius: 8,
-                        background: "rgba(245,166,35,.1)", border: "1px solid rgba(245,166,35,.3)",
-                        color: "var(--amber)", cursor: "pointer",
-                        fontFamily: "var(--font-syne), sans-serif", fontWeight: 600, fontSize: 13,
-                      }}
-                    >Submit Dispute →</button>
-                    <button
-                      onClick={() => { setShowDisputeModal(null); setDisputeReason(""); setDisputeStatus(""); }}
-                      style={{
-                        padding: "11px 20px", background: "none",
-                        border: "1px solid var(--border)", borderRadius: 8,
-                        color: "var(--text3)", cursor: "pointer", fontSize: 13,
-                      }}
-                    >Cancel</button>
-                  </div>
-                </div>
-              </div>
-            )}
+	    {/* Dispute Modal */}
+{showDisputeModal && (
+  <div style={{
+    position: "fixed", inset: 0, zIndex: 200,
+    background: "rgba(0,0,0,.7)", display: "flex",
+    alignItems: "center", justifyContent: "center",
+    backdropFilter: "blur(4px)",
+  }}
+    onClick={() => setShowDisputeModal(null)}
+  >
+    <div
+      onClick={e => e.stopPropagation()}
+      style={{
+        background: "var(--bg1)", border: "1px solid rgba(245,166,35,.3)",
+        borderRadius: 16, padding: 32, width: "100%", maxWidth: 480,
+        margin: "0 24px",
+      }}
+    >
+      <div style={{
+        fontFamily: "var(--font-syne), sans-serif", fontWeight: 700,
+        fontSize: 18, letterSpacing: "-.02em", marginBottom: 4,
+        color: "var(--amber)",
+      }}>Raise Dispute ⚠</div>
+      <div style={{ fontSize: 12, color: "var(--text3)", marginBottom: 20 }}>
+        Describe why the submitted work does not meet requirements.
+        The agent will be notified and can respond before you resolve.
+      </div>
+      <textarea
+        value={disputeReason}
+        onChange={e => setDisputeReason(e.target.value)}
+        placeholder="e.g. The delivered report was incomplete — missing reentrancy analysis..."
+        style={{
+          width: "100%", padding: "10px 12px", borderRadius: 8,
+          background: "var(--bg2)", border: "1px solid var(--border-hi)",
+          color: "var(--text)", fontSize: 13, resize: "vertical",
+          minHeight: 100, fontFamily: "'Inter', sans-serif",
+          outline: "none", fontWeight: 300, boxSizing: "border-box",
+        }}
+      />
+      {disputeStatus && (
+        <p style={{ marginTop: 8, fontSize: 12, color: "var(--red)", fontFamily: "'DM Mono', monospace" }}>
+          {disputeStatus}
+        </p>
+      )}
+      <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
+        <button
+          onClick={() => void handleDispute(showDisputeModal)}
+          style={{
+            flex: 1, padding: "11px", borderRadius: 8,
+            background: "rgba(245,166,35,.1)", border: "1px solid rgba(245,166,35,.3)",
+            color: "var(--amber)", cursor: "pointer",
+            fontFamily: "var(--font-syne), sans-serif", fontWeight: 600, fontSize: 13,
+          }}
+        >
+          Submit Dispute →
+        </button>
+        <button
+          onClick={() => { setShowDisputeModal(null); setDisputeReason(""); setDisputeStatus(""); }}
+          style={{
+            padding: "11px 20px", background: "none",
+            border: "1px solid var(--border)", borderRadius: 8,
+            color: "var(--text3)", cursor: "pointer", fontSize: 13,
+          }}
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+)}
 
             {/* post task panel */}
             <div style={{
@@ -1783,16 +1834,24 @@ const handleAssign = async (taskId: string, agentId: string, agentAddress: strin
                 onClick={() => void authenticateWallet()}
                 disabled={!isConnected || authenticating || isAuthed}
                 style={{
-                  width: "100%", marginBottom: 12, padding: "10px",
-                  borderRadius: 8, border: "1px solid var(--border)",
+                  width: "100%",
+                  marginBottom: 12,
+                  padding: "10px",
+                  borderRadius: 8,
+                  border: "1px solid var(--border)",
                   background: "var(--bg2)",
                   color: isAuthed ? "var(--green)" : "var(--gold)",
                   cursor: !isConnected || authenticating || isAuthed ? "not-allowed" : "pointer",
                   opacity: !isConnected || authenticating || isAuthed ? 0.65 : 1,
-                  fontFamily: "'DM Mono', monospace", fontSize: 11,
+                  fontFamily: "'DM Mono', monospace",
+                  fontSize: 11,
                 }}
               >
-                {authenticating ? "Authenticating..." : isAuthed ? "✓ Wallet Authenticated" : "Authenticate Wallet"}
+                {authenticating
+                  ? "Authenticating..."
+                  : isAuthed
+                    ? "Wallet Authenticated"
+                    : "Authenticate Wallet"}
               </button>
 
               {(["title","description","reward"] as const).map(field => (
@@ -1804,7 +1863,7 @@ const handleAssign = async (taskId: string, agentId: string, agentAddress: strin
                     <textarea
                       value={taskForm[field]}
                       onChange={e => setTaskForm(p => ({ ...p, [field]: e.target.value }))}
-                      placeholder="Describe deliverables and timeline..."
+                      placeholder={field === "description" ? "Describe deliverables and timeline..." : ""}
                       style={{
                         width: "100%", background: "var(--bg)", border: "1px solid var(--border)",
                         borderRadius: 6, padding: "10px 12px",
@@ -1837,13 +1896,17 @@ const handleAssign = async (taskId: string, agentId: string, agentAddress: strin
                   )}
                 </div>
               ))}
+
               {/* task tags */}
               <div style={{ marginBottom: 20 }}>
-                <label style={{ display: "block", fontFamily: "'DM Mono', monospace", fontSize: 10, color: "var(--text3)", letterSpacing: ".06em", textTransform: "uppercase", marginBottom: 8 }}>Tags</label>
+                <label style={{ display: "block", fontFamily: "'DM Mono', monospace", fontSize: 10, color: "var(--text3)", letterSpacing: ".06em", textTransform: "uppercase", marginBottom: 8 }}>
+                  Tags
+                </label>
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                   {["Solidity","Audit","DeFi","Analytics","Research","NLP","Trading","Security","Content","APIs"].map(tag => (
                     <button
-                      key={tag} type="button"
+                      key={tag}
+                      type="button"
                       onClick={() => setTaskForm(p => ({ ...p, tags: p.tags.includes(tag) ? p.tags.filter(t => t !== tag) : [...p.tags, tag] }))}
                       style={{
                         padding: "4px 10px", borderRadius: 99, fontSize: 11, cursor: "pointer",
@@ -1856,6 +1919,7 @@ const handleAssign = async (taskId: string, agentId: string, agentAddress: strin
                   ))}
                 </div>
               </div>
+
               {/* rep slider */}
               <div style={{ marginBottom: 20 }}>
                 <label style={{ display: "block", fontFamily: "'DM Mono', monospace", fontSize: 10, color: "var(--text3)", letterSpacing: ".06em", textTransform: "uppercase", marginBottom: 6 }}>
@@ -1870,6 +1934,7 @@ const handleAssign = async (taskId: string, agentId: string, agentAddress: strin
                   <span>0</span><span>100</span>
                 </div>
               </div>
+
               <button
                 onClick={handlePostTask}
                 disabled={postingTask || !isConnected}
@@ -1886,19 +1951,38 @@ const handleAssign = async (taskId: string, agentId: string, agentAddress: strin
               >
                 {postingTask ? <><span className="spinner" />Posting...</> : isConnected ? "Lock Escrow & Post Task →" : "Connect Wallet to Post"}
               </button>
+
               {!isConnected && (
                 <p style={{ marginTop: 10, fontSize: 12, color: "var(--text3)", fontFamily: "'DM Mono', monospace" }}>
                   Connect wallet to post.
                 </p>
               )}
 
+              {taskStatus && (
+                <p style={{ marginTop: 10, fontSize: 12, color: taskStatus.startsWith("Error") ? "var(--red)" : "var(--green)", fontFamily: "'DM Mono', monospace" }}>{taskStatus}</p>
+              )}
+              {authStatus && (
+                <p style={{ marginTop: 8, fontSize: 11, color: authStatus.startsWith("Error") ? "var(--red)" : "var(--text3)", fontFamily: "'DM Mono', monospace" }}>
+                  {authStatus}
+                </p>
+              )}
+
+              <div style={{
+                display: "flex", alignItems: "flex-start", gap: 8, marginTop: 14,
+                padding: "10px 12px", borderRadius: 8,
+                background: "rgba(212,170,80,.04)", border: "1px solid var(--border)",
+              }}>
+                <span style={{ fontSize: 12, color: "var(--gold-dim)", flexShrink: 0, marginTop: 1 }}>🔒</span>
+                <p style={{ fontSize: 11, color: "var(--text3)", lineHeight: 1.55 }}>
+                  USDC is held in a Circle developer-controlled wallet and released only after onchain validation of task completion.
+                </p>
+              </div>
             </div>
           </div>
         </div>
       )}
 
-      </div>
-
+      {/* ── FOOTER ── */}
       <footer style={{
         borderTop: "1px solid var(--border)",
         padding: "20px 0", position: "relative", zIndex: 1,

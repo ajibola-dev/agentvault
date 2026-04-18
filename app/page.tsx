@@ -1026,39 +1026,50 @@ const handleAssign = async (taskId: string, agentId: string, agentAddress: strin
         <div style={S.container}>
 
           {/* header */}
-          <div style={{ padding: "60px 0 40px", borderBottom: "1px solid var(--border)" }}>
-            <h1 style={{
-              fontFamily: "var(--font-syne), sans-serif", fontWeight: 800,
-              fontSize: "clamp(32px,5vw,56px)", letterSpacing: "-.03em", lineHeight: 1.05,
-            }}>
-              Discover{" "}
-              <span style={{
-                background: "linear-gradient(95deg, var(--gold-hi), var(--amber))",
-                WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
-              }}>Agents</span>
-            </h1>
-            <div style={{ display: "flex", gap: 12, marginTop: 14, flexWrap: "wrap", alignItems: "center" }}>
-              {[`${agents.length || 0} agents registered`, "ERC-8004 identities", "Arc Testnet"].map((s, i, a) => (
-                <span key={s} style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--text3)" }}>
-                  {s}{i < a.length - 1 ? <span style={{ margin: "0 8px", color: "var(--border-hi)" }}>·</span> : null}
-                </span>
-              ))}
+          <div style={{ padding: "60px 0 32px" }}>
+            <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", flexWrap: "wrap", gap: 16 }}>
+              <div>
+                <h1 style={{
+                  fontFamily: "var(--font-syne), sans-serif", fontWeight: 800,
+                  fontSize: "clamp(32px,5vw,56px)", letterSpacing: "-.03em", lineHeight: 1.05, margin: 0,
+                }}>
+                  Discover{" "}
+                  <span style={{
+                    background: "linear-gradient(95deg, var(--gold-hi), var(--amber))",
+                    WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
+                  }}>Agents</span>
+                </h1>
+                <div style={{ display: "flex", gap: 12, marginTop: 10, flexWrap: "wrap", alignItems: "center" }}>
+                  {[`${agents.length || 0} registered`, "ERC-8004", "Arc Testnet"].map((s, i, a) => (
+                    <span key={s} style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--text3)" }}>
+                      {s}{i < a.length - 1 ? <span style={{ margin: "0 8px", color: "var(--border-hi)" }}>·</span> : null}
+                    </span>
+                  ))}
+                </div>
+              </div>
+              <div style={{
+                fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--text3)",
+                padding: "6px 12px", border: "1px solid var(--border)", borderRadius: 6,
+                background: "var(--bg1)",
+              }}>
+                ranked by reputation
+              </div>
             </div>
           </div>
 
-          {/* filter bar */}
-          <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "20px 0", flexWrap: "wrap" }}>
-            <div style={{
-              flex: 1, minWidth: 220, display: "flex", alignItems: "center", gap: 10,
-              background: "var(--bg1)", border: "1px solid var(--border)",
-              borderRadius: 6, padding: "9px 14px",
-            }}>
-              <span style={{ color: "var(--text3)", fontSize: 14 }}>⌕</span>
+          {/* search + filter bar */}
+          <div style={{
+            background: "var(--bg1)", border: "1px solid var(--border)", borderRadius: 10,
+            padding: "12px 14px", marginBottom: 28,
+            display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center",
+          }}>
+            <div style={{ flex: 1, minWidth: 200, display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{ color: "var(--text3)", fontSize: 14, flexShrink: 0 }}>⌕</span>
               <input
                 type="text"
                 value={agentSearch}
                 onChange={e => setAgentSearch(e.target.value)}
-                placeholder="Search agents, capabilities..."
+                placeholder="Search agents or capabilities..."
                 style={{
                   background: "none", border: "none", outline: "none",
                   fontFamily: "'Inter', sans-serif", fontSize: 13, color: "var(--text)",
@@ -1066,112 +1077,218 @@ const handleAssign = async (taskId: string, agentId: string, agentAddress: strin
                 }}
               />
             </div>
-            {["All","Data","Code","Research","Trading","Content"].map(f => (
-              <button key={f} onClick={() => setActiveFilter(f)} style={{
-                padding: "7px 14px", borderRadius: 99,
-                border: `1px solid ${f === activeFilter ? "var(--gold)" : "var(--border)"}`,
-                background: f === activeFilter ? "rgba(212,170,80,.06)" : "var(--bg1)",
-                color: f === activeFilter ? "var(--gold)" : "var(--text2)",
-                fontSize: 12, cursor: "pointer", fontFamily: "'Inter', sans-serif",
-              }}>{f}</button>
-            ))}
+            <div style={{ width: "1px", height: 20, background: "var(--border)", flexShrink: 0 }} />
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+              {["All","Data","Code","Research","Trading","Content"].map(f => (
+                <button key={f} onClick={() => setActiveFilter(f)} style={{
+                  padding: "5px 12px", borderRadius: 99,
+                  border: `1px solid ${f === activeFilter ? "var(--gold)" : "transparent"}`,
+                  background: f === activeFilter ? "rgba(212,170,80,.1)" : "transparent",
+                  color: f === activeFilter ? "var(--gold)" : "var(--text3)",
+                  fontSize: 12, cursor: "pointer", fontFamily: "'Inter', sans-serif",
+                  transition: "all .15s",
+                }}>{f}</button>
+              ))}
+            </div>
           </div>
 
-          {/* agent grid */}
+          {/* loading */}
           {loadingAgents && (
             <p style={{ fontSize: 13, color: "var(--text3)", padding: "40px 0", fontFamily: "'DM Mono', monospace" }}>
               <span className="spinner" />Loading agents...
             </p>
           )}
-          {!loadingAgents && (
-            <div style={{
-              display: "grid",
-              gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fill, minmax(300px, 1fr))",
-              gap: 16, padding: "8px 0 80px",
-            }}>
-              {displayAgents.map((agent, i) => (
-                <div key={i} style={{
-                  background: "var(--bg1)", border: "1px solid var(--border)",
-                  borderRadius: 12, padding: 24, cursor: "pointer",
-                  transition: "border-color .2s, transform .2s",
-                }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--border-hi)"; (e.currentTarget as HTMLElement).style.transform = "translateY(-3px)"; }}
-                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--border)"; (e.currentTarget as HTMLElement).style.transform = ""; }}
-                >
-                  {/* top row */}
-                  <div style={{ display: "flex", alignItems: "flex-start", gap: 14, marginBottom: 16 }}>
-                    <div style={{
-                      width: 44, height: 44, borderRadius: 8, border: "1px solid var(--border)",
-                      display: "grid", placeItems: "center", fontSize: 20, flexShrink: 0,
-                      background: "linear-gradient(135deg, var(--bg2), var(--bg3))",
-                    }}>
-                      {agent.emoji ?? "🤖"}
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{
-                        fontFamily: "var(--font-syne), sans-serif", fontWeight: 600,
-                        fontSize: 15, letterSpacing: "-.01em",
-                        whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
-                      }}>{agent.name ?? `Agent #${i + 1}`}</div>
-                      <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--text3)", marginTop: 2 }}>
-                        {agent.owner} · ERC-8004
-                      </div>
-                    </div>
-                    <div style={{
-                      display: "flex", alignItems: "center", gap: 5, flexShrink: 0,
-                      fontFamily: "'DM Mono', monospace", fontSize: 10,
-                      padding: "4px 8px", borderRadius: 99,
-                      color:       agent.status === "active" ? "var(--green)" : "var(--gold-dim)",
-                      border:      agent.status === "active" ? "1px solid rgba(78,203,141,.25)" : "1px solid var(--border)",
-                      background:  agent.status === "active" ? "rgba(78,203,141,.06)" : "rgba(212,170,80,.04)",
-                    }}>
-                      {agent.status === "active"
-                        ? <><span style={{ width: 5, height: 5, borderRadius: "50%", background: "var(--green)", display: "inline-block" }} />Active</>
-                        : <>○ Idle</>
-                      }
-                    </div>
-                  </div>
 
-                  {/* tags */}
-                  {agent.tags && (
-                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 16 }}>
-                      {agent.tags.map((t: string) => (
-                        <span key={t} style={{
-                          padding: "3px 8px", borderRadius: 4,
-                          fontFamily: "'DM Mono', monospace", fontSize: 10, color: "var(--text3)",
-                          background: "var(--bg2)", border: "1px solid var(--border)",
-                        }}>{t}</span>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* meta */}
-                  <div style={{
-                    display: "flex", alignItems: "center", justifyContent: "space-between",
-                    paddingTop: 16, borderTop: "1px solid var(--border)",
-                  }}>
-                    <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
-                      <span style={{
-                        fontFamily: "var(--font-syne), sans-serif", fontWeight: 700,
-                        fontSize: 22, color: "var(--gold-hi)",
-                      }}>{agent.reputation ?? 1}</span>
-                      <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: "var(--text3)", letterSpacing: ".06em" }}>REP</span>
-                    </div>
-                    <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: "var(--text3)" }}>
-                      {agent.tasks ?? 0} tasks
-                    </span>
-                    <a href={`/agents/${agent.owner}`} style={{
-                      padding: "7px 16px", borderRadius: 6,
-                      background: "rgba(212,170,80,.1)", border: "1px solid var(--border-hi)",
-                      color: "var(--gold)", fontSize: 12, fontWeight: 500,
-                      fontFamily: "var(--font-syne), sans-serif", cursor: "pointer",
-                      textDecoration: "none", display: "inline-block",
-                    }}>View →</a>
-                  </div>
-                </div>
-              ))}
+          {/* empty state */}
+          {!loadingAgents && displayAgents.length === 0 && (
+            <div style={{ textAlign: "center", padding: "80px 0", color: "var(--text3)" }}>
+              <div style={{ fontSize: 40, marginBottom: 16 }}>🤖</div>
+              <div style={{ fontFamily: "var(--font-syne), sans-serif", fontWeight: 600, fontSize: 18, marginBottom: 8 }}>No agents found</div>
+              <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 13 }}>Try a different search or filter</div>
             </div>
           )}
+
+          {!loadingAgents && displayAgents.length > 0 && (() => {
+            const sorted = [...displayAgents].sort((a, b) => (b.reputation ?? 0) - (a.reputation ?? 0));
+            const [top, ...rest] = sorted;
+            return (
+              <div style={{ paddingBottom: 80 }}>
+
+                {/* featured top agent */}
+                <div
+                  onClick={() => window.location.href = `/agents/${top.owner}`}
+                  style={{
+                    background: "linear-gradient(135deg, rgba(212,170,80,.07), var(--bg1))",
+                    border: "1px solid var(--gold)",
+                    borderRadius: 14, padding: isMobile ? 24 : 32,
+                    cursor: "pointer", marginBottom: 20,
+                    display: "flex", gap: 24, flexWrap: "wrap", alignItems: "flex-start",
+                    transition: "transform .2s",
+                  }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = "translateY(-2px)"; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = ""; }}
+                >
+                  <div style={{
+                    flexShrink: 0, textAlign: "center",
+                    padding: "16px 24px", borderRadius: 10,
+                    background: "rgba(212,170,80,.08)", border: "1px solid rgba(212,170,80,.2)",
+                    minWidth: 90,
+                  }}>
+                    <div style={{
+                      fontFamily: "var(--font-syne), sans-serif", fontWeight: 800,
+                      fontSize: 48, lineHeight: 1, color: "var(--gold-hi)",
+                    }}>{top.reputation ?? 1}</div>
+                    <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: "var(--text3)", letterSpacing: ".1em", marginTop: 4 }}>REP</div>
+                  </div>
+
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6, flexWrap: "wrap" }}>
+                      <span style={{ fontSize: 24 }}>{top.emoji ?? "🤖"}</span>
+                      <span style={{
+                        fontFamily: "var(--font-syne), sans-serif", fontWeight: 700,
+                        fontSize: 22, letterSpacing: "-.02em",
+                      }}>{top.name ?? "Top Agent"}</span>
+                      <span style={{
+                        fontFamily: "'DM Mono', monospace", fontSize: 10, padding: "3px 8px", borderRadius: 99,
+                        background: "rgba(212,170,80,.12)", color: "var(--gold)", border: "1px solid rgba(212,170,80,.3)",
+                      }}>⭐ TOP AGENT</span>
+                      <span style={{
+                        marginLeft: "auto",
+                        display: "flex", alignItems: "center", gap: 5,
+                        fontFamily: "'DM Mono', monospace", fontSize: 10,
+                        padding: "4px 8px", borderRadius: 99,
+                        color: top.status === "active" ? "var(--green)" : "var(--text3)",
+                        border: top.status === "active" ? "1px solid rgba(78,203,141,.25)" : "1px solid var(--border)",
+                        background: top.status === "active" ? "rgba(78,203,141,.06)" : "transparent",
+                      }}>
+                        {top.status === "active"
+                          ? <><span style={{ width: 5, height: 5, borderRadius: "50%", background: "var(--green)", display: "inline-block" }} />Active</>
+                          : <>○ Idle</>}
+                      </span>
+                    </div>
+                    <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--text3)", marginBottom: 12 }}>
+                      {top.owner} · ERC-8004
+                    </div>
+                    {top.tags && (
+                      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 16 }}>
+                        {top.tags.map((t: string) => (
+                          <span key={t} style={{
+                            padding: "4px 10px", borderRadius: 4,
+                            fontFamily: "'DM Mono', monospace", fontSize: 10, color: "var(--gold)",
+                            background: "rgba(212,170,80,.08)", border: "1px solid rgba(212,170,80,.2)",
+                          }}>{t}</span>
+                        ))}
+                      </div>
+                    )}
+                    <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+                      <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--text3)" }}>
+                        {top.tasks ?? 0} tasks completed
+                      </span>
+                      <span style={{
+                        padding: "8px 20px", borderRadius: 6,
+                        background: "var(--gold)", color: "#000",
+                        fontSize: 12, fontWeight: 700,
+                        fontFamily: "var(--font-syne), sans-serif",
+                      }}>View Profile →</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* rest grid */}
+                {rest.length > 0 && (
+                  <div style={{
+                    display: "grid",
+                    gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fill, minmax(280px, 1fr))",
+                    gap: 14,
+                  }}>
+                    {rest.map((agent, i) => (
+                      <div key={i}
+                        onClick={() => window.location.href = `/agents/${agent.owner}`}
+                        style={{
+                          background: "var(--bg1)", border: "1px solid var(--border)",
+                          borderRadius: 12, padding: 20, cursor: "pointer",
+                          transition: "border-color .2s, transform .2s",
+                          display: "flex", flexDirection: "column", gap: 12,
+                        }}
+                        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--border-hi)"; (e.currentTarget as HTMLElement).style.transform = "translateY(-2px)"; }}
+                        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--border)"; (e.currentTarget as HTMLElement).style.transform = ""; }}
+                      >
+                        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
+                          <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
+                            <span style={{
+                              fontFamily: "var(--font-syne), sans-serif", fontWeight: 800,
+                              fontSize: 36, lineHeight: 1, color: "var(--gold-hi)",
+                            }}>{agent.reputation ?? 1}</span>
+                            <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: "var(--text3)", letterSpacing: ".08em" }}>REP</span>
+                          </div>
+                          <span style={{
+                            display: "flex", alignItems: "center", gap: 4,
+                            fontFamily: "'DM Mono', monospace", fontSize: 9,
+                            padding: "3px 7px", borderRadius: 99,
+                            color: agent.status === "active" ? "var(--green)" : "var(--text3)",
+                            border: agent.status === "active" ? "1px solid rgba(78,203,141,.25)" : "1px solid var(--border)",
+                            background: agent.status === "active" ? "rgba(78,203,141,.06)" : "transparent",
+                          }}>
+                            {agent.status === "active"
+                              ? <><span style={{ width: 4, height: 4, borderRadius: "50%", background: "var(--green)", display: "inline-block" }} />Active</>
+                              : <>○ Idle</>}
+                          </span>
+                        </div>
+
+                        <div>
+                          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                            <span style={{ fontSize: 18 }}>{agent.emoji ?? "🤖"}</span>
+                            <span style={{
+                              fontFamily: "var(--font-syne), sans-serif", fontWeight: 700,
+                              fontSize: 15, letterSpacing: "-.01em",
+                              whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+                            }}>{agent.name ?? `Agent #${i + 2}`}</span>
+                          </div>
+                          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: "var(--text3)", marginTop: 3 }}>
+                            {agent.owner?.slice(0, 6)}...{agent.owner?.slice(-4)} · ERC-8004
+                          </div>
+                        </div>
+
+                        {agent.tags && agent.tags.length > 0 && (
+                          <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
+                            {agent.tags.slice(0, 4).map((t: string) => (
+                              <span key={t} style={{
+                                padding: "3px 8px", borderRadius: 4,
+                                fontFamily: "'DM Mono', monospace", fontSize: 9, color: "var(--text3)",
+                                background: "var(--bg2)", border: "1px solid var(--border)",
+                              }}>{t}</span>
+                            ))}
+                            {agent.tags.length > 4 && (
+                              <span style={{
+                                padding: "3px 8px", borderRadius: 4,
+                                fontFamily: "'DM Mono', monospace", fontSize: 9, color: "var(--text3)",
+                                background: "var(--bg2)", border: "1px solid var(--border)",
+                              }}>+{agent.tags.length - 4}</span>
+                            )}
+                          </div>
+                        )}
+
+                        <div style={{
+                          display: "flex", alignItems: "center", justifyContent: "space-between",
+                          paddingTop: 12, borderTop: "1px solid var(--border)", marginTop: "auto",
+                        }}>
+                          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: "var(--text3)" }}>
+                            {agent.tasks ?? 0} tasks
+                          </span>
+                          <span style={{
+                            padding: "6px 14px", borderRadius: 6,
+                            background: "rgba(212,170,80,.08)", border: "1px solid var(--border-hi)",
+                            color: "var(--gold)", fontSize: 11, fontWeight: 600,
+                            fontFamily: "var(--font-syne), sans-serif",
+                          }}>View →</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
         </div>
       )}
 

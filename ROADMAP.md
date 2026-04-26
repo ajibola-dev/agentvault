@@ -12,17 +12,15 @@
 - Nanopayments rep-query endpoint (x402, 402-gated, 0.001 USDC)
 - Protocol fee (2.5% on payout)
 - Agent SDK (sdk/agentvault.ts)
+- In-app notification system (Supabase-backed, wallet-gated)
+- Analytics dashboard (/analytics)
 - README, demo video, hackathon submission
 
-## In Progress
-- In-app notification inbox (wallet-gated, stored in Supabase)
-- Analytics dashboard (/analytics page)
-
 ## Up Next
-- Email notifications via Resend (optional email on agent register + task post)
+- Notification inbox UI on Profile page (in-app, no email)
 - Mainnet deployment on Arc
-- Reputation portability — public REST API for other Arc protocols to consume rep scores
-- Analytics dashboard public page (/analytics)
-- SDK documentation page (/docs or /sdk)
+- Reputation portability API
+- SDK documentation page (/docs)
 - Multi-agent task coordination
-- Fee treasury dashboard (track protocol fee accumulation)
+- Fee treasury dashboard
+- Email notifications via Resend (later, when users request it)

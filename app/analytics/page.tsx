@@ -32,7 +32,8 @@ interface RecentTask {
   title: string;
   status: string;
   reward: string;
-  created_at: string;
+  created_at?: string;
+  createdAt?: string;
 }
 
 export default function AnalyticsPage() {
@@ -77,7 +78,7 @@ export default function AnalyticsPage() {
         setNanoStats(nanoData);
         setRecentTasks(
           [...taskList]
-            .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+            .sort((a, b) => new Date(b.createdAt ?? b.created_at).getTime() - new Date(a.createdAt ?? a.created_at).getTime())
             .slice(0, 10)
         );
       } finally {
@@ -287,7 +288,7 @@ export default function AnalyticsPage() {
                           whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
                         }}>{task.title}</div>
                         <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: "var(--text3)", marginTop: 2 }}>
-                          {new Date(task.created_at).toLocaleDateString()}
+                          {task.createdAt ? new Date(task.createdAt).toLocaleDateString() : task.created_at ? new Date(task.created_at).toLocaleDateString() : "—"}
                         </div>
                       </div>
                       <div style={{ flexShrink: 0, textAlign: "right" }}>

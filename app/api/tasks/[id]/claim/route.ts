@@ -1,3 +1,4 @@
+import { notifyTaskClaimed } from "@/lib/notify";
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseServerClient } from "@/lib/supabase";
 import { getAuthenticatedAddress } from "@/lib/auth";
@@ -102,6 +103,10 @@ export async function POST(
       metadata: { agentId: agent.id },
     });
 
+    // Notify creator
+    if (updatedTask.creator_address) {
+      void notifyTaskClaimed(updatedTask.creator_address, updatedTask.title ?? "Task", id);
+    }
     return NextResponse.json({ task: updatedTask });
   } catch (err) {
     logAuditEvent({

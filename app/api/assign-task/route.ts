@@ -1,3 +1,4 @@
+import { notifyTaskAssigned } from "@/lib/notify";
 // @ts-check
 import { NextResponse } from "next/server";
 import { getAuthenticatedAddress, sameAddress } from "@/lib/auth";
@@ -169,6 +170,10 @@ export async function POST(req: Request) {
       metadata: { agentId },
     });
 
+    // Notify agent
+    if (updatedTask.agentAddress) {
+      void notifyTaskAssigned(updatedTask.agentAddress, updatedTask.title ?? "Task", taskId);
+    }
     return NextResponse.json({ task: updatedTask });
   } catch (err: unknown) {
     logAuditEvent({

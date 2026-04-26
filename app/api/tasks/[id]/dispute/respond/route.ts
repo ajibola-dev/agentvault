@@ -1,3 +1,4 @@
+import { notifyDisputeResponded } from "@/lib/notify";
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseServerClient } from "@/lib/supabase";
 import { getAuthenticatedAddress } from "@/lib/auth";
@@ -68,6 +69,15 @@ export async function POST(
       resourceId: id,
     });
 
+    // Notify creator that agent responded — fetch task to get creator address
+    const { data: taskForNotif } = await supabase
+      .from("tasks")
+      .select("creator_address, title")
+      .eq("id", id)
+      .single();
+    if (taskForNotif?.creator_address) {
+      void notifyDisputeResponded(taskForNotif.creator_address, taskForNotif.title ?? "Task", id);
+    }
     return NextResponse.json({ success: true });
   } catch (err) {
     logAuditEvent({ endpoint: "tasks/dispute/respond", action: "dispute_response", ip, status: "error", message: String(err) });

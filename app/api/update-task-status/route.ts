@@ -1,3 +1,4 @@
+import { notify, notifyTaskCompleted, notifyPaymentReleased } from "@/lib/notify";
 // ~/agentvault-next/app/api/update-task-status/route.ts
 import { NextResponse } from "next/server";
 import type { Task } from "@/lib/task-store";
@@ -348,6 +349,22 @@ export async function POST(req: Request) {
       metadata: { status },
     });
 
+    // Notifications per status transition
+    if (status === "completed" && task.creatorAddress) {
+      void notifyTaskCompleted(task.creatorAddress, task.title ?? "Task", taskId);
+    }
+    if (status === "paid" && task.agentAddress) {
+      void notifyPaymentReleased(task.agentAddress, task.title ?? "Task", task.reward ?? "0", taskId);
+    }
+    if (status === "in_progress" && task.creatorAddress) {
+      void notify({
+        recipientAddress: task.creatorAddress,
+        type: "task_started",
+        title: "Agent started work",
+        message: `An agent has started work on "${task.title ?? "Task"}".`,
+        taskId,
+      });
+    }
     return NextResponse.json({ task: updated });
   } catch (error) {
     logAuditEvent({

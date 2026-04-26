@@ -1,3 +1,4 @@
+import { notifyDisputeRaised } from "@/lib/notify";
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseServerClient } from "@/lib/supabase";
 import { getAuthenticatedAddress } from "@/lib/auth";
@@ -88,6 +89,8 @@ export async function POST(
       metadata: { disputeId: dispute.id },
     });
 
+    // Notify agent that dispute was raised
+    void notifyDisputeRaised(task.agent_address, id, id);
     return NextResponse.json({ dispute });
   } catch (err) {
     logAuditEvent({ endpoint: "tasks/dispute", action: "raise_dispute", ip, status: "error", message: String(err) });

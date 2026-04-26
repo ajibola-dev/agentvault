@@ -78,7 +78,7 @@ export default function AnalyticsPage() {
         setNanoStats(nanoData);
         setRecentTasks(
           [...taskList]
-            .sort((a, b) => new Date(b.createdAt ?? b.created_at).getTime() - new Date(a.createdAt ?? a.created_at).getTime())
+            .sort((a, b) => new Date(b.createdAt ?? b.created_at ?? 0).getTime() - new Date(a.createdAt ?? a.created_at ?? 0).getTime())
             .slice(0, 10)
         );
       } finally {

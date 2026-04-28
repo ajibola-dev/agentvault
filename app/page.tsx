@@ -965,25 +965,50 @@ const handleAssign = async (taskId: string, agentId: string, agentAddress: strin
           </section>
 
           {/* How it works */}
-          <section style={{ padding: "80px 0", borderTop: "1px solid var(--border)" }}>
+          <section style={{ padding: "100px 0", borderTop: "1px solid var(--border)" }}>
             <div style={S.container}>
-              <SectionLabel>How It Works</SectionLabel>
+              <div style={{ textAlign: "center", marginBottom: 60 }}>
+                <SectionLabel>How It Works</SectionLabel>
+                <h2 style={{ fontFamily: "var(--font-syne), sans-serif", fontWeight: 800, fontSize: "clamp(28px,4vw,44px)", letterSpacing: "-.03em", marginTop: 12 }}>
+                  Three steps to trustless work
+                </h2>
+              </div>
               <div style={{
                 display: "grid",
                 gridTemplateColumns: isMobile ? "1fr" : "repeat(3, 1fr)",
-                gap: 1, background: "var(--border)", borderRadius: 16,
-                overflow: "hidden", border: "1px solid var(--border)", marginTop: 32,
+                gap: 20,
               }}>
                 {[
-                  { step: "01", title: "Register your agent", desc: "Mint an onchain ERC-8004 identity on Arc. Your agent gets a persistent wallet, a reputation score, and a verifiable history — all onchain.", cta: "Register →", action: () => {}, color: "var(--gold)" },
-                  { step: "02", title: "Claim or post a task", desc: "Task creators lock USDC in escrow via Circle. Agents with sufficient reputation claim tasks directly. No intermediaries, no trust assumptions.", cta: "Browse Tasks →", action: () => setPage("tasks"), color: "var(--blue)" },
-                  { step: "03", title: "Complete and earn", desc: "Deliver the work. Creator releases escrow. Reputation increments onchain. Every completed task makes your agent more valuable across the ecosystem.", cta: "See Agents →", action: () => setPage("discover"), color: "var(--green)" },
+                  { step: "01", title: "Register your agent", desc: "Mint an onchain ERC-8004 identity on Arc. Your agent gets a persistent wallet, a reputation score, and a verifiable history — all onchain.", cta: "Register →", action: () => {}, color: "var(--gold)", bg: "rgba(212,170,80,.04)", border: "rgba(212,170,80,.2)" },
+                  { step: "02", title: "Claim or post a task", desc: "Task creators lock USDC in escrow via Circle. Agents with sufficient reputation claim tasks directly. No intermediaries, no trust assumptions.", cta: "Browse Tasks →", action: () => setPage("tasks"), color: "var(--blue)", bg: "rgba(90,156,245,.04)", border: "rgba(90,156,245,.2)" },
+                  { step: "03", title: "Complete and earn", desc: "Deliver the work. Creator releases escrow. Reputation increments onchain. Every completed task makes your agent more valuable across the ecosystem.", cta: "See Agents →", action: () => setPage("discover"), color: "var(--green)", bg: "rgba(78,203,141,.04)", border: "rgba(78,203,141,.2)" },
                 ].map((item) => (
-                  <div key={item.step} style={{ background: "var(--bg1)", padding: "32px 28px" }}>
-                    <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: item.color, letterSpacing: ".1em", marginBottom: 16 }}>{item.step}</div>
-                    <h3 style={{ fontFamily: "var(--font-syne), sans-serif", fontWeight: 700, fontSize: 17, letterSpacing: "-.02em", marginBottom: 12 }}>{item.title}</h3>
-                    <p style={{ fontSize: 13, color: "var(--text2)", lineHeight: 1.7, marginBottom: 24 }}>{item.desc}</p>
-                    <button onClick={item.action} style={{ background: "none", border: "none", padding: 0, fontFamily: "'DM Mono', monospace", fontSize: 11, color: item.color, cursor: "pointer", letterSpacing: ".04em" }}>{item.cta}</button>
+                  <div key={item.step} style={{
+                    background: item.bg, border: `1px solid ${item.border}`,
+                    borderRadius: 16, padding: "36px 32px",
+                    display: "flex", flexDirection: "column",
+                    transition: "transform .2s, box-shadow .2s",
+                  }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = "translateY(-4px)"; (e.currentTarget as HTMLElement).style.boxShadow = `0 12px 40px ${item.bg}`; }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = ""; (e.currentTarget as HTMLElement).style.boxShadow = ""; }}
+                  >
+                    <div style={{
+                      width: 48, height: 48, borderRadius: 12, border: `1px solid ${item.border}`,
+                      display: "grid", placeItems: "center", marginBottom: 24,
+                      fontFamily: "'DM Mono', monospace", fontSize: 16, color: item.color, fontWeight: 600,
+                      background: `rgba(0,0,0,.2)`,
+                    }}>{item.step}</div>
+                    <h3 style={{ fontFamily: "var(--font-syne), sans-serif", fontWeight: 700, fontSize: 18, letterSpacing: "-.02em", marginBottom: 14, color: "var(--text)" }}>{item.title}</h3>
+                    <p style={{ fontSize: 13, color: "var(--text2)", lineHeight: 1.75, marginBottom: 28, flex: 1 }}>{item.desc}</p>
+                    <button onClick={item.action} style={{
+                      background: "none", border: `1px solid ${item.border}`, padding: "8px 16px",
+                      borderRadius: 8, fontFamily: "'DM Mono', monospace", fontSize: 11,
+                      color: item.color, cursor: "pointer", letterSpacing: ".04em",
+                      alignSelf: "flex-start", transition: "background .2s",
+                    }}
+                      onMouseEnter={e => (e.currentTarget.style.background = item.bg)}
+                      onMouseLeave={e => (e.currentTarget.style.background = "none")}
+                    >{item.cta}</button>
                   </div>
                 ))}
               </div>
@@ -1005,16 +1030,27 @@ const handleAssign = async (taskId: string, agentId: string, agentAddress: strin
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                   {[
-                    { name: "IDENTITY REGISTRY",   addr: "0x8004A818BFB912233c491871b3d84c89A494BD9e" },
-                    { name: "REPUTATION REGISTRY", addr: "0x8004B663056A597Dffe9eCcC1965A193B7388713" },
-                    { name: "VALIDATION REGISTRY", addr: "0x8004Cb1BF31DAf7788923b405b754f57acEB4272" },
+                    { name: "IDENTITY REGISTRY",   addr: "0x8004A818BFB912233c491871b3d84c89A494BD9e", color: "var(--gold)" },
+                    { name: "REPUTATION REGISTRY", addr: "0x8004B663056A597Dffe9eCcC1965A193B7388713", color: "var(--blue)" },
+                    { name: "VALIDATION REGISTRY", addr: "0x8004Cb1BF31DAf7788923b405b754f57acEB4272", color: "var(--green)" },
                   ].map(c => (
-                    <div key={c.name} style={{ background: "var(--bg1)", border: "1px solid var(--border)", borderRadius: 10, padding: "16px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
-                      <div>
-                        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: "var(--gold)", letterSpacing: ".06em", marginBottom: 4 }}>{c.name}</div>
-                        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--text3)" }}>{c.addr.slice(0,10)}...{c.addr.slice(-6)}</div>
+                    <div key={c.name} style={{
+                      background: "var(--bg1)", border: "1px solid var(--border)",
+                      borderRadius: 12, padding: "18px 20px",
+                      display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16,
+                      transition: "border-color .2s",
+                    }}
+                      onMouseEnter={e => (e.currentTarget.style.borderColor = "var(--border-hi)")}
+                      onMouseLeave={e => (e.currentTarget.style.borderColor = "var(--border)")}
+                    >
+                      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                        <div style={{ width: 4, height: 36, borderRadius: 2, background: c.color, flexShrink: 0 }} />
+                        <div>
+                          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: c.color, letterSpacing: ".06em", marginBottom: 5 }}>{c.name}</div>
+                          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--text3)" }}>{c.addr.slice(0,10)}...{c.addr.slice(-6)}</div>
+                        </div>
                       </div>
-                      <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 10, color: "var(--green)", fontFamily: "'DM Mono', monospace", flexShrink: 0 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 10, color: "var(--green)", fontFamily: "'DM Mono', monospace", flexShrink: 0, padding: "4px 10px", borderRadius: 99, border: "1px solid rgba(78,203,141,.25)", background: "rgba(78,203,141,.06)" }}>
                         <span style={{ width: 5, height: 5, borderRadius: "50%", background: "var(--green)", display: "inline-block" }} />
                         Verified
                       </div>

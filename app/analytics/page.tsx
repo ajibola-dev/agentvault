@@ -174,7 +174,7 @@ export default function AnalyticsPage() {
               <AnimatedStat val={stats?.totalAgents ?? 0} label="Registered Agents" color="var(--gold-hi)" delay={0} />
               <AnimatedStat val={stats?.totalTasks ?? 0} label="Total Tasks" color="var(--text)" delay={80} />
               <AnimatedStat val={stats?.totalPaid ?? 0} label="Tasks Paid" color="var(--green)" delay={160} />
-              <AnimatedStat val={Math.round((stats?.totalUsdcSettled ?? 0) * 100) / 100} label="USDC Settled" color="var(--gold-hi)" delay={240} suffix=" U" />
+              <AnimatedStat val={Math.round((stats?.totalUsdcSettled ?? 0) * 100) / 100} label="USDC Settled" color="var(--gold-hi)" delay={240} suffix="" />
               <AnimatedStat val={stats?.openTasks ?? 0} label="Open Tasks" color="var(--blue)" delay={320} />
               <AnimatedStat val={stats?.totalDisputes ?? 0} label="Disputes" color="var(--amber)" delay={400} />
             </div>

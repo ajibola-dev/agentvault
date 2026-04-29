@@ -54,17 +54,12 @@ export async function GET() {
       if (t.agent_address) countMap[t.agent_address] = (countMap[t.agent_address] ?? 0) + 1;
     });
 
-    const enriched = await Promise.all(
-      (agents ?? []).map(async (agent) => {
-        const onchainRep = await getReputationScore(agent.wallet_address);
-        return {
-          ...agent,
-          reputation: onchainRep,
-          owner: agent.wallet_address,
-          tasks: countMap[agent.wallet_address] ?? 0,
-        };
-      })
-    );
+    const enriched = (agents ?? []).map((agent) => ({
+      ...agent,
+      reputation: agent.reputation ?? 1,
+      owner: agent.wallet_address,
+      tasks: countMap[agent.wallet_address] ?? 0,
+    }));
 
     return NextResponse.json({ agents: enriched });
   } catch (err: unknown) {

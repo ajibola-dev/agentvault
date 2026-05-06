@@ -57,7 +57,7 @@ function AnimatedStat({ val, label, color, delay, prefix = "", suffix = "" }: {
   return (
     <div style={{
       padding: "28px 24px", background: "var(--bg1)",
-      border: "1px solid var(--border)", borderRadius: 14,
+      border: "1px solid var(--border)", borderRadius: 4,
       animation: `fadeUp 0.5s ${delay}ms ease both`,
       transition: "border-color .2s, transform .2s",
       cursor: "default",
@@ -148,7 +148,7 @@ export default function AnalyticsPage() {
       <div style={{ background: "linear-gradient(180deg, rgba(212,170,80,.04) 0%, transparent 100%)", borderBottom: "1px solid var(--border)", padding: "60px 24px 48px" }}>
         <div style={{ maxWidth: 1200, margin: "0 auto", opacity: visible ? 1 : 0, transform: visible ? "none" : "translateY(20px)", transition: "opacity .6s ease, transform .6s ease" }}>
           <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--gold)", letterSpacing: ".1em", marginBottom: 12 }}>PROTOCOL · ARC TESTNET · ERC-8004</div>
-          <h1 style={{ fontFamily: "var(--font-syne), sans-serif", fontWeight: 800, fontSize: "clamp(32px,5vw,56px)", letterSpacing: "-.03em", lineHeight: 1.05, margin: 0 }}>
+          <h1 style={{ fontFamily: "var(--font-syne), sans-serif", fontWeight: 800, fontSize: "clamp(32px,5vw,56px)", letterSpacing: "-.03em", lineHeight: 1.02, margin: 0 }}>
             Protocol{" "}
             <span style={{ background: "linear-gradient(95deg, var(--gold-hi), var(--amber))", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
               Analytics
@@ -181,7 +181,7 @@ export default function AnalyticsPage() {
 
             {/* Nanopayments panel */}
             <div style={{
-              padding: "32px 36px", borderRadius: 16, marginBottom: 48,
+              padding: "32px 36px", borderRadius: 4, marginBottom: 48,
               background: "linear-gradient(135deg, rgba(212,170,80,.07), rgba(212,170,80,.02))",
               border: "1px solid rgba(212,170,80,.3)",
               animation: "fadeUp 0.5s 0.4s ease both",
@@ -225,7 +225,7 @@ export default function AnalyticsPage() {
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, animation: "fadeUp 0.5s 0.5s ease both" }}>
 
               {/* Leaderboard */}
-              <div style={{ background: "var(--bg1)", border: "1px solid var(--border)", borderRadius: 14, padding: 28, overflow: "hidden" }}>
+              <div style={{ background: "var(--bg1)", border: "1px solid var(--border)", borderRadius: 4, padding: 28, overflow: "hidden" }}>
                 <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: "var(--text3)", letterSpacing: ".1em", textTransform: "uppercase", marginBottom: 20 }}>
                   Agent Leaderboard · By Reputation
                 </div>
@@ -233,7 +233,7 @@ export default function AnalyticsPage() {
                   {agents.map((agent, i) => (
                     <Link key={agent.owner} href={`/agents/${agent.owner}`} style={{
                       display: "flex", alignItems: "center", gap: 12,
-                      padding: "12px 14px", borderRadius: 10,
+                      padding: "12px 14px", borderRadius: 6,
                       background: i === 0 ? "rgba(212,170,80,.07)" : i < 3 ? "rgba(212,170,80,.03)" : "var(--bg2)",
                       border: `1px solid ${i === 0 ? "rgba(212,170,80,.3)" : "var(--border)"}`,
                       textDecoration: "none",
@@ -266,7 +266,7 @@ export default function AnalyticsPage() {
               </div>
 
               {/* Recent tasks */}
-              <div style={{ background: "var(--bg1)", border: "1px solid var(--border)", borderRadius: 14, padding: 28, overflow: "hidden" }}>
+              <div style={{ background: "var(--bg1)", border: "1px solid var(--border)", borderRadius: 4, padding: 28, overflow: "hidden" }}>
                 <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: "var(--text3)", letterSpacing: ".1em", textTransform: "uppercase", marginBottom: 20 }}>
                   Recent Task Activity
                 </div>
@@ -274,7 +274,7 @@ export default function AnalyticsPage() {
                   {recentTasks.map((task, i) => (
                     <div key={task.id} style={{
                       display: "flex", alignItems: "center", gap: 12,
-                      padding: "12px 14px", borderRadius: 10,
+                      padding: "12px 14px", borderRadius: 6,
                       background: "var(--bg2)", border: "1px solid var(--border)",
                       transition: "border-color .2s",
                       animation: `fadeUp 0.4s ${i * 40}ms ease both`,

@@ -63,7 +63,7 @@ function StatCard({ label, value, suffix = "", delay = 0 }: { label: string; val
   return (
     <div style={{
       padding: "24px 20px", background: "var(--bg1)",
-      border: "1px solid var(--border)", borderRadius: 12,
+      border: "1px solid var(--border)", borderRadius: 6,
       animation: `fadeUp 0.5s ${delay}ms ease both`,
     }}>
       <div style={{ fontFamily: "var(--font-syne), sans-serif", fontWeight: 800, fontSize: 32, lineHeight: 1, color: "var(--gold-hi)" }}>
@@ -141,7 +141,7 @@ export default function ProfilePage() {
       <div style={{ fontSize: 48 }}>🤖</div>
       <p style={{ fontFamily: "var(--font-syne), sans-serif", fontWeight: 700, fontSize: 20 }}>No agent found</p>
       <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: "var(--text3)" }}>{error}</p>
-      <Link href="/" style={{ padding: "10px 20px", borderRadius: 8, background: "rgba(212,170,80,.1)", border: "1px solid var(--border-hi)", color: "var(--gold)", fontFamily: "var(--font-syne), sans-serif", fontSize: 13, fontWeight: 600, textDecoration: "none" }}>
+      <Link href="/" style={{ padding: "10px 20px", borderRadius: 4, background: "rgba(212,170,80,.1)", border: "1px solid var(--border-hi)", color: "var(--gold)", fontFamily: "var(--font-syne), sans-serif", fontSize: 13, fontWeight: 600, textDecoration: "none" }}>
         Register an Agent →
       </Link>
     </div>
@@ -179,7 +179,7 @@ export default function ProfilePage() {
       <div style={{ background: "linear-gradient(180deg, rgba(212,170,80,.05) 0%, transparent 100%)", borderBottom: "1px solid var(--border)", padding: "60px 24px 48px" }}>
         <div style={{ maxWidth: 1100, margin: "0 auto" }}>
           <div style={{ display: "flex", alignItems: "flex-start", gap: 28, flexWrap: "wrap", opacity: visible ? 1 : 0, transform: visible ? "none" : "translateY(20px)", transition: "opacity .6s ease, transform .6s ease" }}>
-            <div style={{ width: 80, height: 80, borderRadius: 16, fontSize: 38, border: "2px solid var(--border-hi)", display: "grid", placeItems: "center", background: "linear-gradient(135deg, var(--bg2), var(--bg3))", flexShrink: 0, boxShadow: "0 8px 32px rgba(212,170,80,.12)" }}>
+            <div style={{ width: 80, height: 80, borderRadius: 4, fontSize: 38, border: "2px solid var(--border-hi)", display: "grid", placeItems: "center", background: "linear-gradient(135deg, var(--bg2), var(--bg3))", flexShrink: 0, boxShadow: "0 8px 32px rgba(212,170,80,.12)" }}>
               {agent.emoji ?? "🤖"}
             </div>
             <div style={{ flex: 1, minWidth: 200 }}>
@@ -205,11 +205,11 @@ export default function ProfilePage() {
                 Registered {new Date(agent.created_at).toLocaleDateString("en", { month: "long", day: "numeric", year: "numeric" })}
               </div>
             </div>
-            <div style={{ padding: "20px 28px", borderRadius: 14, textAlign: "center", background: "rgba(212,170,80,.06)", border: "1px solid rgba(212,170,80,.25)", flexShrink: 0 }}>
+            <div style={{ padding: "20px 28px", borderRadius: 4, textAlign: "center", background: "rgba(212,170,80,.06)", border: "1px solid rgba(212,170,80,.25)", flexShrink: 0 }}>
               <div style={{ fontFamily: "var(--font-syne), sans-serif", fontWeight: 800, fontSize: 56, lineHeight: 1, background: "linear-gradient(135deg, var(--gold-hi), var(--amber))", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
                 {agent.reputation}
               </div>
-              <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: "var(--text3)", letterSpacing: ".12em", marginTop: 6 }}>REP SCORE</div>
+              <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: "var(--text3)", letterSpacing: ".1em", marginTop: 6 }}>REP SCORE</div>
             </div>
           </div>
         </div>
@@ -229,10 +229,10 @@ export default function ProfilePage() {
         {/* Active task */}
         {activeTask && (
           <div style={{ marginBottom: 36, animation: "fadeUp 0.5s 0.3s ease both" }}>
-            <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: "var(--gold-dim)", letterSpacing: ".12em", textTransform: "uppercase", marginBottom: 14, display: "flex", alignItems: "center", gap: 10 }}>
+            <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: "var(--gold-dim)", letterSpacing: ".1em", textTransform: "uppercase", marginBottom: 14, display: "flex", alignItems: "center", gap: 10 }}>
               <span style={{ width: 24, height: 1, background: "var(--gold-dim)", display: "block" }} />Active Task
             </div>
-            <div style={{ padding: "20px 24px", background: "rgba(78,203,141,.04)", border: "1px solid rgba(78,203,141,.25)", borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
+            <div style={{ padding: "20px 24px", background: "rgba(78,203,141,.04)", border: "1px solid rgba(78,203,141,.25)", borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
               <div>
                 <div style={{ fontFamily: "var(--font-syne), sans-serif", fontWeight: 700, fontSize: 16, marginBottom: 4 }}>{activeTask.title}</div>
                 <div style={{ fontSize: 13, color: "var(--text2)", marginBottom: 8 }}>{activeTask.description}</div>
@@ -278,7 +278,7 @@ export default function ProfilePage() {
             ) : (
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                 {taskHistory.map((task, i) => (
-                  <div key={task.id} style={{ padding: "16px 20px", background: "var(--bg1)", border: "1px solid var(--border)", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, animation: `fadeUp 0.4s ${i * 60}ms ease both`, transition: "border-color .2s" }}
+                  <div key={task.id} style={{ padding: "16px 20px", background: "var(--bg1)", border: "1px solid var(--border)", borderRadius: 6, boxShadow: "var(--shadow-sm)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, animation: `fadeUp 0.4s ${i * 60}ms ease both`, transition: "border-color .2s" }}
                     onMouseEnter={e => (e.currentTarget.style.borderColor = "var(--border-hi)")}
                     onMouseLeave={e => (e.currentTarget.style.borderColor = "var(--border)")}>
                     <div style={{ flex: 1, minWidth: 0 }}>
@@ -302,7 +302,7 @@ export default function ProfilePage() {
             {/* Rep timeline */}
             {taskHistory.length > 0 && (
               <div style={{ marginTop: 40 }}>
-                <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: "var(--gold-dim)", letterSpacing: ".12em", textTransform: "uppercase", marginBottom: 14, display: "flex", alignItems: "center", gap: 10 }}>
+                <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: "var(--gold-dim)", letterSpacing: ".1em", textTransform: "uppercase", marginBottom: 14, display: "flex", alignItems: "center", gap: 10 }}>
                   <span style={{ width: 24, height: 1, background: "var(--gold-dim)", display: "block" }} />Reputation Timeline
                 </div>
                 <div style={{ padding: 28, background: "var(--bg1)", border: "1px solid var(--border)", borderRadius: 12 }}>
@@ -342,7 +342,7 @@ export default function ProfilePage() {
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                 {notifications.map((n, i) => (
                   <div key={n.id} style={{
-                    padding: "16px 20px", borderRadius: 10,
+                    padding: "16px 20px", borderRadius: 6,
                     background: n.read ? "var(--bg1)" : "rgba(212,170,80,.04)",
                     border: `1px solid ${n.read ? "var(--border)" : "rgba(212,170,80,.2)"}`,
                     display: "flex", gap: 14, alignItems: "flex-start",

@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
 :root {
+  /* ── Core palette ─────────────────────────────────────────── */
   --bg:        #0a0905;
   --bg1:       #0f0e0a;
   --bg2:       #161410;
@@ -17,6 +18,61 @@
   --green:     #4ecb8d;
   --red:       #e85454;
   --blue:      #5a9cf5;
+
+  /* ── Cursor-inspired design tokens ───────────────────────── */
+
+  /* Typography scale */
+  --text-caption:     10px;
+  --text-body:        13px;
+  --text-body-lg:     14px;
+  --text-heading-sm:  18px;
+  --text-heading:     22px;
+  --text-heading-lg:  32px;
+  --text-display:     56px;
+
+  --leading-tight:    1.05;
+  --leading-snug:     1.2;
+  --leading-normal:   1.5;
+  --leading-relaxed:  1.7;
+
+  --tracking-tight:   -0.03em;
+  --tracking-snug:    -0.02em;
+  --tracking-normal:  -0.01em;
+  --tracking-wide:    0.04em;
+  --tracking-wider:   0.08em;
+  --tracking-widest:  0.12em;
+
+  /* Border radius — tighter like Cursor */
+  --radius-sm:  2px;
+  --radius-md:  4px;
+  --radius-lg:  6px;
+  --radius-xl:  8px;
+  --radius-2xl: 12px;
+
+  /* Spacing — compact like Cursor */
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-5:  20px;
+  --space-6:  24px;
+  --space-8:  32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  /* Shadows — multi-layered like Cursor */
+  --shadow-sm:  0 1px 2px rgba(0,0,0,0.3), 0 0 0 1px rgba(212,170,80,0.06);
+  --shadow-md:  0 4px 12px rgba(0,0,0,0.4), 0 0 0 1px rgba(212,170,80,0.08);
+  --shadow-lg:  0 8px 24px rgba(0,0,0,0.5), 0 0 0 1px rgba(212,170,80,0.1);
+  --shadow-xl:  rgba(0,0,0,0.4) 0px 20px 50px 0px, rgba(0,0,0,0.3) 0px 10px 24px 0px, rgba(212,170,80,0.08) 0px 0px 0px 1px;
+  --shadow-gold: 0 4px 20px rgba(212,170,80,0.2), 0 0 0 1px rgba(212,170,80,0.15);
+
+  /* Layout */
+  --page-max-width: 1200px;
+  --section-gap:    80px;
+  --card-padding:   20px;
+  --element-gap:    8px;
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -28,9 +84,11 @@ body {
   color: var(--text);
   font-family: 'Inter', sans-serif;
   font-weight: 300;
-  line-height: 1.6;
+  line-height: var(--leading-normal);
   overflow-x: hidden;
   min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body::before {
@@ -41,14 +99,20 @@ body::before {
   background-size: 128px;
 }
 
-::-webkit-scrollbar { width: 6px; }
+/* ── Scrollbar ──────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 5px; }
 ::-webkit-scrollbar-track { background: var(--bg); }
-::-webkit-scrollbar-thumb { background: var(--bg3); border-radius: 3px; }
+::-webkit-scrollbar-thumb { background: var(--bg3); border-radius: 2px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--gold-dim); }
 
+/* ── Animations ─────────────────────────────────────────────── */
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(16px); }
   to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 @keyframes pulse {
   0%, 100% { opacity: 1; }
@@ -57,16 +121,122 @@ body::before {
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+@keyframes barGrow {
+  from { transform: scaleY(0); }
+  to   { transform: scaleY(1); }
+}
 
-.animate-fade-up { animation: fadeUp 0.6s ease both; }
-.animate-fade-up-1 { animation: fadeUp 0.6s 0.1s ease both; }
-.animate-fade-up-2 { animation: fadeUp 0.6s 0.2s ease both; }
-.animate-fade-up-3 { animation: fadeUp 0.6s 0.3s ease both; }
-.animate-fade-up-4 { animation: fadeUp 0.6s 0.4s ease both; }
+.animate-fade-up   { animation: fadeUp 0.5s ease both; }
+.animate-fade-up-1 { animation: fadeUp 0.5s 0.08s ease both; }
+.animate-fade-up-2 { animation: fadeUp 0.5s 0.16s ease both; }
+.animate-fade-up-3 { animation: fadeUp 0.5s 0.24s ease both; }
+.animate-fade-up-4 { animation: fadeUp 0.5s 0.32s ease both; }
 .pulse { animation: pulse 2s infinite; }
+
 .spinner {
   display: inline-block; width: 10px; height: 10px;
   border: 1.5px solid var(--gold); border-top-color: transparent;
   border-radius: 50%; animation: spin 0.8s linear infinite;
   margin-right: 6px; vertical-align: middle;
+}
+
+/* ── Utility classes ────────────────────────────────────────── */
+
+/* Cards */
+.card {
+  background: var(--bg1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--card-padding);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.card:hover {
+  border-color: var(--border-hi);
+  box-shadow: var(--shadow-md);
+}
+.card-elevated {
+  box-shadow: var(--shadow-lg);
+}
+
+/* Buttons */
+.btn-primary {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 10px 20px;
+  background: linear-gradient(135deg, var(--gold), var(--amber));
+  color: #0a0905;
+  border: none; border-radius: var(--radius-md);
+  font-family: var(--font-syne), sans-serif;
+  font-size: 13px; font-weight: 700;
+  letter-spacing: var(--tracking-wide);
+  cursor: pointer;
+  box-shadow: var(--shadow-gold);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+.btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+
+.btn-ghost {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 14px;
+  background: transparent;
+  color: var(--gold);
+  border: 1px solid var(--border-hi);
+  border-radius: var(--radius-md);
+  font-family: var(--font-syne), sans-serif;
+  font-size: 12px; font-weight: 600;
+  letter-spacing: var(--tracking-wide);
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.btn-ghost:hover { background: rgba(212,170,80,0.08); }
+
+/* Typography helpers */
+.heading-display {
+  font-family: var(--font-syne), sans-serif;
+  font-weight: 800;
+  font-size: var(--text-display);
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-tight);
+}
+.heading-lg {
+  font-family: var(--font-syne), sans-serif;
+  font-weight: 700;
+  font-size: var(--text-heading-lg);
+  line-height: var(--leading-snug);
+  letter-spacing: var(--tracking-snug);
+}
+.heading {
+  font-family: var(--font-syne), sans-serif;
+  font-weight: 700;
+  font-size: var(--text-heading);
+  line-height: var(--leading-snug);
+  letter-spacing: var(--tracking-snug);
+}
+.mono {
+  font-family: 'DM Mono', monospace;
+  font-size: var(--text-caption);
+  letter-spacing: var(--tracking-wider);
+}
+.label {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: var(--text3);
+  letter-spacing: var(--tracking-widest);
+  text-transform: uppercase;
+}
+
+/* Status badges */
+.badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  font-weight: 500;
+}
+
+/* Divider */
+.divider {
+  height: 1px;
+  background: var(--border);
+  margin: var(--space-5) 0;
 }

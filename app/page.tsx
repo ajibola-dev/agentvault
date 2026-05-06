@@ -111,7 +111,7 @@ const S = {
   },
   navLogoMark: {
     width: 28, height: 28, border: "1.5px solid var(--gold)",
-    borderRadius: 6, display: "grid", placeItems: "center",
+    borderRadius: 4, display: "grid", placeItems: "center",
     fontSize: 11, fontFamily: "var(--font-mono, monospace)",
     color: "var(--gold)", background: "rgba(212,170,80,.08)",
     flexShrink: 0,
@@ -125,21 +125,21 @@ const S = {
     background: "rgba(212,170,80,.04)", letterSpacing: ".04em",
   },
   btnConnect: {
-    padding: "7px 16px", borderRadius: 6,
+    padding: "7px 16px", borderRadius: 4,
     background: "linear-gradient(135deg, var(--gold), var(--amber))",
     color: "#0a0905", fontSize: 12, fontWeight: 600,
     fontFamily: "var(--font-syne), sans-serif", letterSpacing: ".04em",
     border: "none", cursor: "pointer",
   },
   btnConnectIdle: {
-    padding: "7px 16px", borderRadius: 6,
+    padding: "7px 16px", borderRadius: 4,
     background: "rgba(212,170,80,.1)",
     color: "var(--gold)", fontSize: 12, fontWeight: 700,
     fontFamily: "var(--font-syne), sans-serif", letterSpacing: ".04em",
     border: "1px solid var(--border-hi)", cursor: "pointer",
   },
   navAccount: {
-    padding: "7px 12px", borderRadius: 6,
+    padding: "7px 12px", borderRadius: 4,
     background: "rgba(78,203,141,.08)",
     color: "var(--green)", fontSize: 11, fontWeight: 500,
     fontFamily: "'DM Mono', monospace", letterSpacing: ".04em",
@@ -158,7 +158,7 @@ function NavLink({
         padding: "6px 14px", fontSize: 13, fontWeight: 400,
         color: active ? "var(--gold)" : "var(--text2)",
         background: active ? "rgba(212,170,80,.07)" : "none",
-        borderRadius: 6, border: "none", cursor: "pointer",
+        borderRadius: 4, border: "none", cursor: "pointer",
         fontFamily: "'Inter', sans-serif", letterSpacing: ".01em",
         transition: "color .15s, background .15s",
       }}
@@ -750,7 +750,7 @@ const handleAssign = async (taskId: string, agentId: string, agentAddress: strin
 	      <a href="/profile" style={{
                 padding: "6px 14px", fontSize: 13, fontWeight: 400,
                 color: "var(--text2)", background: "none",
-                borderRadius: 6, border: "none", cursor: "pointer",
+                borderRadius: 4, border: "none", cursor: "pointer",
                 fontFamily: "'Inter', sans-serif", letterSpacing: ".01em",
                 textDecoration: "none", display: "inline-block",
              }}>
@@ -863,7 +863,7 @@ const handleAssign = async (taskId: string, agentId: string, agentAddress: strin
                       onClick={() => setPage("discover")}
                       style={{
                         display: "inline-flex", alignItems: "center", gap: 8,
-                        padding: "13px 28px", borderRadius: 10, border: "none", cursor: "pointer",
+                        padding: "13px 28px", borderRadius: 6, border: "none", cursor: "pointer",
                         background: "linear-gradient(135deg, var(--gold), var(--amber))",
                         color: "#0a0905", fontFamily: "var(--font-syne), sans-serif",
                         fontWeight: 700, fontSize: 14, letterSpacing: ".04em",
@@ -876,7 +876,7 @@ const handleAssign = async (taskId: string, agentId: string, agentAddress: strin
                       onClick={() => setPage("tasks")}
                       style={{
                         display: "inline-flex", alignItems: "center", gap: 8,
-                        padding: "13px 24px", borderRadius: 10, cursor: "pointer",
+                        padding: "13px 24px", borderRadius: 6, cursor: "pointer",
                         border: "1px solid var(--border-hi)", background: "rgba(212,170,80,.04)",
                         color: "var(--gold)", fontSize: 14, fontWeight: 500,
                         fontFamily: "var(--font-syne), sans-serif",
@@ -890,7 +890,7 @@ const handleAssign = async (taskId: string, agentId: string, agentAddress: strin
                 {/* Right — live stats dashboard */}
                 <div style={{
                   background: "var(--bg1)", border: "1px solid var(--border)",
-                  borderRadius: 16, overflow: "hidden",
+                  borderRadius: 4, overflow: "hidden",
                 }}>
                   <div style={{
                     padding: "16px 20px", borderBottom: "1px solid var(--border)",
@@ -985,7 +985,7 @@ const handleAssign = async (taskId: string, agentId: string, agentAddress: strin
                 ].map((item) => (
                   <div key={item.step} style={{
                     background: item.bg, border: `1px solid ${item.border}`,
-                    borderRadius: 16, padding: "36px 32px",
+                    borderRadius: 4, padding: "36px 32px",
                     display: "flex", flexDirection: "column",
                     transition: "transform .2s, box-shadow .2s",
                   }}
@@ -993,7 +993,7 @@ const handleAssign = async (taskId: string, agentId: string, agentAddress: strin
                     onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = ""; (e.currentTarget as HTMLElement).style.boxShadow = ""; }}
                   >
                     <div style={{
-                      width: 48, height: 48, borderRadius: 12, border: `1px solid ${item.border}`,
+                      width: 48, height: 48, borderRadius: 6, border: `1px solid ${item.border}`,
                       display: "grid", placeItems: "center", marginBottom: 24,
                       fontFamily: "'DM Mono', monospace", fontSize: 16, color: item.color, fontWeight: 600,
                       background: `rgba(0,0,0,.2)`,
@@ -1002,7 +1002,7 @@ const handleAssign = async (taskId: string, agentId: string, agentAddress: strin
                     <p style={{ fontSize: 13, color: "var(--text2)", lineHeight: 1.75, marginBottom: 28, flex: 1 }}>{item.desc}</p>
                     <button onClick={item.action} style={{
                       background: "none", border: `1px solid ${item.border}`, padding: "8px 16px",
-                      borderRadius: 8, fontFamily: "'DM Mono', monospace", fontSize: 11,
+                      borderRadius: 4, fontFamily: "'DM Mono', monospace", fontSize: 11,
                       color: item.color, cursor: "pointer", letterSpacing: ".04em",
                       alignSelf: "flex-start", transition: "background .2s",
                     }}
@@ -1036,7 +1036,7 @@ const handleAssign = async (taskId: string, agentId: string, agentAddress: strin
                   ].map(c => (
                     <div key={c.name} style={{
                       background: "var(--bg1)", border: "1px solid var(--border)",
-                      borderRadius: 12, padding: "18px 20px",
+                      borderRadius: 6, padding: "18px 20px",
                       display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16,
                       transition: "border-color .2s",
                     }}
@@ -1074,7 +1074,7 @@ const handleAssign = async (taskId: string, agentId: string, agentAddress: strin
               <div>
                 <h1 style={{
                   fontFamily: "var(--font-syne), sans-serif", fontWeight: 800,
-                  fontSize: "clamp(32px,5vw,56px)", letterSpacing: "-.03em", lineHeight: 1.05, margin: 0,
+                  fontSize: "clamp(32px,5vw,56px)", letterSpacing: "-.03em", lineHeight: 1.02, margin: 0,
                 }}>
                   Discover{" "}
                   <span style={{
@@ -1092,7 +1092,7 @@ const handleAssign = async (taskId: string, agentId: string, agentAddress: strin
               </div>
               <div style={{
                 fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--text3)",
-                padding: "6px 12px", border: "1px solid var(--border)", borderRadius: 6,
+                padding: "6px 12px", border: "1px solid var(--border)", borderRadius: 4,
                 background: "var(--bg1)",
               }}>
                 ranked by reputation
@@ -1102,7 +1102,7 @@ const handleAssign = async (taskId: string, agentId: string, agentAddress: strin
 
           {/* search + filter bar */}
           <div style={{
-            background: "var(--bg1)", border: "1px solid var(--border)", borderRadius: 10,
+            background: "var(--bg1)", border: "1px solid var(--border)", borderRadius: 6,
             padding: "12px 14px", marginBottom: 28,
             display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center",
           }}>
@@ -1163,7 +1163,7 @@ const handleAssign = async (taskId: string, agentId: string, agentAddress: strin
                   style={{
                     background: "linear-gradient(135deg, rgba(212,170,80,.07), var(--bg1))",
                     border: "1px solid var(--gold)",
-                    borderRadius: 14, padding: isMobile ? 24 : 32,
+                    borderRadius: 4, padding: isMobile ? 24 : 32,
                     cursor: "pointer", marginBottom: 20,
                     display: "flex", gap: 24, flexWrap: "wrap", alignItems: "flex-start",
                     transition: "transform .2s",
@@ -1173,7 +1173,7 @@ const handleAssign = async (taskId: string, agentId: string, agentAddress: strin
                 >
                   <div style={{
                     flexShrink: 0, textAlign: "center",
-                    padding: "16px 24px", borderRadius: 10,
+                    padding: "16px 24px", borderRadius: 6,
                     background: "rgba(212,170,80,.08)", border: "1px solid rgba(212,170,80,.2)",
                     minWidth: 90,
                   }}>
@@ -1228,7 +1228,7 @@ const handleAssign = async (taskId: string, agentId: string, agentAddress: strin
                         {top.tasks ?? 0} tasks completed
                       </span>
                       <span style={{
-                        padding: "8px 20px", borderRadius: 6,
+                        padding: "8px 20px", borderRadius: 4,
                         background: "var(--gold)", color: "#000",
                         fontSize: 12, fontWeight: 700,
                         fontFamily: "var(--font-syne), sans-serif",
@@ -1249,7 +1249,7 @@ const handleAssign = async (taskId: string, agentId: string, agentAddress: strin
                         onClick={() => window.location.href = `/agents/${agent.owner}`}
                         style={{
                           background: "var(--bg1)", border: "1px solid var(--border)",
-                          borderRadius: 12, padding: 20, cursor: "pointer",
+                          borderRadius: 6, padding: 20, cursor: "pointer",
                           transition: "border-color .2s, transform .2s",
                           display: "flex", flexDirection: "column", gap: 12,
                         }}
@@ -1319,7 +1319,7 @@ const handleAssign = async (taskId: string, agentId: string, agentAddress: strin
                             {agent.tasks ?? 0} tasks
                           </span>
                           <span style={{
-                            padding: "6px 14px", borderRadius: 6,
+                            padding: "6px 14px", borderRadius: 4,
                             background: "rgba(212,170,80,.08)", border: "1px solid var(--border-hi)",
                             color: "var(--gold)", fontSize: 11, fontWeight: 600,
                             fontFamily: "var(--font-syne), sans-serif",
@@ -1345,7 +1345,7 @@ const handleAssign = async (taskId: string, agentId: string, agentAddress: strin
               <div>
                 <h1 style={{
                   fontFamily: "var(--font-syne), sans-serif", fontWeight: 800,
-                  fontSize: "clamp(32px,5vw,56px)", letterSpacing: "-.03em", lineHeight: 1.05, margin: 0,
+                  fontSize: "clamp(32px,5vw,56px)", letterSpacing: "-.03em", lineHeight: 1.02, margin: 0,
                 }}>
                   Task{" "}
                   <span style={{
@@ -1365,7 +1365,7 @@ const handleAssign = async (taskId: string, agentId: string, agentAddress: strin
               </div>
               <div style={{
                 fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--text3)",
-                padding: "6px 12px", border: "1px solid var(--border)", borderRadius: 6,
+                padding: "6px 12px", border: "1px solid var(--border)", borderRadius: 4,
                 background: "var(--bg1)",
               }}>
                 {tasks.length} total tasks
@@ -1417,7 +1417,7 @@ const handleAssign = async (taskId: string, agentId: string, agentAddress: strin
                 return (
                   <div key={i} style={{
                     background: "var(--bg1)", border: "1px solid var(--border)",
-                    borderRadius: 12, padding: 24,
+                    borderRadius: 6, padding: 24,
                     transition: "border-color .2s, transform .15s",
                   }}
                     onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--border-hi)"; (e.currentTarget as HTMLElement).style.transform = "translateX(2px)"; }}
@@ -1426,7 +1426,7 @@ const handleAssign = async (taskId: string, agentId: string, agentAddress: strin
                     {/* reward + title */}
                     <div style={{ display: "flex", alignItems: "flex-start", gap: 16, marginBottom: 10 }}>
                       <div style={{
-                        flexShrink: 0, textAlign: "center", padding: "8px 14px", borderRadius: 8,
+                        flexShrink: 0, textAlign: "center", padding: "8px 14px", borderRadius: 4,
                         background: "rgba(212,170,80,.08)", border: "1px solid rgba(212,170,80,.2)", minWidth: 64,
                       }}>
                         <div style={{ fontFamily: "var(--font-syne), sans-serif", fontWeight: 800, fontSize: 22, lineHeight: 1, color: "var(--gold-hi)" }}>{task.reward}</div>
@@ -1479,43 +1479,43 @@ const handleAssign = async (taskId: string, agentId: string, agentAddress: strin
                     <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 14 }}>
                       {canAssign && (
                         <button onClick={() => { if (!isConnected) { setAssignStatus("Connect wallet to assign"); return; } setShowAssignModal(task.id); }} disabled={!isConnected}
-                          style={{ padding: "8px 18px", borderRadius: 6, background: "rgba(212,170,80,.1)", border: "1px solid var(--border-hi)", color: "var(--gold)", fontSize: 12, fontWeight: 600, fontFamily: "var(--font-syne), sans-serif", cursor: !isConnected ? "not-allowed" : "pointer", opacity: !isConnected ? 0.65 : 1 }}>
+                          style={{ padding: "8px 18px", borderRadius: 4, background: "rgba(212,170,80,.1)", border: "1px solid var(--border-hi)", color: "var(--gold)", fontSize: 12, fontWeight: 600, fontFamily: "var(--font-syne), sans-serif", cursor: !isConnected ? "not-allowed" : "pointer", opacity: !isConnected ? 0.65 : 1 }}>
                           Assign Agent →
                         </button>
                       )}
                       {canClaim && (
                         <button onClick={() => void handleClaim(task.id)} disabled={assigning}
-                          style={{ padding: "8px 18px", borderRadius: 6, background: "rgba(78,203,141,.08)", border: "1px solid rgba(78,203,141,.25)", color: "var(--green)", fontSize: 12, fontWeight: 600, fontFamily: "var(--font-syne), sans-serif", cursor: "pointer", opacity: assigning ? 0.65 : 1 }}>
+                          style={{ padding: "8px 18px", borderRadius: 4, background: "rgba(78,203,141,.08)", border: "1px solid rgba(78,203,141,.25)", color: "var(--green)", fontSize: 12, fontWeight: 600, fontFamily: "var(--font-syne), sans-serif", cursor: "pointer", opacity: assigning ? 0.65 : 1 }}>
                           Claim Task →
                         </button>
                       )}
                       {canStart && (
                         <button onClick={() => void handleStatusUpdate(task.id, "in_progress")} disabled={assigning}
-                          style={{ padding: "8px 18px", borderRadius: 6, background: "rgba(90,156,245,.1)", border: "1px solid rgba(90,156,245,.3)", color: "var(--blue)", fontSize: 12, fontWeight: 600, fontFamily: "var(--font-syne), sans-serif", cursor: "pointer", opacity: assigning ? 0.65 : 1 }}>
+                          style={{ padding: "8px 18px", borderRadius: 4, background: "rgba(90,156,245,.1)", border: "1px solid rgba(90,156,245,.3)", color: "var(--blue)", fontSize: 12, fontWeight: 600, fontFamily: "var(--font-syne), sans-serif", cursor: "pointer", opacity: assigning ? 0.65 : 1 }}>
                           Start Work →
                         </button>
                       )}
                       {canComplete && (
                         <button onClick={() => void handleStatusUpdate(task.id, "completed")} disabled={assigning}
-                          style={{ padding: "8px 18px", borderRadius: 6, background: "rgba(78,203,141,.08)", border: "1px solid rgba(78,203,141,.25)", color: "var(--green)", fontSize: 12, fontWeight: 600, fontFamily: "var(--font-syne), sans-serif", cursor: "pointer", opacity: assigning ? 0.65 : 1 }}>
+                          style={{ padding: "8px 18px", borderRadius: 4, background: "rgba(78,203,141,.08)", border: "1px solid rgba(78,203,141,.25)", color: "var(--green)", fontSize: 12, fontWeight: 600, fontFamily: "var(--font-syne), sans-serif", cursor: "pointer", opacity: assigning ? 0.65 : 1 }}>
                           Submit Complete →
                         </button>
                       )}
                       {canPay && (
                         <button onClick={() => void handleStatusUpdate(task.id, "paid")} disabled={assigning}
-                          style={{ padding: "8px 18px", borderRadius: 6, background: "rgba(212,170,80,.1)", border: "1px solid var(--border-hi)", color: "var(--gold-hi)", fontSize: 12, fontWeight: 600, fontFamily: "var(--font-syne), sans-serif", cursor: "pointer", opacity: assigning ? 0.65 : 1 }}>
+                          style={{ padding: "8px 18px", borderRadius: 4, background: "rgba(212,170,80,.1)", border: "1px solid var(--border-hi)", color: "var(--gold-hi)", fontSize: 12, fontWeight: 600, fontFamily: "var(--font-syne), sans-serif", cursor: "pointer", opacity: assigning ? 0.65 : 1 }}>
                           Release Payment →
                         </button>
                       )}
                       {canDispute && (
                         <button onClick={() => { setShowDisputeModal(task.id); setDisputeStatus(""); }}
-                          style={{ padding: "8px 18px", borderRadius: 6, background: "rgba(245,166,35,.08)", border: "1px solid rgba(245,166,35,.25)", color: "var(--amber)", fontSize: 12, fontWeight: 600, fontFamily: "var(--font-syne), sans-serif", cursor: "pointer" }}>
+                          style={{ padding: "8px 18px", borderRadius: 4, background: "rgba(245,166,35,.08)", border: "1px solid rgba(245,166,35,.25)", color: "var(--amber)", fontSize: 12, fontWeight: 600, fontFamily: "var(--font-syne), sans-serif", cursor: "pointer" }}>
                           Raise Dispute ⚠
                         </button>
                       )}
                       {task.status === "open" && isCreator && (
                         <button onClick={() => void handleCancel(task.id)} disabled={assigning}
-                          style={{ padding: "8px 18px", borderRadius: 6, background: "rgba(232,84,84,.08)", border: "1px solid rgba(232,84,84,.25)", color: "var(--red)", fontSize: 12, fontWeight: 600, fontFamily: "var(--font-syne), sans-serif", cursor: "pointer", opacity: assigning ? 0.65 : 1 }}>
+                          style={{ padding: "8px 18px", borderRadius: 4, background: "rgba(232,84,84,.08)", border: "1px solid rgba(232,84,84,.25)", color: "var(--red)", fontSize: 12, fontWeight: 600, fontFamily: "var(--font-syne), sans-serif", cursor: "pointer", opacity: assigning ? 0.65 : 1 }}>
                           Cancel Task ✕
                         </button>
                       )}
@@ -1523,12 +1523,12 @@ const handleAssign = async (taskId: string, agentId: string, agentAddress: strin
 
                     {/* dispute respond */}
                     {canRespondToDispute && (
-                      <div style={{ marginTop: 14, padding: 14, borderRadius: 8, background: "rgba(90,156,245,.04)", border: "1px solid rgba(90,156,245,.2)" }}>
+                      <div style={{ marginTop: 14, padding: 14, borderRadius: 4, background: "rgba(90,156,245,.04)", border: "1px solid rgba(90,156,245,.2)" }}>
                         <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: "var(--blue)", marginBottom: 8 }}>RESPOND TO DISPUTE</div>
                         <textarea value={disputeResponse} onChange={e => setDisputeResponse(e.target.value)} placeholder="Describe the work you delivered..."
-                          style={{ width: "100%", padding: "8px 12px", borderRadius: 6, background: "var(--bg2)", border: "1px solid var(--border)", color: "var(--text)", fontSize: 12, resize: "vertical", minHeight: 64, fontFamily: "'Inter', sans-serif", outline: "none", boxSizing: "border-box" }} />
+                          style={{ width: "100%", padding: "8px 12px", borderRadius: 4, background: "var(--bg2)", border: "1px solid var(--border)", color: "var(--text)", fontSize: 12, resize: "vertical", minHeight: 64, fontFamily: "'Inter', sans-serif", outline: "none", boxSizing: "border-box" }} />
                         <button onClick={() => void handleDisputeResponse(task.id)}
-                          style={{ marginTop: 8, padding: "7px 16px", borderRadius: 6, background: "rgba(90,156,245,.08)", border: "1px solid rgba(90,156,245,.25)", color: "var(--blue)", fontSize: 12, fontWeight: 600, fontFamily: "var(--font-syne), sans-serif", cursor: "pointer" }}>
+                          style={{ marginTop: 8, padding: "7px 16px", borderRadius: 4, background: "rgba(90,156,245,.08)", border: "1px solid rgba(90,156,245,.25)", color: "var(--blue)", fontSize: 12, fontWeight: 600, fontFamily: "var(--font-syne), sans-serif", cursor: "pointer" }}>
                           Submit Response →
                         </button>
                         {disputeStatus && <p style={{ marginTop: 6, fontSize: 11, color: "var(--text3)", fontFamily: "'DM Mono', monospace" }}>{disputeStatus}</p>}
@@ -1537,15 +1537,15 @@ const handleAssign = async (taskId: string, agentId: string, agentAddress: strin
 
                     {/* dispute resolve */}
                     {canResolveDispute && (
-                      <div style={{ marginTop: 14, padding: 14, borderRadius: 8, background: "rgba(245,166,35,.04)", border: "1px solid rgba(245,166,35,.2)" }}>
+                      <div style={{ marginTop: 14, padding: 14, borderRadius: 4, background: "rgba(245,166,35,.04)", border: "1px solid rgba(245,166,35,.2)" }}>
                         <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: "var(--amber)", marginBottom: 10 }}>RESOLVE DISPUTE</div>
                         <div style={{ display: "flex", gap: 8 }}>
                           <button onClick={() => void handleResolveDispute(task.id, "pay_agent")}
-                            style={{ flex: 1, padding: "8px", borderRadius: 6, background: "rgba(78,203,141,.08)", border: "1px solid rgba(78,203,141,.25)", color: "var(--green)", fontSize: 12, fontWeight: 600, fontFamily: "var(--font-syne), sans-serif", cursor: "pointer" }}>
+                            style={{ flex: 1, padding: "8px", borderRadius: 4, background: "rgba(78,203,141,.08)", border: "1px solid rgba(78,203,141,.25)", color: "var(--green)", fontSize: 12, fontWeight: 600, fontFamily: "var(--font-syne), sans-serif", cursor: "pointer" }}>
                             Pay Agent →
                           </button>
                           <button onClick={() => void handleResolveDispute(task.id, "refund_creator")}
-                            style={{ flex: 1, padding: "8px", borderRadius: 6, background: "rgba(232,84,84,.08)", border: "1px solid rgba(232,84,84,.25)", color: "var(--red)", fontSize: 12, fontWeight: 600, fontFamily: "var(--font-syne), sans-serif", cursor: "pointer" }}>
+                            style={{ flex: 1, padding: "8px", borderRadius: 4, background: "rgba(232,84,84,.08)", border: "1px solid rgba(232,84,84,.25)", color: "var(--red)", fontSize: 12, fontWeight: 600, fontFamily: "var(--font-syne), sans-serif", cursor: "pointer" }}>
                             Refund Me →
                           </button>
                         </div>
@@ -1555,7 +1555,7 @@ const handleAssign = async (taskId: string, agentId: string, agentAddress: strin
 
                     {/* assigned agent chip */}
                     {task.agentId && (
-                      <div style={{ marginTop: 12, padding: "7px 12px", borderRadius: 6, background: "rgba(78,203,141,.06)", border: "1px solid rgba(78,203,141,.25)", fontSize: 11, color: "var(--green)", fontFamily: "'DM Mono', monospace" }}>
+                      <div style={{ marginTop: 12, padding: "7px 12px", borderRadius: 4, background: "rgba(78,203,141,.06)", border: "1px solid rgba(78,203,141,.25)", fontSize: 11, color: "var(--green)", fontFamily: "'DM Mono', monospace" }}>
                         Agent · {task.agentAddress?.slice(0, 10)}...
                       </div>
                     )}
@@ -1567,14 +1567,14 @@ const handleAssign = async (taskId: string, agentId: string, agentAddress: strin
               {showAssignModal && (
                 <div style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,.7)", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(4px)" }}
                   onClick={() => setShowAssignModal(null)}>
-                  <div onClick={e => e.stopPropagation()} style={{ background: "var(--bg1)", border: "1px solid var(--border-hi)", borderRadius: 16, padding: 32, width: "100%", maxWidth: 480, margin: "0 24px" }}>
+                  <div onClick={e => e.stopPropagation()} style={{ background: "var(--bg1)", border: "1px solid var(--border-hi)", borderRadius: 4, padding: 32, width: "100%", maxWidth: 480, margin: "0 24px" }}>
                     <div style={{ fontFamily: "var(--font-syne), sans-serif", fontWeight: 700, fontSize: 18, letterSpacing: "-.02em", marginBottom: 4 }}>Assign Agent</div>
                     <div style={{ fontSize: 12, color: "var(--text3)", marginBottom: 24 }}>Select a registered agent for this task</div>
                     {agents.length === 0 && <p style={{ fontSize: 13, color: "var(--text3)", fontFamily: "'DM Mono', monospace" }}>No agents registered yet.</p>}
                     <div style={{ display: "flex", flexDirection: "column", gap: 10, maxHeight: 320, overflowY: "auto" }}>
                       {agents.map((agent, i: number) => (
                         <button key={i} onClick={() => { if (!showAssignModal || !agent.id || !agent.owner) return; handleAssign(showAssignModal, agent.id, agent.owner); }} disabled={assigning}
-                          style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px", borderRadius: 10, background: "var(--bg2)", border: "1px solid var(--border)", cursor: "pointer", textAlign: "left", transition: "border-color .15s" }}
+                          style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px", borderRadius: 6, background: "var(--bg2)", border: "1px solid var(--border)", cursor: "pointer", textAlign: "left", transition: "border-color .15s" }}
                           onMouseEnter={e => (e.currentTarget.style.borderColor = "var(--border-hi)")}
                           onMouseLeave={e => (e.currentTarget.style.borderColor = "var(--border)")}>
                           <div>
@@ -1589,7 +1589,7 @@ const handleAssign = async (taskId: string, agentId: string, agentAddress: strin
                       ))}
                     </div>
                     {assignStatus && <p style={{ marginTop: 12, fontSize: 12, color: "var(--text3)", fontFamily: "'DM Mono', monospace" }}>{assignStatus}</p>}
-                    <button onClick={() => setShowAssignModal(null)} style={{ marginTop: 16, width: "100%", padding: "10px", background: "none", border: "1px solid var(--border)", borderRadius: 8, color: "var(--text3)", cursor: "pointer", fontSize: 13 }}>Cancel</button>
+                    <button onClick={() => setShowAssignModal(null)} style={{ marginTop: 16, width: "100%", padding: "10px", background: "none", border: "1px solid var(--border)", borderRadius: 4, color: "var(--text3)", cursor: "pointer", fontSize: 13 }}>Cancel</button>
                   </div>
                 </div>
               )}
@@ -1599,19 +1599,19 @@ const handleAssign = async (taskId: string, agentId: string, agentAddress: strin
             {showDisputeModal && (
               <div style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,.7)", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(4px)" }}
                 onClick={() => setShowDisputeModal(null)}>
-                <div onClick={e => e.stopPropagation()} style={{ background: "var(--bg1)", border: "1px solid rgba(245,166,35,.3)", borderRadius: 16, padding: 32, width: "100%", maxWidth: 480, margin: "0 24px" }}>
+                <div onClick={e => e.stopPropagation()} style={{ background: "var(--bg1)", border: "1px solid rgba(245,166,35,.3)", borderRadius: 4, padding: 32, width: "100%", maxWidth: 480, margin: "0 24px" }}>
                   <div style={{ fontFamily: "var(--font-syne), sans-serif", fontWeight: 700, fontSize: 18, letterSpacing: "-.02em", marginBottom: 4, color: "var(--amber)" }}>Raise Dispute ⚠</div>
                   <div style={{ fontSize: 12, color: "var(--text3)", marginBottom: 20 }}>Describe why the submitted work does not meet requirements. The agent will be notified and can respond before you resolve.</div>
                   <textarea value={disputeReason} onChange={e => setDisputeReason(e.target.value)} placeholder="e.g. The delivered report was incomplete — missing reentrancy analysis..."
-                    style={{ width: "100%", padding: "10px 12px", borderRadius: 8, background: "var(--bg2)", border: "1px solid var(--border-hi)", color: "var(--text)", fontSize: 13, resize: "vertical", minHeight: 100, fontFamily: "'Inter', sans-serif", outline: "none", fontWeight: 300, boxSizing: "border-box" }} />
+                    style={{ width: "100%", padding: "10px 12px", borderRadius: 4, background: "var(--bg2)", border: "1px solid var(--border-hi)", color: "var(--text)", fontSize: 13, resize: "vertical", minHeight: 100, fontFamily: "'Inter', sans-serif", outline: "none", fontWeight: 300, boxSizing: "border-box" }} />
                   {disputeStatus && <p style={{ marginTop: 8, fontSize: 12, color: "var(--red)", fontFamily: "'DM Mono', monospace" }}>{disputeStatus}</p>}
                   <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
                     <button onClick={() => void handleDispute(showDisputeModal)}
-                      style={{ flex: 1, padding: "11px", borderRadius: 8, background: "rgba(245,166,35,.1)", border: "1px solid rgba(245,166,35,.3)", color: "var(--amber)", cursor: "pointer", fontFamily: "var(--font-syne), sans-serif", fontWeight: 600, fontSize: 13 }}>
+                      style={{ flex: 1, padding: "11px", borderRadius: 4, background: "rgba(245,166,35,.1)", border: "1px solid rgba(245,166,35,.3)", color: "var(--amber)", cursor: "pointer", fontFamily: "var(--font-syne), sans-serif", fontWeight: 600, fontSize: 13 }}>
                       Submit Dispute →
                     </button>
                     <button onClick={() => { setShowDisputeModal(null); setDisputeReason(""); setDisputeStatus(""); }}
-                      style={{ padding: "11px 20px", background: "none", border: "1px solid var(--border)", borderRadius: 8, color: "var(--text3)", cursor: "pointer", fontSize: 13 }}>
+                      style={{ padding: "11px 20px", background: "none", border: "1px solid var(--border)", borderRadius: 4, color: "var(--text3)", cursor: "pointer", fontSize: 13 }}>
                       Cancel
                     </button>
                   </div>
@@ -1620,11 +1620,11 @@ const handleAssign = async (taskId: string, agentId: string, agentAddress: strin
             )}
 
             {/* post task panel */}
-            <div style={{ background: "var(--bg1)", border: "1px solid var(--border)", borderRadius: 12, padding: 28, position: "sticky", top: 80 }}>
+            <div style={{ background: "var(--bg1)", border: "1px solid var(--border)", borderRadius: 6, padding: 28, position: "sticky", top: 80 }}>
               <div style={{ fontFamily: "var(--font-syne), sans-serif", fontWeight: 700, fontSize: 18, letterSpacing: "-.02em", marginBottom: 4 }}>Post a Task</div>
               <div style={{ fontSize: 12, color: "var(--text3)", marginBottom: 24 }}>USDC is locked in escrow until task completion</div>
               <button onClick={() => void authenticateWallet()} disabled={!isConnected || authenticating || isAuthed}
-                style={{ width: "100%", marginBottom: 12, padding: "10px", borderRadius: 8, border: "1px solid var(--border)", background: "var(--bg2)", color: isAuthed ? "var(--green)" : "var(--gold)", cursor: !isConnected || authenticating || isAuthed ? "not-allowed" : "pointer", opacity: !isConnected || authenticating || isAuthed ? 0.65 : 1, fontFamily: "'DM Mono', monospace", fontSize: 11 }}>
+                style={{ width: "100%", marginBottom: 12, padding: "10px", borderRadius: 4, border: "1px solid var(--border)", background: "var(--bg2)", color: isAuthed ? "var(--green)" : "var(--gold)", cursor: !isConnected || authenticating || isAuthed ? "not-allowed" : "pointer", opacity: !isConnected || authenticating || isAuthed ? 0.65 : 1, fontFamily: "'DM Mono', monospace", fontSize: 11 }}>
                 {authenticating ? "Authenticating..." : isAuthed ? "✓ Wallet Authenticated" : "Authenticate Wallet"}
               </button>
               {(["title","description","reward"] as const).map(field => (
@@ -1634,7 +1634,7 @@ const handleAssign = async (taskId: string, agentId: string, agentAddress: strin
                   </label>
                   {field === "description" ? (
                     <textarea value={taskForm[field]} onChange={e => setTaskForm(p => ({ ...p, [field]: e.target.value }))} placeholder="Describe deliverables and timeline..."
-                      style={{ width: "100%", background: "var(--bg)", border: "1px solid var(--border)", borderRadius: 6, padding: "10px 12px", fontFamily: "'Inter', sans-serif", fontSize: 13, color: "var(--text)", outline: "none", resize: "vertical", minHeight: 80, fontWeight: 300 }} />
+                      style={{ width: "100%", background: "var(--bg)", border: "1px solid var(--border)", borderRadius: 4, padding: "10px 12px", fontFamily: "'Inter', sans-serif", fontSize: 13, color: "var(--text)", outline: "none", resize: "vertical", minHeight: 80, fontWeight: 300 }} />
                   ) : (
                     <div style={{ position: "relative" }}>
                       {field === "reward" && (
@@ -1642,7 +1642,7 @@ const handleAssign = async (taskId: string, agentId: string, agentAddress: strin
                       )}
                       <input type={field === "reward" ? "number" : "text"} value={taskForm[field]} onChange={e => setTaskForm(p => ({ ...p, [field]: e.target.value }))}
                         placeholder={field === "title" ? "e.g. Audit my staking contract" : "0.00"}
-                        style={{ width: "100%", background: "var(--bg)", border: `1px solid ${field === "reward" ? "var(--border-hi)" : "var(--border)"}`, borderRadius: 6, padding: field === "reward" ? "10px 12px 10px 28px" : "10px 12px", fontFamily: field === "reward" ? "'DM Mono', monospace" : "'Inter', sans-serif", fontSize: field === "reward" ? 14 : 13, color: field === "reward" ? "var(--gold-hi)" : "var(--text)", outline: "none", fontWeight: field === "reward" ? 500 : 300 }} />
+                        style={{ width: "100%", background: "var(--bg)", border: `1px solid ${field === "reward" ? "var(--border-hi)" : "var(--border)"}`, borderRadius: 4, padding: field === "reward" ? "10px 12px 10px 28px" : "10px 12px", fontFamily: field === "reward" ? "'DM Mono', monospace" : "'Inter', sans-serif", fontSize: field === "reward" ? 14 : 13, color: field === "reward" ? "var(--gold-hi)" : "var(--text)", outline: "none", fontWeight: field === "reward" ? 500 : 300 }} />
                     </div>
                   )}
                 </div>
@@ -1668,7 +1668,7 @@ const handleAssign = async (taskId: string, agentId: string, agentAddress: strin
                 </div>
               </div>
               <button onClick={handlePostTask} disabled={postingTask || !isConnected}
-                style={{ width: "100%", padding: 13, background: "linear-gradient(135deg, var(--gold), var(--amber))", color: "#0a0905", border: "none", cursor: postingTask || !isConnected ? "not-allowed" : "pointer", fontFamily: "var(--font-syne), sans-serif", fontWeight: 700, fontSize: 14, letterSpacing: ".04em", borderRadius: 10, opacity: postingTask || !isConnected ? 0.6 : 1, boxShadow: "0 4px 20px rgba(212,170,80,.2)" }}>
+                style={{ width: "100%", padding: 13, background: "linear-gradient(135deg, var(--gold), var(--amber))", color: "#0a0905", border: "none", cursor: postingTask || !isConnected ? "not-allowed" : "pointer", fontFamily: "var(--font-syne), sans-serif", fontWeight: 700, fontSize: 14, letterSpacing: ".04em", borderRadius: 6, opacity: postingTask || !isConnected ? 0.6 : 1, boxShadow: "0 4px 20px rgba(212,170,80,.2)" }}>
                 {postingTask ? <><span className="spinner" />Posting...</> : isConnected ? "Lock Escrow & Post Task →" : "Connect Wallet to Post"}
               </button>
               {!isConnected && <p style={{ marginTop: 10, fontSize: 12, color: "var(--text3)", fontFamily: "'DM Mono', monospace" }}>Connect wallet to post.</p>}

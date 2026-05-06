@@ -50,7 +50,7 @@ function StatCard({ label, value, suffix = "", delay = 0 }: { label: string; val
   return (
     <div style={{
       padding: "24px 20px", background: "var(--bg1)",
-      border: "1px solid var(--border)", borderRadius: 12,
+      border: "1px solid var(--border)", borderRadius: 6,
       animation: `fadeUp 0.5s ${delay}ms ease both`,
     }}>
       <div style={{
@@ -100,7 +100,7 @@ export default function PublicAgentPage() {
       <div style={{ fontSize: 48 }}>🤖</div>
       <p style={{ fontFamily: "var(--font-syne), sans-serif", fontWeight: 700, fontSize: 20, color: "var(--text)" }}>Agent not found</p>
       <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: "var(--text3)" }}>{error ?? "This agent doesn't exist"}</p>
-      <Link href="/?page=discover" style={{ padding: "10px 20px", borderRadius: 8, background: "rgba(212,170,80,.1)", border: "1px solid var(--border-hi)", color: "var(--gold)", fontFamily: "var(--font-syne), sans-serif", fontSize: 13, fontWeight: 600, textDecoration: "none" }}>
+      <Link href="/?page=discover" style={{ padding: "10px 20px", borderRadius: 4, background: "rgba(212,170,80,.1)", border: "1px solid var(--border-hi)", color: "var(--gold)", fontFamily: "var(--font-syne), sans-serif", fontSize: 13, fontWeight: 600, textDecoration: "none" }}>
         ← Back to Discover
       </Link>
     </div>
@@ -160,7 +160,7 @@ export default function PublicAgentPage() {
           }}>
             {/* Avatar */}
             <div style={{
-              width: 80, height: 80, borderRadius: 16, fontSize: 38,
+              width: 80, height: 80, borderRadius: 4, fontSize: 38,
               border: "2px solid var(--border-hi)",
               display: "grid", placeItems: "center",
               background: "linear-gradient(135deg, var(--bg2), var(--bg3))",
@@ -209,7 +209,7 @@ export default function PublicAgentPage() {
 
             {/* Rep score */}
             <div style={{
-              padding: "20px 28px", borderRadius: 14, textAlign: "center",
+              padding: "20px 28px", borderRadius: 4, textAlign: "center",
               background: "rgba(212,170,80,.06)", border: "1px solid rgba(212,170,80,.25)",
               flexShrink: 0,
             }}>
@@ -219,7 +219,7 @@ export default function PublicAgentPage() {
                 background: "linear-gradient(135deg, var(--gold-hi), var(--amber))",
                 WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
               }}>{agent.reputation}</div>
-              <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: "var(--text3)", letterSpacing: ".12em", marginTop: 6 }}>
+              <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: "var(--text3)", letterSpacing: ".1em", marginTop: 6 }}>
                 REP SCORE
               </div>
             </div>
@@ -241,13 +241,13 @@ export default function PublicAgentPage() {
         {/* Active task */}
         {activeTask && (
           <div style={{ marginBottom: 36, animation: "fadeUp 0.5s 0.3s ease both" }}>
-            <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: "var(--gold-dim)", letterSpacing: ".12em", textTransform: "uppercase", marginBottom: 14, display: "flex", alignItems: "center", gap: 10 }}>
+            <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: "var(--gold-dim)", letterSpacing: ".1em", textTransform: "uppercase", marginBottom: 14, display: "flex", alignItems: "center", gap: 10 }}>
               <span style={{ width: 24, height: 1, background: "var(--gold-dim)", display: "block" }} />
               Active Task
             </div>
             <div style={{
               padding: "20px 24px", background: "rgba(78,203,141,.04)",
-              border: "1px solid rgba(78,203,141,.25)", borderRadius: 12,
+              border: "1px solid rgba(78,203,141,.25)", borderRadius: 6,
               display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap",
             }}>
               <div>
@@ -266,7 +266,7 @@ export default function PublicAgentPage() {
 
         {/* Task history */}
         <div style={{ animation: "fadeUp 0.5s 0.4s ease both" }}>
-          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: "var(--gold-dim)", letterSpacing: ".12em", textTransform: "uppercase", marginBottom: 14, display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: "var(--gold-dim)", letterSpacing: ".1em", textTransform: "uppercase", marginBottom: 14, display: "flex", alignItems: "center", gap: 10 }}>
             <span style={{ width: 24, height: 1, background: "var(--gold-dim)", display: "block" }} />
             Task History
           </div>
@@ -281,7 +281,7 @@ export default function PublicAgentPage() {
               {taskHistory.map((task, i) => (
                 <div key={task.id} style={{
                   padding: "16px 20px", background: "var(--bg1)",
-                  border: "1px solid var(--border)", borderRadius: 10,
+                  border: "1px solid var(--border)", borderRadius: 6,
                   display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12,
                   animation: `fadeUp 0.4s ${i * 60}ms ease both`,
                   transition: "border-color .2s",
@@ -319,7 +319,7 @@ export default function PublicAgentPage() {
         {/* Rep timeline */}
         {taskHistory.length > 0 && (
           <div style={{ marginTop: 40, animation: "fadeUp 0.5s 0.5s ease both" }}>
-            <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: "var(--gold-dim)", letterSpacing: ".12em", textTransform: "uppercase", marginBottom: 14, display: "flex", alignItems: "center", gap: 10 }}>
+            <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: "var(--gold-dim)", letterSpacing: ".1em", textTransform: "uppercase", marginBottom: 14, display: "flex", alignItems: "center", gap: 10 }}>
               <span style={{ width: 24, height: 1, background: "var(--gold-dim)", display: "block" }} />
               Reputation Timeline
             </div>
